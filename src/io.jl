@@ -1,4 +1,4 @@
-export load, mapvalues, save, NoValue, hasvalue
+export load, mapvalues, reducevalues, save, NoValue, hasvalue
 
 """
     load(f, t::DirTree; dirs=false)
@@ -48,7 +48,7 @@ Use `f` to combine values in the tree.
 - `associative=true` assumes `f` can be applied in an associative way
 """
 function reducevalues(f, t::DirTree; associative=true)
-    itr = Iterators.filter(hasvalue, Leaves(t))
+    itr = value.(collect(Iterators.filter(hasvalue, Leaves(t))))
     associative ? assocreduce(f, itr) : reduce(f, itr)
 end
 

@@ -2,6 +2,7 @@ using DataStructures
 using AbstractTrees
 import AbstractTrees: children
 
+export name, path
 struct NoValue end
 
 struct DirTree
@@ -15,8 +16,8 @@ DirTree(parent, name, children) = DirTree(parent, name, children, NoValue())
 
 # convenience method to replace a few parameters
 # and leave others unchanged
-function DirTree(t::DirTree; parent=t.parent, name=t.name, children=t.children)
-    DirTree(parent, name, children)
+function DirTree(t::DirTree; parent=t.parent, name=t.name, children=t.children, value=t.value)
+    DirTree(parent, name, children, value)
 end
 
 DirTree(dir) = DirTree(nothing, dir)
@@ -85,7 +86,7 @@ Base.getindex(tree::DirTree, i::Int) = tree.children[i]
 Base.getindex(tree::DirTree, i::String) = _getindex(x->x.name==i, tree, i)
 function Base.getindex(tree::DirTree, i::Regex)
     filtered = filter(r->match(i, r.name) !== nothing, tree.children)
-    DirTree(tree.dirname, tree.name, filtered)
+    DirTree(tree.parent, tree.name, filtered)
 end
 function _getindex(f, tree::DirTree, repr)
     idx = findfirst(f, tree.children)

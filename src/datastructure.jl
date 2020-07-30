@@ -49,7 +49,13 @@ name(f::DirTree) = f.name
 
 Base.isempty(d::DirTree) = isempty(d.children)
 
-AbstractTrees.printnode(io::IO, f::DirTree) = print(io, f.name)
+function AbstractTrees.printnode(io::IO, f::Union{DirTree, File})
+    print(io, name(f))
+    if hasvalue(f)
+        T = typeof(value(f))
+        print(io," (", repr(T), ")")
+    end
+end
 
 Base.show(io::IO, d::DirTree) = AbstractTrees.print_tree(io, d)
 
@@ -76,8 +82,6 @@ parent(f::File) = f.parent
 name(f::File) = f.name
 
 Base.isempty(d::File) = false
-
-AbstractTrees.printnode(io::IO, f::File) = print(io, f.name)
 
 files(tree::DirTree) = DirTree(tree; children=filter(x->x isa File, tree.children))
 subdirs(tree::DirTree) = DirTree(tree; children=filter(x->x isa DirTree, tree.children))

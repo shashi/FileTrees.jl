@@ -16,9 +16,8 @@ end
 # and leave others unchanged
 DirTree(t::DirTree;
         parent=t.parent,
-        dirname=t.dirname,
         name=t.name,
-        children=t.children) = DirTree(parent, dirname, name, children)
+        children=t.children) = DirTree(parent, name, children)
 
 DirTree(dir) = DirTree(nothing, dir)
 function DirTree(parent, dir)
@@ -102,9 +101,41 @@ function filterrecur(f, x)
     end
 end
 
-Base.basename(d::Union{DirTree, File}) = d.name
-path(d::Union{File, DirTree}) = d.parent === nothing ? d.name : joinpath(path(d.parent), d.name)
-Base.dirname(d::Union{File, DirTree}) = dirname(path(d))
+const Node = Union{DirTree, File}
+Base.basename(d::Node) = d.name
+path(d::Node) = d.parent === nothing ? d.name : joinpath(path(d.parent), d.name)
+Base.dirname(d::Node) = dirname(path(d))
+
+######## Values Maybe use ShadowTrees?
+struct Valued{T}
+    node::Node
+    value::T
+end
+
+children(v::Valued) = children(v.node)
+
+Base.show(io::IO, v::Valued) = (print(io, "Valued("); print(io, v.node); print(io, ")"))
+
+export load, mapvalues, save
+
+function load(f, t::DirTree; dirs=false)
+    inner = DirTree(t; children=map(c->load(f, c), children(t)))
+    dirs ? Valued(inner, f(inner)) : inner
+end
+
+function load(f, t::File)
+    Valued(t, f(t))
+end
+
+mapvalues(f, t::File) = t
+
+function mapvalues(f, t::DirTree)
+    DirTree(t, children = mapvalues.(f, t.children))
+end
+
+function mapvalues(f, t::Valued)
+    Valued(mapvalues(f, t.node), f(t.value))
+end
 
 end # module
 

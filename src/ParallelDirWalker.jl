@@ -1,6 +1,6 @@
 module ParallelDirWalker
 
-export DirTree
+export DirTree, File, path
 
 using DataStructures
 using AbstractTrees
@@ -26,7 +26,6 @@ function DirTree(parent, dir)
     parent′ = DirTree(parent, dir, children)
 
     ls = readdir(dir)
-    @show ls
     cd(dir) do
         children′ = map(ls) do f
             if isdir(f)
@@ -58,7 +57,7 @@ struct File
     name::String
 end
 
-Base.show(io::IO, f::File) = print(io, f.name)
+Base.show(io::IO, f::File) = print(io, "File(" * path(f) * ")")
 
 File(parent, name::String) = File(parent, name, nothing)
 
@@ -102,6 +101,10 @@ function filterrecur(f, x)
         return nothing
     end
 end
+
+Base.basename(d::Union{DirTree, File}) = d.name
+path(d::Union{File, DirTree}) = d.parent === nothing ? d.name : joinpath(path(d.parent), d.name)
+Base.dirname(d::Union{File, DirTree}) = dirname(path(d))
 
 end # module
 

@@ -7,7 +7,7 @@ struct NoValue end
 struct DirTree
     parent::Union{DirTree, Nothing}
     name::String
-    children::Vector
+    children::Vector{Union{DirTree, File}}
     value::Any
 end
 

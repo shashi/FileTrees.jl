@@ -154,7 +154,7 @@ function save(f, t::DirTree)
     foreach(x->save(f, x), children(t))
 end
 
-save(f, t::File) = open(f, path(t), "w")
+save(f, t::File) = hasvalue(t) && open(io->f(io, value(t)), path(t), "w")
 
 end # module
 

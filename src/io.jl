@@ -40,12 +40,16 @@ function mapvalues(f, t::DirTree)
     hasvalue(x) ? DirTree(x, value=f(value(x))) : x
 end
 
-function reducevalues(f, t::DirTree; associative=true, across_dirs=false)
-    if associative
-        assocreduce(f, [value(c) for c in t.children if hasvalue(c)])
-    else
-        reduce(f, [value(c) for c in t.children if hasvalue(c)])
-    end
+"""
+    reducevalues(f, t::DirTree; associative=true)
+
+Use `f` to combine values in the tree.
+
+- `associative=true` assumes `f` can be applied in an associative way
+"""
+function reducevalues(f, t::DirTree; associative=true)
+    itr = Iterators.filter(hasvalue, Leaves(t))
+    associative ? assocreduce(f, itr) : reduce(f, itr)
 end
 
 """

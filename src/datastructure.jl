@@ -7,7 +7,7 @@ struct NoValue end
 struct DirTree
     parent::Union{DirTree, Nothing}
     name::String
-    children::Vector{Union{DirTree, File}}
+    children::Vector
     value::Any
 end
 
@@ -96,6 +96,7 @@ function _getindex(f, tree::DirTree, repr)
 end
 
 Base.filter(f, x::DirTree) = filterrecur(f, x)
+
 function filterrecur(f, x)
     if f(x)
         if x isa DirTree

@@ -126,4 +126,19 @@ value(d::Node) = d.value
 
 hasvalue(x::Node) = !(value(x) isa NoValue)
 
-rename(x::T, newname) where {T<:Node} = T(x, name=newname)
+rename(x::File, newname) = File(x, name=newname)
+
+# A
+#   x2
+#     y
+
+function rename(x::DirTree, newname)
+    set_parent(DirTree(x, name=newname))
+end
+
+function set_parent(x::DirTree, parent=x.parent)
+    p = DirTree(x, parent=parent, children=copy(x.children))
+    copy!(p.children, set_parent.(x.children, (p,)))
+    p
+end
+set_parent(x::File, parent=x.parent) = File(x, parent=parent)

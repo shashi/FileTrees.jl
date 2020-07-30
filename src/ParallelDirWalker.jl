@@ -6,18 +6,22 @@ using DataStructures
 using AbstractTrees
 import AbstractTrees: children
 
+struct NoValue end
+
 struct DirTree
     parent::Union{DirTree, Nothing}
     name::String
     children::Vector
+    value::Any
 end
+
+DirTree(parent, name, children) = DirTree(parent, name, children, NoValue())
 
 # convenience method to replace a few parameters
 # and leave others unchanged
-DirTree(t::DirTree;
-        parent=t.parent,
-        name=t.name,
-        children=t.children) = DirTree(parent, name, children)
+function DirTree(t::DirTree; parent=t.parent, name=t.name, children=t.children)
+    DirTree(parent, name, children)
+end
 
 DirTree(dir) = DirTree(nothing, dir)
 function DirTree(parent, dir)
@@ -54,6 +58,13 @@ Base.show(io::IO, d::DirTree) = AbstractTrees.print_tree(io, d)
 struct File
     parent::DirTree
     name::String
+    value::Any
+end
+
+File(parent, name) = File(parent, name, NoValue())
+
+function File(f::File; parent=f.parent, name=f.name, value=f.value)
+    File(parent, name, value)
 end
 
 Base.show(io::IO, f::File) = print(io, "File(" * path(f) * ")")
@@ -101,41 +112,49 @@ function filterrecur(f, x)
     end
 end
 
+
+### Stuff agnostic to Dir or File nature of "Node"s
+
 const Node = Union{DirTree, File}
+
 Base.basename(d::Node) = d.name
+
 path(d::Node) = d.parent === nothing ? d.name : joinpath(path(d.parent), d.name)
+
 Base.dirname(d::Node) = dirname(path(d))
 
-######## Values Maybe use ShadowTrees?
-struct Valued{T}
-    node::Node
-    value::T
-end
+value(d::Node) = d.value
 
-children(v::Valued) = children(v.node)
+hasvalue(x::Node) = !(value(x) isa NoValue)
 
-Base.show(io::IO, v::Valued) = (print(io, "Valued("); print(io, v.node); print(io, ")"))
+rename(x::T, newname) where {T<:Node} = T(x, name=newname)
 
-export load, mapvalues, save
+######## load, map over loaded data, save
+
+export load, mapvalues, save, NoValue
 
 function load(f, t::DirTree; dirs=false)
-    inner = DirTree(t; children=map(c->load(f, c), children(t)))
-    dirs ? Valued(inner, f(inner)) : inner
+    inner = DirTree(t; children=map(c->load(f, c; dirs=dirs), children(t)))
+    dirs ? DirTree(inner, value=f(inner)) : inner
 end
 
-function load(f, t::File)
-    Valued(t, f(t))
-end
+load(f, t::DirTree; dirs=false) = File(t, value=f(t))
 
-mapvalues(f, t::File) = t
+function mapvalues(f, x::File)
+    hasvalue(x) ? File(x, value=f(value(x))) : x
+end
 
 function mapvalues(f, t::DirTree)
-    DirTree(t, children = mapvalues.(f, t.children))
+    x = DirTree(t, children = mapvalues.(f, t.children))
+    hasvalue(x) ? DirTree(x, value=f(value(x))) : x
 end
 
-function mapvalues(f, t::Valued)
-    Valued(mapvalues(f, t.node), f(t.value))
+function save(f, t::DirTree)
+    mkpath(path(t))
+    foreach(x->save(f, x), children(t))
 end
+
+save(f, t::File) = open(f, path(t), "w")
 
 end # module
 

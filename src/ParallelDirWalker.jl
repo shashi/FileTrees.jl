@@ -9,6 +9,10 @@ struct File
     name::String
     val::Any
 end
+File(name::String) = File(name, nothing)
+name(f::File) = f.name
+value(f::File) = f.val
+Base.isempty(d::File) = false
 
 AbstractTrees.children(d::File) = ()
 AbstractTrees.printnode(io::IO, f::File) = print(io, f.name)
@@ -18,6 +22,9 @@ struct DirTree
     name::String
     children::Vector{Union{File, DirTree}}
 end
+name(f::DirTree) = f.name
+value(f::File) = f.val
+Base.isempty(d::DirTree) = isempty(d.children)
 
 AbstractTrees.children(d::DirTree) = d.children
 AbstractTrees.printnode(io::IO, f::DirTree) = print(io, f.name)
@@ -35,23 +42,30 @@ function DirTree(dir)
         if isdir(filepath)
             DirTree(filepath)
         else
-            File(basename(filepath), nothing)
+            File(basename(filepath))
         end
     end
     DirTree(dname, basename(dir), children)
 end
 
-files(tree::DirTree) = DirTree(tree.dirname, tree.name, filter(x->x isa File, tree.children))
-dirs(tree::DirTree) = DirTree(tree.dirname, tree.name, filter(x->x isa DirTree, tree.children))
+files(tree::DirTree) = DirTree(tree; children=filter(x->x isa File, tree.children))
+subdirs(tree::DirTree) = DirTree(tree; children=filter(x->x isa DirTree, tree.children))
+
 Base.getindex(tree::DirTree, i::Int) = tree.children[i]
-Base.getindex(tree::DirTree, i::String) = _getindex(x->x==i, tree, i)
+Base.getindex(tree::DirTree, i::String) = _getindex(x->x.name==i, tree, i)
 function Base.getindex(tree::DirTree, i::Regex)
     filtered = filter(r->match(i, r.name) !== nothing, tree.children)
     DirTree(tree.dirname, tree.name, filtered)
 end
+function _getindex(f, tree::DirTree, repr)
+    idx = findfirst(f, tree.children)
+    if idx === nothing
+        error("No file matched getindex $repr")
+    end
+    tree.children[i]
+end
 
 Base.filter(f, x::DirTree) = filterrecur(f, x)
-
 function filterrecur(f, x)
     if f(x)
         if x isa DirTree
@@ -64,48 +78,6 @@ function filterrecur(f, x)
         return nothing
     end
 end
-function _getindex(f, tree::DirTree, repr)
-    idx = findfirst(f, tree.children)
-    if idx === nothing
-        error("No file matched getindex $repr")
-    end
-    tree.children[i]
-end
 
-
-#=
-
-d = maketree("dir") #-> DirTree
-d["subdir"] #-> DirTree
-
-d1 = map(f->DataFrame(CSV.File(f)), dirtree)
-d2 = map(df->(df.foo = parse(Int, foo); df), d1)
-
-dir(dirname, subtrees) = ... # DirTree(Dict(dirname=>subtree)
-
-d2 = save(dir("dirname", d2)) do io
-    write(rand(UInt8, 100))
-end
-
-function Base.getindex(d::DirTree, idx)
-end
-
-
-"""
-All the files in the whole subtree
-"""
-leaves(d::DirTree)
-
-"""
-Apply f to every node in d
-and return the same directory structure
-"""
-function map(f, d::DirTree)
-end
-
-function reduce(f, d::DirTree)
-end
-
-=#
 end # module
 

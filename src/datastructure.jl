@@ -59,16 +59,6 @@ function set_parent(x::DirTree, parent=x.parent)
     p
 end
 
-set_parent(x::File, parent=x.parent) = File(x, parent=parent)
-
-function AbstractTrees.printnode(io::IO, f::Union{DirTree, File})
-    print(io, name(f))
-    if hasvalue(f)
-        T = typeof(value(f))
-        print(io," (", repr(T), ")")
-    end
-end
-
 Base.show(io::IO, d::DirTree) = AbstractTrees.print_tree(io, d)
 
 struct File
@@ -85,7 +75,16 @@ end
 
 Base.show(io::IO, f::File) = print(io, "File(" * path(f) * ")")
 
-File(parent, name::String) = File(parent, name, nothing)
+function AbstractTrees.printnode(io::IO, f::Union{DirTree, File})
+    print(io, name(f))
+    if hasvalue(f)
+        T = typeof(value(f))
+        print(io," (", repr(T), ")")
+    end
+end
+
+
+File(parent, name::String) = File(parent, name, NoValue())
 
 children(d::File) = ()
 
@@ -94,6 +93,8 @@ parent(f::File) = f.parent
 name(f::File) = f.name
 
 Base.isempty(d::File) = false
+
+set_parent(x::File, parent=x.parent) = File(x, parent=parent)
 
 files(tree::DirTree) = DirTree(tree; children=filter(x->x isa File, tree.children))
 
@@ -154,7 +155,23 @@ prewalk(f, t::File; collect_children=identity) = f(t)
 
 function postwalk(f, t::DirTree; collect_children=identity)
     cs = map(c->postwalk(f, c; collect_children=collect_children), t.children)
-    DirTree(t; children=collect_children(cs)) |> f
+    f(DirTree(t; children=collect_children(cs)))
 end
 
 postwalk(f, t::File; collect_children=identity) = f(t)
+
+function flatten(t::DirTree; joinpath=joinpath)
+    postwalk(t) do x
+        if x isa DirTree
+            cs = map(filter(x->x isa DirTree, children(x))) do sd
+                map(children(sd)) do thing
+                    newname = joinpath(name(sd), name(thing))
+                    typeof(thing)(thing; name=newname, parent=x)
+                end
+            end |> Iterators.flatten |> collect
+            return DirTree(x; children=vcat(cs, filter(x->!(x isa DirTree), children(x))))
+        else
+            return x
+        end
+    end
+end

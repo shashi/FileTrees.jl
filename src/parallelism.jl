@@ -1,4 +1,4 @@
-using Dagger
+import Dagger
 import Dagger: compute
 export lazy, execute
 

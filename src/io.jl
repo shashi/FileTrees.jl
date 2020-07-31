@@ -17,10 +17,10 @@ If `NoValue()` is returned by `f`, no value is attached to the node.
 function load end
 function load(f, t::DirTree; dirs=false)
     inner = DirTree(t; children=map(c->load(f, c; dirs=dirs), children(t)))
-    dirs ? DirTree(inner, value=f(inner)) : inner
+    dirs ? DirTree(inner, value=f <| inner) : inner
 end
 
-load(f, t::File; dirs=false) = File(t, value=f(t))
+load(f, t::File; dirs=false) = File(t, value=f <| t)
 
 """
     mapvalues(f, x::DirTree)
@@ -33,11 +33,11 @@ Returns a new tree where every value is replaced with the result of applying `f`
 `f` may return `NoValue()` to cause no value to be associated with a node.
 """
 function mapvalues end
-mapvalues(f, x::File) = hasvalue(x) ? File(x, value=f(value(x))) : x
+mapvalues(f, x::File) = hasvalue(x) ? File(x, value=f <| value(x)) : x
 
 function mapvalues(f, t::DirTree)
     x = DirTree(t, children = mapvalues.(f, t.children))
-    hasvalue(x) ? DirTree(x, value=f(value(x))) : x
+    hasvalue(x) ? DirTree(x, value= f <| value(x)) : x
 end
 
 """
@@ -49,7 +49,7 @@ Use `f` to combine values in the tree.
 """
 function reducevalues(f, t::DirTree; associative=true)
     itr = value.(collect(Iterators.filter(hasvalue, Leaves(t))))
-    associative ? assocreduce(f, itr) : reduce(f, itr)
+    associative ? assocreduce(<|(f), itr) : reduce(<|(f), itr)
 end
 
 """
@@ -61,11 +61,13 @@ has a value associated with it.
 
 (see `load` and `mapvalues` for associating values with files.)
 """
-function save end
-function save(f, t::DirTree)
-    mkpath(path(t))
-    foreach(x->save(f, x), children(t))
+function savevalues end
+function savevalues(f, t::DirTree)
+    foreach(x->savevalues(f, x), children(t))
 end
 
-save(f, t::File) = hasvalue(t) && f(t)
-
+function save(f, t::File)
+    if hasvalue(t)
+        (t -> (mkpath(dirname(t)); f(t))) <| t
+    end
+end

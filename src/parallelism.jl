@@ -1,5 +1,19 @@
 using Dagger
-export compute, par_exec
+import Dagger: compute
+export lazy, execute
+
+function lazy(f)
+    lazy_mode[] = true
+    thing = f()
+    lazy_mode[] = false
+    thing
+end
+
+const lazy_mode = Ref(false)
+
+_modal_apply(f, x...) = lazy_mode[] ? delayed(f)(x...) : f(x...)
+<|(f, x) = _modal_apply(x...)
+<|(f) = (x...) -> _modal_exec(f, x...)
 
 function Dagger.compute(ctx, d::DirTree)
     thunks = []
@@ -18,8 +32,10 @@ function Dagger.compute(ctx, d::DirTree)
     end
 end
 
-function par_exec(d::DirTree)
+function execute(d::DirTree)
     mapvalues(compute(d)) do x
         x isa Dagger.Chunk ? collect(x) : x
     end
 end
+
+execute(d::Union{Dagger.Thunk, Dagger.Chunk}) = collect(d)

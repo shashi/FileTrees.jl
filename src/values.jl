@@ -4,7 +4,7 @@ export load, mapvalues, reducevalues, save, NoValue, hasvalue
 apply `f` to any node that has a value. `f` gets the node itself
 and must return a node.
 """
-mapvalued(f, t::Node; walk=postwalk) = walk(x->hasvalue(x) ? x <| f : x, t)
+mapvalued(f, t::Node; walk=postwalk) = walk(x->hasvalue(x) ? f <| x : x, t)
 
 """
     load(f, t::FileTree; dirs=false)
@@ -22,8 +22,8 @@ If `NoValue()` is returned by `f`, no value is attached to the node.
 """
 function load(f, t::Node; dirs=false, walk=postwalk)
     walk(t) do x
-        !dirs && x isa FileTree && return x
-        typeof(x)(value=f <| x)
+        (!dirs && x isa FileTree) && return x
+        typeof(x)(x, value=f <| x)
     end
 end
 
@@ -37,7 +37,7 @@ Returns a new tree where every value is replaced with the result of applying `f`
 
 `f` may return `NoValue()` to cause no value to be associated with a node.
 """
-mapvalues(f, t::Node) = mapvalued(x -> typeof(x)(value=f(value(x))), t)
+mapvalues(f, t::Node) = mapvalued(x -> typeof(x)(x; value=f(value(x))), t)
 
 """
     reducevalues(f, t::FileTree; associative=true)

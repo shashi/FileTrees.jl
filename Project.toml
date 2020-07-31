@@ -1,4 +1,4 @@
-name = "ParallelDirWalker"
+name = "FileTrees"
 uuid = "171f509a-1e60-42c5-9198-18f8e4f8ba85"
 authors = ["Shashi Gowda <gowda@mit.edu>"]
 version = "0.1.0"

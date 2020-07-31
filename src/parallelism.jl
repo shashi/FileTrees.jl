@@ -1,5 +1,5 @@
 import Dagger
-import Dagger: compute
+import Dagger: compute, delayed
 export lazy, execute
 
 function lazy(f)
@@ -12,18 +12,21 @@ end
 const lazy_mode = Ref(false)
 
 _modal_apply(f, x...) = lazy_mode[] ? delayed(f)(x...) : f(x...)
-<|(f, x) = _modal_apply(x...)
-<|(f) = (x...) -> _modal_exec(f, x...)
+<|(f, x) = _modal_apply(f, x)
+<|(f) = (x...) -> _modal_apply(f, x...)
 
 function Dagger.compute(ctx, d::FileTree)
+    println("here")
     thunks = []
     mapvalues(d) do x
-        if x isa Thunk
+        if x isa Dagger.Thunk
             push!(thunks, x)
         end
     end
 
     vals = compute(delayed((xs...)->[xs...]; meta=true)(thunks...))
+
+    @show vals
 
     i = 0
     mapvalues(d) do x

@@ -7,28 +7,28 @@ and must return a node.
 mapvalued(f, t::Node; walk=postwalk) = walk(x->hasvalue(x) ? x <| f : x, t)
 
 """
-    load(f, t::DirTree; dirs=false)
+    load(f, t::FileTree; dirs=false)
 
 Walk the tree and optionally load data for nodes in it.
 
 `f(file)` is the loader function which takes `File` as input.
 Call `path(file)` to get the String path to read the  file.
 
-If `dirs = true` then `f` can either get a `File` or `DirTree`.
-nodes within `DirTree` will have already been loaded.
+If `dirs = true` then `f` can either get a `File` or `FileTree`.
+nodes within `FileTree` will have already been loaded.
 
 If `NoValue()` is returned by `f`, no value is attached to the node.
 `hasvalue(x)` tells you if `x` already has a value or not.
 """
 function load(f, t::Node; dirs=false, walk=postwalk)
     walk(t) do x
-        !dirs && x isa DirTree && return x
+        !dirs && x isa FileTree && return x
         typeof(x)(value=f <| x)
     end
 end
 
 """
-    mapvalues(f, x::DirTree)
+    mapvalues(f, x::FileTree)
 
 (See `load` to load values into nodes of a tree.)
 
@@ -40,13 +40,13 @@ Returns a new tree where every value is replaced with the result of applying `f`
 mapvalues(f, t::Node) = mapvalued(x -> typeof(x)(value=f(value(x))), t)
 
 """
-    reducevalues(f, t::DirTree; associative=true)
+    reducevalues(f, t::FileTree; associative=true)
 
 Use `f` to combine values in the tree.
 
 - `associative=true` assumes `f` can be applied in an associative way
 """
-function reducevalues(f, t::DirTree; associative=true)
+function reducevalues(f, t::FileTree; associative=true)
     itr = value.(collect(Iterators.filter(hasvalue, Leaves(t))))
     associative ? assocreduce(<|(f), itr) : reduce(<|(f), itr)
 end
@@ -54,7 +54,7 @@ end
 """
     save(f, x::Node)
 
-Save a DirTree to disk. Creates the directory structure
+Save a FileTree to disk. Creates the directory structure
 and calls `f` with `File` for every file in the tree which
 has a value associated with it.
 

@@ -15,7 +15,7 @@ _modal_apply(f, x...) = lazy_mode[] ? delayed(f)(x...) : f(x...)
 <|(f, x) = _modal_apply(x...)
 <|(f) = (x...) -> _modal_exec(f, x...)
 
-function Dagger.compute(ctx, d::DirTree)
+function Dagger.compute(ctx, d::FileTree)
     thunks = []
     mapvalues(d) do x
         if x isa Thunk
@@ -32,7 +32,7 @@ function Dagger.compute(ctx, d::DirTree)
     end
 end
 
-function execute(d::DirTree)
+function execute(d::FileTree)
     mapvalues(compute(d)) do x
         x isa Dagger.Chunk ? collect(x) : x
     end

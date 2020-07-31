@@ -1,6 +1,6 @@
 module ParallelDirWalker
 
-export DirTree, File, path
+export FileTree, File, path
 
 include("util.jl")
 include("datastructure.jl")

@@ -49,6 +49,18 @@ name(f::DirTree) = f.name
 
 Base.isempty(d::DirTree) = isempty(d.children)
 
+function rename(x::DirTree, newname)
+    set_parent(DirTree(x, name=newname))
+end
+
+function set_parent(x::DirTree, parent=x.parent)
+    p = DirTree(x, parent=parent, children=copy(x.children))
+    copy!(p.children, set_parent.(x.children, (p,)))
+    p
+end
+
+set_parent(x::File, parent=x.parent) = File(x, parent=parent)
+
 function AbstractTrees.printnode(io::IO, f::Union{DirTree, File})
     print(io, name(f))
     if hasvalue(f)
@@ -84,37 +96,33 @@ name(f::File) = f.name
 Base.isempty(d::File) = false
 
 files(tree::DirTree) = DirTree(tree; children=filter(x->x isa File, tree.children))
+
 subdirs(tree::DirTree) = DirTree(tree; children=filter(x->x isa DirTree, tree.children))
 
 Base.getindex(tree::DirTree, i::Int) = tree.children[i]
-Base.getindex(tree::DirTree, i::String) = _getindex(x->x.name==i, tree, i)
+
+function Base.getindex(tree::DirTree, ix::Vector)
+    DirTree(tree;
+            children=vcat(map(i->(x=tree[i]; i isa Regex ? x.children :  x), ix)...))
+end
+
+function Base.getindex(tree::DirTree, i::String)
+    idx = findfirst(x->name(x)==i, children(tree))
+    if idx === nothing
+        error("No file matched getindex $repr")
+    end
+    tree[idx]
+end
+
 function Base.getindex(tree::DirTree, i::Regex)
     filtered = filter(r->match(i, r.name) !== nothing, tree.children)
     DirTree(tree.parent, tree.name, filtered)
 end
-function _getindex(f, tree::DirTree, repr)
-    idx = findfirst(f, tree.children)
-    if idx === nothing
-        error("No file matched getindex $repr")
-    end
-    tree.children[idx]
-end
 
-Base.filter(f, x::DirTree) = filterrecur(f, x)
+Base.filter(f, x::DirTree; walk=postwalk) =
+    walk(x->f(x) ? x : nothing, t; collect_children=cs->filter(!isnothing, cs))
 
-function filterrecur(f, x)
-    if f(x)
-        if x isa DirTree
-            children = filter(!isnothing, filterrecur.(f, x.children))
-            return DirTree(x; children=children)
-        else
-            return x
-        end
-    else
-        return nothing
-    end
-end
-
+rename(x::File, newname) = File(x, name=newname)
 
 ### Stuff agnostic to Dir or File nature of "Node"s
 
@@ -130,19 +138,23 @@ value(d::Node) = d.value
 
 hasvalue(x::Node) = !(value(x) isa NoValue)
 
-rename(x::File, newname) = File(x, name=newname)
+## Tree walking
 
-# A
-#   x2
-#     y
-
-function rename(x::DirTree, newname)
-    set_parent(DirTree(x, name=newname))
+function prewalk(f, t::DirTree; collect_children=identity)
+    x = f(t)
+    if x isa DirTree
+        cs = map(c->prewalk(f, c; collect_children=collect_children), t.children)
+        DirTree(x; children=collect_children(cs))
+    else
+        return x
+    end
 end
 
-function set_parent(x::DirTree, parent=x.parent)
-    p = DirTree(x, parent=parent, children=copy(x.children))
-    copy!(p.children, set_parent.(x.children, (p,)))
-    p
+prewalk(f, t::File; collect_children=identity) = f(t)
+
+function postwalk(f, t::DirTree; collect_children=identity)
+    cs = map(c->postwalk(f, c; collect_children=collect_children), t.children)
+    DirTree(t; children=collect_children(cs)) |> f
 end
-set_parent(x::File, parent=x.parent) = File(x, parent=parent)
+
+postwalk(f, t::File; collect_children=identity) = f(t)

@@ -1,4 +1,4 @@
-module ParallelDirWalker
+module FileTrees
 
 export FileTree, File, path
 

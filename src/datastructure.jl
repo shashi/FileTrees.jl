@@ -62,7 +62,7 @@ end
 Base.show(io::IO, d::DirTree) = AbstractTrees.print_tree(io, d)
 
 struct File
-    parent::DirTree
+    parent::Union{Nothing, DirTree}
     name::String
     value::Any
 end
@@ -173,5 +173,37 @@ function flatten(t::DirTree; joinpath=joinpath)
         else
             return x
         end
+    end
+end
+
+_merge_error(x, y) = error("Files with same name $(name(x)) found at $(dirname(x)) while merging")
+
+"""
+    merge(t1, t2)
+
+Merge two DirTrees
+"""
+function merge(t1::DirTree, t2::DirTree; combine=_merge_error)
+    if name(t1) == name(t2)
+        t2_names = name.(children(t2))
+        t2_merged = zeros(Bool, length(t2_names))
+        cs = []
+        for x in children(t1)
+            idx = findfirst(==(name(x)), t2_names)
+            if !isnothing(idx)
+                y = t2[idx]
+                if t2[idx] isa DirTree
+                    push!(cs, merge(x, y))
+                else
+                    push!(cs, combine(x, y))
+                end
+                t2_merged[idx] = true
+            else
+                push!(cs, x)
+            end
+        end
+        DirTree(t1; children=vcat(cs, children(t2)[map(!, t2_merged)])) |> set_parent
+    else
+        DirTree(nothing, ".", [t1, t2], NoValue())
     end
 end

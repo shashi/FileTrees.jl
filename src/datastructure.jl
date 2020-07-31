@@ -207,3 +207,31 @@ function merge(t1::DirTree, t2::DirTree; combine=_merge_error)
         DirTree(nothing, ".", [t1, t2], NoValue())
     end
 end
+
+
+function treediff(t1::DirTree, t2::DirTree)
+    if name(t1) == name(t2)
+        t2_names = name.(children(t2))
+        cs = []
+        for x in children(t1)
+            idx = findfirst(==(name(x)), t2_names)
+            if !isnothing(idx)
+                if t2[idx] isa File
+                    @assert x isa File
+                elseif x isa DirTree && t2[idx] isa DirTree
+                    push!(cs, treediff(x, t2[idx]))
+                end
+            else
+                push!(cs, x)
+            end
+        end
+        DirTree(t1; children=cs) |> set_parent
+    else
+        t1
+    end
+end
+
+function withsubtree(f, filt, tree)
+    filtered = filter(filt, tree)
+    merge(f(filtered), treediff(tree, filtered))
+end

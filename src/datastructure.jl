@@ -240,12 +240,6 @@ function treediff(t1::FileTree, t2::FileTree)
     end
 end
 
-function withsubtree(f, filt, tree)
-    filtered = filter(filt, tree)
-    merge(f(filtered), treediff(tree, filtered))
-end
-
-
 function Base.mv(t::FileTree, filt, dest)
     if filt isa String
         subtree = t[filt]

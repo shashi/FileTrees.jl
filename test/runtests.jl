@@ -17,6 +17,9 @@ t = maketree(["a" => ["b" => ["a"],
 
     @test isempty(t[r"c"])
 
+    @test isequal(t["a"]["c"][["b", r"a|d"]],
+                  maketree("c" => ["b","a"]))
+
     @test_throws ErrorException t["c"]
 end
 
@@ -36,4 +39,28 @@ end
     @test isequal(filter(f->f isa FileTree || name(f) == "c", t),
                   maketree(["a"=>["b"=>[],
                                   "c"=>["c"=>[]]]]))
+end
+
+@testset "flatten" begin
+end
+
+@testset "merge" begin
+end
+
+@testset "treediff" begin
+end
+
+@testset "load" begin
+end
+
+@testset "mapvalues" begin
+end
+
+@testset "reducevalues" begin
+end
+
+@testset "save" begin
+end
+
+@testset "lazy-exec" begin
 end

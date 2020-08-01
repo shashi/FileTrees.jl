@@ -1,10 +1,15 @@
 export load, mapvalues, reducevalues, save, NoValue, hasvalue
 
+lazify(flag::Nothing, f) = _lazy_if_lazy(f)
+lazify(flag::Bool, f) = flag ? lazy(f) : f
+
 """
 apply `f` to any node that has a value. `f` gets the node itself
 and must return a node.
 """
-mapvalued(f, t::Node; walk=postwalk) = walk(x->hasvalue(x) ? f <| x : x, t)
+function mapvalued(f, t::Node; walk=postwalk)
+    walk(x->hasvalue(x) ? f(x) : x, t)
+end
 
 """
     load(f, t::FileTree; dirs=false)
@@ -20,11 +25,15 @@ nodes within `FileTree` will have already been loaded.
 If `NoValue()` is returned by `f`, no value is attached to the node.
 `hasvalue(x)` tells you if `x` already has a value or not.
 """
-function load(f, t::Node; dirs=false, walk=postwalk)
-    walk(t) do x
-        (!dirs && x isa FileTree) && return x
-        typeof(x)(x, value=f <| x)
+function load(f, t::Node; dirs=false, walk=postwalk, lazy=false)
+
+    loader = x -> begin
+        (!dirs && x isa FileTree) && x
+        f′ = lazify(lazy, f)
+        typeof(x)(x, value=f′(x))
     end
+
+    walk(loader, t)
 end
 
 """
@@ -37,7 +46,9 @@ Returns a new tree where every value is replaced with the result of applying `f`
 
 `f` may return `NoValue()` to cause no value to be associated with a node.
 """
-mapvalues(f, t::Node) = mapvalued(x -> typeof(x)(x; value=f(value(x))), t)
+function mapvalues(f, t::Node; lazy=nothing)
+    mapvalued(x -> typeof(x)(x; value=lazify(lazy, f)(value(x))), t)
+end
 
 """
     reducevalues(f, t::FileTree; associative=true)
@@ -46,9 +57,10 @@ Use `f` to combine values in the tree.
 
 - `associative=true` assumes `f` can be applied in an associative way
 """
-function reducevalues(f, t::FileTree; associative=true)
+function reducevalues(f, t::FileTree; associative=true, lazy=nothing)
+    f′ = lazify(lazy, f)
     itr = value.(collect(Iterators.filter(hasvalue, Leaves(t))))
-    associative ? assocreduce(<|(f), itr) : reduce(<|(f), itr)
+    associative ? assocreduce(f′, itr) : reduce(f′, itr)
 end
 
 """
@@ -60,4 +72,4 @@ has a value associated with it.
 
 (see `load` and `mapvalues` for associating values with files.)
 """
-save(f, t::Node) = mapvalued(x->(mkpath(dirname(f)); f(x)), t)
+save(f, t::Node; lazy=nothing) = mapvalued(lazify(lazy, x->(mkpath(dirname(f)); f(x))), t)

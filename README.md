@@ -11,6 +11,7 @@ There are no restrictions on what files you can read and write, as long as you h
 - FileTree
 - filter
 - merge
+- treediff
 - flatten
 - prewalk
 - postwalk
@@ -22,7 +23,7 @@ There are no restrictions on what files you can read and write, as long as you h
 - reducevalues
 - save
 
-### Parallelism
+### Laziness and Parallelism
 
 - lazy
-- execute
+- exec

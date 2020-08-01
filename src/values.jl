@@ -64,6 +64,16 @@ function reducevalues(f, t::FileTree; associative=true, lazy=nothing)
 end
 
 """
+Associative reduce
+"""
+function assocreduce(f, xs)
+    length(xs) == 1 && return xs[1]
+    l = length(xs)
+    m = div(l, 2)
+    f(assocreduce(f, xs[1:m]), assocreduce(f, xs[m+1:end]))
+end
+
+"""
     save(f, x::Node)
 
 Save a FileTree to disk. Creates the directory structure
@@ -72,4 +82,6 @@ has a value associated with it.
 
 (see `load` and `mapvalues` for associating values with files.)
 """
-save(f, t::Node; lazy=nothing) = mapvalued(lazify(lazy, x->(mkpath(dirname(f)); f(x))), t)
+function save(f, t::Node; lazy=nothing)
+    mapvalued(t->typeof(t)(t; value=lazify(lazy, x->(mkpath(dirname(t)); f(x)))(t)), t)
+end

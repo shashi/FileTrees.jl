@@ -2,7 +2,7 @@ using DataStructures
 using AbstractTrees
 import AbstractTrees: children
 
-export name, path
+export name, path, maketree
 struct NoValue end
 
 struct FileTree
@@ -235,3 +235,37 @@ function withsubtree(f, filt, tree)
     filtered = filter(filt, tree)
     merge(f(filtered), treediff(tree, filtered))
 end
+
+
+function Base.mv(t::FileTree, filt, dest)
+    if filt isa String
+        subtree = t[filt]
+    else
+        subtree = filter(filt, t)
+    end
+
+    destpath = splitpath(dest)
+    destsubtree = reduce((x, y) -> FileTree(nothing, y, [x], value(subtree)), destpath)
+
+    to = set_parent(destsubtree, t)
+    merge(treediff(t, subtree), to)
+end
+
+_maketree(node::String) = File(nothing, node, NoValue())
+_maketree(node::NamedTuple) = File(nothing, node.name, node.value)
+_maketree(node::Pair) = _maketree(node[1], node[2])
+
+function _maketree(node, children)
+    cs = maketree.(children)
+    if node isa NamedTuple
+        name = node.name
+        value = node.value
+    else
+        name = node
+        value = NoValue()
+    end
+    return FileTree(nothing, name, cs, value)
+end
+
+maketree(node) = set_parent(_maketree(node))
+maketree(node::Vector) = maketree("."=>node)

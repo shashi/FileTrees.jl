@@ -14,6 +14,12 @@ end
 
 FileTree(parent, name, children) = FileTree(parent, name, children, NoValue())
 
+function Base.isequal(f1::FileTree, f2::FileTree)
+    isequal(f1.name, f2.name) &&
+    isequal(f1.children, f2.children) &&
+    isequal(f1.value, f2.value)
+end
+
 # convenience method to replace a few parameters
 # and leave others unchanged
 function FileTree(t::FileTree; parent=t.parent, name=t.name, children=t.children, value=t.value)
@@ -83,8 +89,11 @@ function AbstractTrees.printnode(io::IO, f::Union{FileTree, File})
     end
 end
 
-
 File(parent, name::String) = File(parent, name, NoValue())
+
+function Base.isequal(f1::File, f2::File)
+    f1.name == f2.name && isequal(f1.value, f2.value)
+end
 
 children(d::File) = ()
 
@@ -121,7 +130,7 @@ function Base.getindex(tree::FileTree, i::Regex)
 end
 
 Base.filter(f, x::FileTree; walk=postwalk) =
-    walk(x->f(x) ? x : nothing, t; collect_children=cs->filter(!isnothing, cs))
+    walk(n->f(n) ? n : nothing, x; collect_children=cs->filter(!isnothing, cs))
 
 rename(x::File, newname) = File(x, name=newname)
 

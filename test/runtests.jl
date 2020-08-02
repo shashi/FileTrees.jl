@@ -42,12 +42,19 @@ end
 end
 
 @testset "flatten" begin
+    @test isequal(FileTrees.flatten(t),
+                  maketree(["a/b/a", "a/c/b", "a/c/a", "a/c/c"=>[]]))
+
+    @test isequal(FileTrees.flatten(t, joinpath=(x,y)->"$(x)_$y"),
+                  maketree(["a_b_a", "a_c_b", "a_c_a", "a_c_c"=>[]]))
 end
 
 @testset "merge" begin
+    @test_throws Any merge(t,t)
 end
 
 @testset "treediff" begin
+    @test isempty(FileTrees.treediff(t,t))
 end
 
 @testset "load" begin

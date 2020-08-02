@@ -178,7 +178,8 @@ function flatten(t::FileTree; joinpath=joinpath)
                     typeof(thing)(thing; name=newname, parent=x)
                 end
             end |> Iterators.flatten |> collect
-            return FileTree(x; children=vcat(cs, filter(x->!(x isa FileTree), children(x))))
+            leftover = filter(x-> isempty(x) || !(x isa FileTree), children(x))
+            return FileTree(x; children=vcat(cs, leftover))
         else
             return x
         end
@@ -228,7 +229,10 @@ function treediff(t1::FileTree, t2::FileTree)
                 if t2[idx] isa File
                     @assert x isa File
                 elseif x isa FileTree && t2[idx] isa FileTree
-                    push!(cs, treediff(x, t2[idx]))
+                    d = treediff(x, t2[idx])
+                    if !isempty(d)
+                        push!(cs, d)
+                    end
                 end
             else
                 push!(cs, x)

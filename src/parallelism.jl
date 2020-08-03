@@ -42,8 +42,6 @@ function compute(ctx, d::FileTree)
 
     vals = compute(delayed((xs...)->[xs...]; meta=true)(thunks...))
 
-    @show vals
-
     i = 0
     mapvalues(d) do x
         i += 1

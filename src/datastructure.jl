@@ -22,7 +22,11 @@ end
 
 # convenience method to replace a few parameters
 # and leave others unchanged
-function FileTree(t::FileTree; parent=t.parent, name=t.name, children=t.children, value=t.value)
+function FileTree(t::FileTree;
+                  parent=t.parent,
+                  name=t.name,
+                  children=t.children,
+                  value=t.value)
     FileTree(parent, name, children, value)
 end
 
@@ -203,7 +207,7 @@ function merge(t1::FileTree, t2::FileTree; combine=_merge_error)
             if !isnothing(idx)
                 y = t2[idx]
                 if t2[idx] isa FileTree
-                    push!(cs, merge(x, y))
+                    push!(cs, merge(x, y; combine=combine))
                 else
                     push!(cs, combine(x, y))
                 end
@@ -248,7 +252,7 @@ function Base.mv(t::FileTree, filt, dest)
     if filt isa String
         subtree = t[filt]
     else
-        subtree = filter(filt, t)
+        subtree = FileTree(filt, t)
     end
 
     destpath = splitpath(dest)

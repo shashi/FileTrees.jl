@@ -83,5 +83,5 @@ has a value associated with it.
 (see `load` and `mapvalues` for associating values with files.)
 """
 function save(f, t::Node; lazy=nothing)
-    mapvalued(t->typeof(t)(t; value=lazify(lazy, x->(mkpath(dirname(t)); f(x)))(t)), t)
+    mapvalued(t->isempty(t) ? NoValue() : typeof(t)(t; value=lazify(lazy, x->(mkpath(dirname(t)); f(x)))(t)), t)
 end

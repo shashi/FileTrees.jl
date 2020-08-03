@@ -1,0 +1,4 @@
+- functions for different levels
+- detatch - attach
+- clip
+- save reset=true (careful when lazy)

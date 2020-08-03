@@ -22,7 +22,7 @@ function FileTree(g::GlobMatch)
     end
 end
 
-function Base.filter(g::GlobMatch, t::FileTree)
+function FileTree(g::GlobMatch, t::FileTree)
     _glob_filter(t, g.pattern...)
 end
 

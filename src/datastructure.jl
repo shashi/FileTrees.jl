@@ -360,7 +360,8 @@ function Base.cp(t, from_path, to_path; combine=_merge_error)
         subt = clip(subt, i)
     end
     spath = splitpath(to_path)
-    t1 = foldl((x, acc) -> acc => [x], [t′; reverse(spath);]) |> maketree
+    t1 = foldl((x, acc) -> acc => [x],
+               [rename(subt, spath[end]); reverse(spath[1:end-1]);]) |> maketree
     merge(t, maketree(name(t)=>[t1]); combine=combine)
 end
 

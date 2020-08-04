@@ -297,14 +297,15 @@ function Base.detach(t, path::AbstractString)
 end
 
 
-function clip(t, n)
+function clip(t, n; combine=_merge_error)
     n==0 && return t
     if length(children(t)) == 1
         clip(first(children(t)), n-1)
     else
         xs = [clip(c, n-1) for c in children(t)]
-        cs = map(x->name(x) == "." ? children(x) : [x], xs) |> Iterators.flatten
-        FileTree(nothing, ".", collect(cs), NoValue())
+        reduce((x,y) -> merge(x,y;combine=combine),
+               map(x->name(x) == "." ? x : FileTree(nothing, ".", [x], NoValue()), xs);
+               init=FileTree(nothing, ".", [], NoValue()))
     end
 end
 

@@ -345,7 +345,11 @@ function Base.mv(t, from_path, to_path; combine=_merge_error)
         i = isnothing(i) ? length(from_path.pattern) : i
         subt = clip(subt, i)
     end
-    attach(t′, to_path, subt; combine=combine)
+
+    spath = splitpath(to_path)
+    t1 = foldl((x, acc) -> acc => [x],
+               [rename(subt, spath[end]); reverse(spath[1:end-1]);]) |> maketree
+    merge(t′, maketree(name(t)=>[t1]); combine=combine)
 end
 
 function Base.cp(t, from_path, to_path; combine=_merge_error)
@@ -355,8 +359,9 @@ function Base.cp(t, from_path, to_path; combine=_merge_error)
         i = isnothing(i) ? length(from_path.pattern) : i
         subt = clip(subt, i)
     end
-
-    attach(t, to_path, subt; combine=combine)
+    spath = splitpath(to_path)
+    t1 = foldl((x, acc) -> acc => [x], [t′; reverse(spath);]) |> maketree
+    merge(t, maketree(name(t)=>[t1]); combine=combine)
 end
 
 function Base.rm(t, path)

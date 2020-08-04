@@ -15,6 +15,9 @@ There are no restrictions on what files you can read and write, as long as you h
 - flatten
 - prewalk
 - postwalk
+- cp
+- mv
+- rm
 
 ### Loading, and saving data
 

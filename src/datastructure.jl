@@ -366,7 +366,7 @@ function Base.cp(t, from_path, to_path; combine=_merge_error)
 end
 
 function Base.rm(t, path)
-    _, t1 = detach(t, from_path)
+    _, t1 = detach(t, path)
     return t1
 end
 

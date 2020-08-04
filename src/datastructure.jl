@@ -87,6 +87,9 @@ Base.show(io::IO, f::File) = print(io, "File(" * path(f) * ")")
 
 function AbstractTrees.printnode(io::IO, f::Union{FileTree, File})
     print(io, name(f))
+    if f isa FileTree
+        print(io, "/")
+    end
     if hasvalue(f)
         T = typeof(value(f))
         print(io," (", repr(T), ")")
@@ -232,7 +235,6 @@ function Base.merge(t1::FileTree, t2::FileTree; combine=_merge_error)
 end
 
 Base.merge(x::Node, y::Node; combine=_merge_error) = name(x) == name(y) ? combine(x, y) : FileTree(nothing, ".", [x,y], NoValue())
-
 
 function treediff(t1::FileTree, t2::FileTree)
     if name(t1) == name(t2)

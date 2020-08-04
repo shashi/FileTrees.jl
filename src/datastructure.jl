@@ -121,9 +121,18 @@ function Base.getindex(tree::FileTree, ix::Vector)
 end
 
 function Base.getindex(tree::FileTree, i::String)
+    spath = splitpath(i)
+
+    if length(spath) > 1
+        for s in spath
+            tree = tree[s]
+        end
+        return tree
+    end
+
     idx = findfirst(x->name(x)==i, children(tree))
     if idx === nothing
-        error("No file matched getindex $repr")
+        error("No file matched getindex $i")
     end
     tree[idx]
 end
@@ -173,7 +182,7 @@ end
 
 postwalk(f, t::File; collect_children=identity) = f(t)
 
-function flatten(t::FileTree; joinpath=joinpath)
+function flatten(t::FileTree; joinpath=(x,y)->"$(x)_$y")
     postwalk(t) do x
         if x isa FileTree
             cs = map(filter(x->x isa FileTree, children(x))) do sd
@@ -248,20 +257,6 @@ function treediff(t1::FileTree, t2::FileTree)
     end
 end
 
-function Base.mv(t::FileTree, filt, dest)
-    if filt isa String
-        subtree = t[filt]
-    else
-        subtree = FileTree(filt, t)
-    end
-
-    destpath = splitpath(dest)
-    destsubtree = reduce((x, y) -> FileTree(nothing, y, [x], value(subtree)), destpath)
-
-    to = set_parent(destsubtree, t)
-    merge(treediff(t, subtree), to)
-end
-
 _maketree(node::String) = File(nothing, node, NoValue())
 _maketree(node::NamedTuple) = File(nothing, node.name, node.value)
 _maketree(node::Pair) = _maketree(node[1], node[2])
@@ -284,13 +279,37 @@ end
 maketree(node) = set_parent(_maketree(node))
 maketree(node::Vector) = maketree("."=>node)
 
-function attach(t, path, t′)
+function attach(t, path::AbstractString, t′)
     spath = splitpath(path)
     t1 = foldl((x, acc) -> acc => [x], [t′; reverse(spath);]) |> maketree
-    merge(t, t1)
+    merge(t, maketree(name(t)=>[t1]))
 end
 
-function detach(t, path)
+function detach(t, path::AbstractString)
     subtree = t[path]
-    subtree, treediff(t, subtree)
+    spath = splitpath(path)[1:end-1]
+    t1 = foldl((x, acc) -> acc => [x], [subtree; reverse(spath);]) |> maketree
+    subtree, treediff(t, t1)
+end
+
+
+function clip(t, n)
+    n==0 && return t
+    if length(children(t)) == 1
+        clip(first(children(t)), n-1)
+    else
+        xs = [clip(c, n-1) for c in children(t)]
+        cs = map(x->name(x) == "." ? children(x) : [x], xs) |> Iterators.flatten
+        FileTree(nothing, ".", collect(cs), NoValue())
+    end
+end
+
+function Base.mv(t, from_path, to_path)
+    subt, t′ = detach(t, from_path)
+    attach(t′, to_path, subt)
+end
+
+function Base.cp(t, from_path, to_path)
+    subt, _ = detach(t, from_path)
+    attach(t, to_path, subt)
 end

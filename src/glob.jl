@@ -5,7 +5,7 @@ import Glob: GlobMatch
 
 export @glob_str
 
-function FileTree(g::GlobMatch)
+function Base.getindex(x::FileTree, g::GlobMatch)
     name = "."
     x = if g.pattern[1] isa AbstractString
         name = g.pattern[1]

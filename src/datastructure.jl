@@ -197,7 +197,7 @@ _merge_error(x, y) = error("Files with same name $(name(x)) found at $(dirname(x
 
 Merge two FileTrees
 """
-function merge(t1::FileTree, t2::FileTree; combine=_merge_error)
+function Base.merge(t1::FileTree, t2::FileTree; combine=_merge_error)
     if name(t1) == name(t2)
         t2_names = name.(children(t2))
         t2_merged = zeros(Bool, length(t2_names))
@@ -265,10 +265,13 @@ end
 _maketree(node::String) = File(nothing, node, NoValue())
 _maketree(node::NamedTuple) = File(nothing, node.name, node.value)
 _maketree(node::Pair) = _maketree(node[1], node[2])
+_maketree(node::Node) = node
 
 function _maketree(node, children)
     cs = maketree.(children)
-    if node isa NamedTuple
+    if node isa Node
+        return typeof(node)(node; children=cs)
+    elseif node isa NamedTuple
         name = node.name
         value = node.value
     else
@@ -280,3 +283,14 @@ end
 
 maketree(node) = set_parent(_maketree(node))
 maketree(node::Vector) = maketree("."=>node)
+
+function attach(t, path, t′)
+    spath = splitpath(path)
+    t1 = foldl((x, acc) -> acc => [x], [t′; reverse(spath);]) |> maketree
+    merge(t, t1)
+end
+
+function detach(t, path)
+    subtree = t[path]
+    subtree, treediff(t, subtree)
+end

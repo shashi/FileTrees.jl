@@ -51,28 +51,6 @@ function FileTree(parent, dir)
     parent′
 end
 
-_maketree(node::String) = File(nothing, node, NoValue())
-_maketree(node::NamedTuple) = File(nothing, node.name, node.value)
-_maketree(node::Pair) = _maketree(node[1], node[2])
-_maketree(node::Node) = node
-
-function _maketree(node, children)
-    cs = maketree.(children)
-    if node isa Node
-        return typeof(node)(node; children=cs)
-    elseif node isa NamedTuple
-        name = node.name
-        value = node.value
-    else
-        name = node
-        value = NoValue()
-    end
-    return FileTree(nothing, name, cs, value)
-end
-
-maketree(node) = set_parent(_maketree(node))
-maketree(node::Vector) = maketree("."=>node)
-
 children(d::FileTree) = d.children
 
 parent(f::FileTree) = f.parent
@@ -176,6 +154,28 @@ rename(x::File, newname) = File(x, name=newname)
 
 const Node = Union{FileTree, File}
 
+_maketree(node::String) = File(nothing, node, NoValue())
+_maketree(node::NamedTuple) = File(nothing, node.name, node.value)
+_maketree(node::Pair) = _maketree(node[1], node[2])
+_maketree(node::Node) = node
+
+function _maketree(node, children)
+    cs = maketree.(children)
+    if node isa Node
+        return typeof(node)(node; children=cs)
+    elseif node isa NamedTuple
+        name = node.name
+        value = node.value
+    else
+        name = node
+        value = NoValue()
+    end
+    return FileTree(nothing, name, cs, value)
+end
+
+maketree(node) = set_parent(_maketree(node))
+maketree(node::Vector) = maketree("."=>node)
+
 Base.basename(d::Node) = d.name
 
 path(d::Node) = d.parent === nothing ? d.name : joinpath(path(d.parent), d.name)
@@ -231,8 +231,8 @@ _merge_error(x, y) = error("Files with same name $(name(x)) found at $(dirname(x
 
 Merge two FileTrees
 """
-function Base.merge(t1::FileTree, t2::FileTree; combine=_merge_error)
-    if name(t1) == name(t2)
+function Base.merge(t1::FileTree, t2::FileTree; combine=_merge_error, dotnorm=true)
+    bigt = if name(t1) == name(t2)
         t2_names = name.(children(t2))
         t2_merged = zeros(Bool, length(t2_names))
         cs = []
@@ -240,8 +240,8 @@ function Base.merge(t1::FileTree, t2::FileTree; combine=_merge_error)
             idx = findfirst(==(name(x)), t2_names)
             if !isnothing(idx)
                 y = t2[idx]
-                if t2[idx] isa FileTree
-                    push!(cs, merge(x, y; combine=combine))
+                if y isa FileTree
+                    push!(cs, merge(x, y; combine=combine, dotnorm=false))
                 else
                     push!(cs, combine(x, y))
                 end
@@ -250,13 +250,45 @@ function Base.merge(t1::FileTree, t2::FileTree; combine=_merge_error)
                 push!(cs, x)
             end
         end
-        FileTree(t1; children=vcat(cs, children(t2)[map(!, t2_merged)])) |> set_parent
+        FileTree(t1; children=vcat(cs, children(t2)[map(!, t2_merged)]))
     else
         FileTree(nothing, ".", [t1, t2], NoValue())
-    end
+    end |> set_parent
+    dotnorm ? normdots(bigt; combine=combine) : bigt
 end
 
-Base.merge(x::Node, y::Node; combine=_merge_error) = name(x) == name(y) ? combine(x, y) : FileTree(nothing, ".", [x,y], NoValue())
+
+function _combine(cs, combine)
+    if !issorted(cs, by=name)
+        sort!(cs, by=name)
+    end
+    i = 0
+    prev = nothing
+    out = []
+    for c in cs
+        if prev == name(c)
+            out[end] = combine(c, out[end])
+        else
+            push!(out, c)
+        end
+        prev = name(c)
+    end
+    map(identity, out)
+end
+
+function normdots(x::FileTree; combine=_merge_error)
+    c2 = map(children(x)) do y
+        z=normdots(y; combine=combine)
+        name(z) == "." ? children(z) : [z]
+    end |> Iterators.flatten |> collect
+    FileTree(x; children=_combine(c2, combine))
+end
+
+normdots(x::File; kw...) = x
+
+function Base.merge(x::Node, y::Node; combine=_merge_error)
+    name(x) == name(y) ? combine(x, y) : FileTree(nothing, ".", [x,y], NoValue())
+end
 
 function treediff(t1::FileTree, t2::FileTree)
     if name(t1) == name(t2)
@@ -299,23 +331,31 @@ end
 
 function clip(t, n; combine=_merge_error)
     n==0 && return t
-    if length(children(t)) == 1
-        clip(first(children(t)), n-1)
-    else
-        xs = [clip(c, n-1) for c in children(t)]
-        reduce((x,y) -> merge(x,y;combine=combine),
-               map(x->name(x) == "." ? x : FileTree(nothing, ".", [x], NoValue()), xs);
-               init=FileTree(nothing, ".", [], NoValue()))
+    cs = map(children(t)) do x
+        y = clip(x, n-1)
     end
+    reduce((x,y)->merge(x,y,combine=combine), cs) |> set_parent
 end
 
 function Base.mv(t, from_path, to_path; combine=_merge_error)
     subt, t′ = detach(t, from_path)
+
+    if from_path isa GlobMatch
+        i = findfirst(p -> !(p isa AbstractString), from_path.pattern)
+        i = isnothing(i) ? length(from_path.pattern) : i
+        subt = clip(subt, i)
+    end
     attach(t′, to_path, subt; combine=combine)
 end
 
 function Base.cp(t, from_path, to_path; combine=_merge_error)
     subt, _ = detach(t, from_path)
+    if from_path isa GlobMatch
+        i = findfirst(p -> !(p isa AbstractString), from_path.pattern)
+        i = isnothing(i) ? length(from_path.pattern) : i
+        subt = clip(subt, i)
+    end
+
     attach(t, to_path, subt; combine=combine)
 end
 
@@ -324,18 +364,21 @@ function Base.rm(t, path)
     return t1
 end
 
-function Base.mkpath(t, path::AbstractString)
+function _mknode(T, t, path::AbstractString)
     spath = splitpath(path)
-    subdir = FileTree(nothing, spath[end], [], NoValue())
+    subdir = if T == File
+        T(nothing, spath[end], NoValue())
+    else
+        T(nothing, spath[end], [], NoValue())
+    end
+
     if length(spath) == 1
-        merge(t, maketree([name(t) => [subdir]]))
+        merge(t, maketree(name(t) => [subdir]))
     else
         p = joinpath(spath[1:end-1]...)
         attach(t, p, subdir)
     end
 end
 
-function Base.touch(t, path::AbstractString)
-    spath = splitpath(path)
-    attach(t, joinpath(spath[1:end-1]...), File(nothing, spath[end], NoValue()))
-end
+Base.touch(t, path::AbstractString) = _mknode(File, t, path)
+Base.mkpath(t, path::AbstractString) = _mknode(FileTree, t, path)

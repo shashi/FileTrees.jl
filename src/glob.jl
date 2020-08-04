@@ -57,13 +57,7 @@ _glob_filter(t::File, p...) = nothing
 
 function Base.detach(t, path::GlobMatch)
     subtree = t[path]
-    i = findfirst(x -> !(x isa AbstractString), path.pattern)
-    node = if i == nothing
-        clip(subtree, length(path.pattern)-1)
-    else
-        clip(subtree, i-1)
-    end
     # the returned value has the full structure from the root of the tree
-    node, treediff(t, subtree)
+    subtree, treediff(t, subtree)
 end
 

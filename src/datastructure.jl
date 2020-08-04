@@ -231,6 +231,8 @@ function Base.merge(t1::FileTree, t2::FileTree; combine=_merge_error)
     end
 end
 
+Base.merge(x::Node, y::Node; combine=_merge_error) = name(x) == name(y) ? combine(x, y) : FileTree(nothing, ".", [x,y], NoValue())
+
 
 function treediff(t1::FileTree, t2::FileTree)
     if name(t1) == name(t2)
@@ -279,17 +281,17 @@ end
 maketree(node) = set_parent(_maketree(node))
 maketree(node::Vector) = maketree("."=>node)
 
-function attach(t, path::AbstractString, t′)
+function attach(t, path::AbstractString, t′; combine=_merge_error)
     spath = splitpath(path)
     t1 = foldl((x, acc) -> acc => [x], [t′; reverse(spath);]) |> maketree
-    merge(t, maketree(name(t)=>[t1]))
+    merge(t, maketree(name(t)=>[t1]); combine=combine)
 end
 
-function detach(t, path::AbstractString)
+function Base.detach(t, path::AbstractString)
     subtree = t[path]
     spath = splitpath(path)[1:end-1]
     t1 = foldl((x, acc) -> acc => [x], [subtree; reverse(spath);]) |> maketree
-    subtree, treediff(t, t1)
+    subtree, treediff(t, maketree(name(t)=>[t1]))
 end
 
 
@@ -304,12 +306,12 @@ function clip(t, n)
     end
 end
 
-function Base.mv(t, from_path, to_path)
+function Base.mv(t, from_path, to_path; combine=_merge_error)
     subt, t′ = detach(t, from_path)
-    attach(t′, to_path, subt)
+    attach(t′, to_path, subt; combine=combine)
 end
 
-function Base.cp(t, from_path, to_path)
+function Base.cp(t, from_path, to_path; combine=_merge_error)
     subt, _ = detach(t, from_path)
-    attach(t, to_path, subt)
+    attach(t, to_path, subt; combine=combine)
 end

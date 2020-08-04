@@ -57,7 +57,7 @@ end
 _glob_filter(t::File, p) = _occursin(p, name(t)) ? File(nothing, name(t)) : nothing
 _glob_filter(t::File, p...) = nothing
 
-function detach(t, path::GlobMatch)
+function Base.detach(t, path::GlobMatch)
     subtree = t[path]
     i = findfirst(x -> !(x isa AbstractString), path.pattern)
     node = if i == nothing

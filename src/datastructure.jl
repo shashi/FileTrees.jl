@@ -51,6 +51,28 @@ function FileTree(parent, dir)
     parent′
 end
 
+_maketree(node::String) = File(nothing, node, NoValue())
+_maketree(node::NamedTuple) = File(nothing, node.name, node.value)
+_maketree(node::Pair) = _maketree(node[1], node[2])
+_maketree(node::Node) = node
+
+function _maketree(node, children)
+    cs = maketree.(children)
+    if node isa Node
+        return typeof(node)(node; children=cs)
+    elseif node isa NamedTuple
+        name = node.name
+        value = node.value
+    else
+        name = node
+        value = NoValue()
+    end
+    return FileTree(nothing, name, cs, value)
+end
+
+maketree(node) = set_parent(_maketree(node))
+maketree(node::Vector) = maketree("."=>node)
+
 children(d::FileTree) = d.children
 
 parent(f::FileTree) = f.parent
@@ -261,28 +283,6 @@ function treediff(t1::FileTree, t2::FileTree)
     end
 end
 
-_maketree(node::String) = File(nothing, node, NoValue())
-_maketree(node::NamedTuple) = File(nothing, node.name, node.value)
-_maketree(node::Pair) = _maketree(node[1], node[2])
-_maketree(node::Node) = node
-
-function _maketree(node, children)
-    cs = maketree.(children)
-    if node isa Node
-        return typeof(node)(node; children=cs)
-    elseif node isa NamedTuple
-        name = node.name
-        value = node.value
-    else
-        name = node
-        value = NoValue()
-    end
-    return FileTree(nothing, name, cs, value)
-end
-
-maketree(node) = set_parent(_maketree(node))
-maketree(node::Vector) = maketree("."=>node)
-
 function attach(t, path::AbstractString, t′; combine=_merge_error)
     spath = splitpath(path)
     t1 = foldl((x, acc) -> acc => [x], [t′; reverse(spath);]) |> maketree
@@ -317,4 +317,25 @@ end
 function Base.cp(t, from_path, to_path; combine=_merge_error)
     subt, _ = detach(t, from_path)
     attach(t, to_path, subt; combine=combine)
+end
+
+function Base.rm(t, path)
+    _, t1 = detach(t, from_path)
+    return t1
+end
+
+function Base.mkpath(t, path::AbstractString)
+    spath = splitpath(path)
+    subdir = FileTree(nothing, spath[end], [], NoValue())
+    if length(spath) == 1
+        merge(t, maketree([name(t) => [subdir]]))
+    else
+        p = joinpath(spath[1:end-1]...)
+        attach(t, p, subdir)
+    end
+end
+
+function Base.touch(t, path::AbstractString)
+    spath = splitpath(path)
+    attach(t, joinpath(spath[1:end-1]...), File(nothing, spath[end], NoValue()))
 end

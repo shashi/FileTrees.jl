@@ -30,8 +30,6 @@ function Base.getindex(t::FileTree, g::GlobMatch)
     sub
 end
 
-struct Skip end
-
 _occursin(p::AbstractString, x) = p == x
 _occursin(p, x) = occursin(p, x)
 

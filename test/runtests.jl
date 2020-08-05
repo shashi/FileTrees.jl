@@ -62,6 +62,9 @@ end
 
 @testset "values" begin
     t1 = load(x->uppercase(path(x)), t)
+    if isdir("test_dir")
+        rm("test_dir", recursive=true)
+    end
 
     @test FileTrees.value(t1["a/b/a"]) == "./A/B/A"
 
@@ -84,6 +87,9 @@ end
     t4 = filter(!isempty, t1)
 
     @test isequal(t3, FileTrees.rename(t4, "test_dir"))
+    if isdir("test_dir")
+        rm("test_dir", recursive=true)
+    end
 end
 
 using FileTrees: Thunk
@@ -98,7 +104,6 @@ using Dates
 
     global t1 = load(x->uppercase(path(x)), t, lazy=true)
 
-    @show t1["a/b/a"]
     @test FileTrees.value(t1["a/b/a"]) isa Thunk
     @test FileTrees.value(exec(t1)["a/b/a"]) == "./A/B/A"
 
@@ -137,4 +142,8 @@ using Dates
 
     t5 = mapvalues(first, t3) |> exec
     @test isequal(t5, FileTrees.rename(t4, "test_dir_lazy"))
+
+    if isdir("test_dir_lazy")
+        rm("test_dir_lazy", recursive=true)
+    end
 end

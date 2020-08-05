@@ -86,7 +86,7 @@ end
     @test isequal(t3, FileTrees.rename(t4, "test_dir"))
 end
 
-using FileTrees: Lazy
+using FileTrees: Thunk
 using Dates
 
 @testset "lazy-exec" begin
@@ -98,7 +98,8 @@ using Dates
 
     global t1 = load(x->uppercase(path(x)), t, lazy=true)
 
-    @test FileTrees.value(t1["a/b/a"]) isa Lazy
+    @show t1["a/b/a"]
+    @test FileTrees.value(t1["a/b/a"]) isa Thunk
     @test FileTrees.value(exec(t1)["a/b/a"]) == "./A/B/A"
 
     @test exec(reducevalues(*, mapvalues(lowercase, t1))) == lowercase(exec(reducevalues(*, t1)))

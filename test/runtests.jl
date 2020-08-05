@@ -60,6 +60,16 @@ end
     @test isequal(FileTrees.treediff(t,maketree([])), t)
 end
 
+@testset "file operations" begin
+    t1 = maketree([])
+    for yr = 1:9
+        for mo = 1:6
+            t1 = touch(t1, joinpath(string("0", yr), string("0", mo), "data.csv"))
+        end
+    end
+    global t1
+end
+
 @testset "values" begin
     t1 = load(x->uppercase(path(x)), t)
     if isdir("test_dir")
@@ -78,7 +88,7 @@ end
     end
 
     t2 = FileTree("test_dir")
-    global  t3 = load(t2) do f
+    t3 = load(t2) do f
         open(path(f), "r") do io
             String(read(io))
         end
@@ -102,7 +112,7 @@ using Dates
     end
 
 
-    global t1 = load(x->uppercase(path(x)), t, lazy=true)
+    t1 = load(x->uppercase(path(x)), t, lazy=true)
 
     @test FileTrees.value(t1["a/b/a"]) isa Thunk
     @test FileTrees.value(exec(t1)["a/b/a"]) == "./A/B/A"
@@ -127,7 +137,7 @@ using Dates
 
 
     t2 = FileTree("test_dir_lazy")
-    global  t3 = load(t2; lazy=true) do f
+    t3 = load(t2; lazy=true) do f
         open(path(f), "r") do io
             (String(read(io)), now())
         end
@@ -147,3 +157,4 @@ using Dates
         rm("test_dir_lazy", recursive=true)
     end
 end
+

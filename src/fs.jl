@@ -14,7 +14,7 @@ function Base.mv(t, from_path::Regex, to_path::SubstitutionString; combine=_merg
     matches, unmatches = detach(t, from_path)
     isempty(matches) && return t
 
-    newtree = _rewrite_tree(tree, from_path, to_path, combine)
+    newtree = _rewrite_tree(matches, from_path, to_path, combine)
     merge(unmatches, newtree; combine=combine)
 end
 
@@ -22,7 +22,7 @@ function Base.cp(t, from_path::Regex, to_path::SubstitutionString; combine=_merg
     matches = t[from_path]
     isempty(matches) && return t
 
-    newtree = _rewrite_tree(tree, from_path, to_path, combine)
+    newtree = _rewrite_tree(matches, from_path, to_path, combine)
     merge(t, newtree; combine=combine)
 end
 

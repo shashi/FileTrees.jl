@@ -16,7 +16,7 @@ t = maketree(["a" => ["b" => ["a"],
 
     @test isequal(t[r"a|b"], t)
 
-    @test isempty(t[r"c"])
+    @test isempty(t[r"^c"])
 
     @test isequal(t["a"]["c"][["b", r"a|d"]],
                   maketree("c" => ["b","a"]))

@@ -34,6 +34,8 @@ function FileTree(t::FileTree;
     FileTree(parent, name, children, value)
 end
 
+(f::FileTree)(; kw...) = FileTree(f; kw...)
+
 FileTree(dir) = FileTree(nothing, dir)
 
 function FileTree(parent, dir)
@@ -102,6 +104,8 @@ end
 
 File(parent, name::String) = File(parent, name, NoValue())
 
+(f::File)(; kw...) = File(f; kw...)
+
 function Base.isequal(f1::File, f2::File)
     f1.name == f2.name && isequal(f1.value, f2.value)
 end
@@ -142,11 +146,6 @@ function Base.getindex(tree::FileTree, i::String)
         error("No file matched getindex $i")
     end
     tree[idx]
-end
-
-function Base.getindex(tree::FileTree, i::Regex)
-    filtered = filter(r->match(i, r.name) !== nothing, tree.children)
-    FileTree(tree.parent, tree.name, filtered)
 end
 
 Base.filter(f, x::FileTree; walk=postwalk) =
@@ -332,6 +331,10 @@ function Base.detach(t, path::AbstractString)
     subtree, treediff(t, maketree(name(t)=>[t1]))
 end
 
+function Base.detach(t, regex::Regex)
+    subtree = t[regex]
+    subtree, treediff(t, subtree)
+end
 
 function clip(t, n; combine=_merge_error)
     n==0 && return t

@@ -61,3 +61,24 @@ function Base.detach(t, path::GlobMatch)
     subtree, treediff(t, subtree)
 end
 
+
+#### Regexes
+
+function Base.getindex(t::FileTree, regex::Regex; toplevel=true)
+    if !toplevel && !isnothing(match(regex, path(t)))
+        return t
+    end
+
+    cs = map(children(t)) do x
+        if toplevel
+            x = set_parent(x, nothing)
+        end
+        getindex(x, regex, toplevel=false)
+    end
+
+    FileTree(t; children=filter(x->!isnothing(x) && !isempty(x), cs))
+end
+
+function Base.getindex(t::File, regex::Regex; toplevel=false)
+    !isnothing(match(regex, path(t))) ? t : nothing
+end

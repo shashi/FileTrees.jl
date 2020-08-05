@@ -26,13 +26,12 @@ end
 lazy(f; kw...) = (x...) -> Lazy(f, x; kw...)
 
 # If any input is Lazy, make the output Lazy
-_lazy_if_lazy(f, x...) = any(x->x isa Lazy, x) ? lazy(f)(x...) : f(x...)
-_lazy_if_lazy(f) = (x...) -> _lazy_if_lazy(f, x...)
+_lazy_if_lazy(f, x) = any(x->x isa Lazy, x) ? lazy(f)(x...) : f(x...)
+_lazy_if_lazy(f) = (x...) -> _lazy_if_lazy(f, x)
 
 function compute(ctx, d::FileTree)
-    println("here")
     thunks = []
-    mapvalues(d) do x
+    mapvalues(d; lazy=false) do x
         if x isa Dagger.Thunk
             push!(thunks, x)
         elseif x isa Lazy
@@ -43,7 +42,7 @@ function compute(ctx, d::FileTree)
     vals = compute(delayed((xs...)->[xs...]; meta=true)(thunks...))
 
     i = 0
-    mapvalues(d) do x
+    mapvalues(d; lazy=false) do x
         i += 1
         vals[i]
     end

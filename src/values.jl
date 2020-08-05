@@ -28,7 +28,7 @@ If `NoValue()` is returned by `f`, no value is attached to the node.
 function load(f, t::Node; dirs=false, walk=postwalk, lazy=false)
 
     loader = x -> begin
-        (!dirs && x isa FileTree) && x
+        (!dirs && x isa FileTree) && return x
         f′ = lazify(lazy, f)
         typeof(x)(x, value=f′(x))
     end
@@ -83,5 +83,17 @@ has a value associated with it.
 (see `load` and `mapvalues` for associating values with files.)
 """
 function save(f, t::Node; lazy=nothing)
-    mapvalued(t->isempty(t) ? NoValue() : typeof(t)(t; value=lazify(lazy, x->(mkpath(dirname(t)); f(x)))(t)), t)
+    t′ = mapvalued(t) do x
+        isempty(x) && return NoValue()
+
+        function saver(file, val)
+            mkpath(dirname(file))
+            # XXX: serialization pitfall!
+            f(typeof(file)(file; value=val))
+        end
+
+        typeof(x)(x; value=lazify(lazy, saver)(x, value(x)))
+    end
+    # placeholder task that waits and returns nothing
+    reducevalues((x,y)->nothing, t′)
 end

@@ -15,8 +15,12 @@ end
 FileTree(parent, name, children) = FileTree(parent, name, children, NoValue())
 
 function Base.isequal(f1::FileTree, f2::FileTree)
-    isequal(f1.name, f2.name) &&
-    isequal(f1.children, f2.children) &&
+    !isequal(f1.name, f2.name) && return false
+
+    c1 = issorted(f1.children, by=name) ? f1.children : sort(f1.children, by=name)
+    c2 = issorted(f2.children, by=name) ? f2.children : sort(f2.children, by=name)
+
+    !isequal(c1, c2) && return false
     isequal(f1.value, f2.value)
 end
 

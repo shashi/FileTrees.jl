@@ -124,7 +124,7 @@ Base.getindex(tree::FileTree, i::Int) = tree.children[i]
 
 function Base.getindex(tree::FileTree, ix::Vector)
     FileTree(tree;
-            children=vcat(map(i->(x=tree[i]; i isa Regex ? x.children :  x), ix)...))
+            children=vcat(map(i->x=tree[i], ix)...))
 end
 
 function Base.getindex(tree::FileTree, i::String)
@@ -142,11 +142,6 @@ function Base.getindex(tree::FileTree, i::String)
         error("No file matched getindex $i")
     end
     tree[idx]
-end
-
-function Base.getindex(tree::FileTree, i::Regex)
-    filtered = filter(r->match(i, r.name) !== nothing, tree.children)
-    FileTree(tree.parent, tree.name, filtered)
 end
 
 Base.filter(f, x::FileTree; walk=postwalk) =

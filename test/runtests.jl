@@ -60,14 +60,37 @@ end
     @test isequal(FileTrees.treediff(t,maketree([])), t)
 end
 
-@testset "file operations" begin
-    t1 = maketree([])
+import FileTrees: attach
+
+@testset "touch mv and cp" begin
+    global t1 = maketree([])
     for yr = 1:9
         for mo = 1:6
-            t1 = touch(t1, joinpath(string("0", yr), string("0", mo), "data.csv"))
+            t1 = attach(t1, joinpath(string("0", yr), string("0", mo)),
+                        File(nothing, "data.csv", (yr, mo)) )
         end
     end
-    global t1
+    data1 = reducevalues(vcat, t1) |> exec
+
+    t4 = mv(t1, r"^(.*)/(.*)/data.csv$", s"\1/\2.csv")
+
+    t5 = maketree([])
+    for yr = 1:9
+        for mo = 1:6
+            t5 = attach(t5, string("0", yr),
+                        File(nothing, string("0", mo) * ".csv", (yr, mo)))
+        end
+    end
+
+    @test isequal(t4, t5)
+
+    data2 = reducevalues(vcat, t4) |> exec
+
+    @test data1 == data2
+
+    t6 = cp(t1, r"^(.*)/(.*)/data.csv$", s"\1/\2.csv")
+
+    @test isequal(t6, merge(t1, t5))
 end
 
 @testset "values" begin

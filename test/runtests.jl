@@ -2,6 +2,8 @@ using Test
 using Harvest
 using Harvest: Thunk
 
+using Dates
+
 t = maketree(["a" => ["b" => ["a"],
                       "c" => ["b", "a", "c"=>[]]]])
 

@@ -259,6 +259,12 @@ function Base.merge(t1::FileTree, t2::FileTree; combine=_merge_error, dotnorm=tr
     dotnorm ? normdots(bigt; combine=combine) : bigt
 end
 
+function _apply_combine(f, x, y)
+    !hasvalue(x) && return value(y)
+    !hasvalue(y) && return value(x)
+
+    x(value=_lazy_if_lazy(f)(value(x), value(y)))
+end
 
 function _combine(cs, combine)
     if !issorted(cs, by=name)

@@ -260,9 +260,7 @@ function Base.merge(t1::FileTree, t2::FileTree; combine=_merge_error, dotnorm=tr
 end
 
 function apply_combine(f, x, y)
-    !hasvalue(x) && return x(value=value(y))
-    !hasvalue(y) && return x(value=value(x))
-
+    (!hasvalue(x) && !hasvalue(y)) && return y
     x(value=maybe_lazy(f)(value(x), value(y)))
 end
 

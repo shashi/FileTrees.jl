@@ -1,5 +1,4 @@
 using Glob
-using DataStructures
 
 import Glob: GlobMatch
 

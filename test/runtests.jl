@@ -1,5 +1,6 @@
 using Test
 using Harvest
+using Harvest: Thunk
 
 t = maketree(["a" => ["b" => ["a"],
                       "c" => ["b", "a", "c"=>[]]]])
@@ -124,9 +125,6 @@ end
         rm("test_dir", recursive=true)
     end
 end
-
-using Harvest: Thunk
-using Dates
 
 @testset "lazy-exec" begin
 

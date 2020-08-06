@@ -232,7 +232,7 @@ _merge_error(x, y) = error("Files with same name $(name(x)) found at $(dirname(x
 """
     merge(t1, t2)
 
-Merge two FileTrees
+Merge two Harvest
 """
 function Base.merge(t1::FileTree, t2::FileTree; combine=_merge_error, dotnorm=true)
     bigt = if name(t1) == name(t2)

@@ -1,6 +1,6 @@
-name = "FileTrees"
-uuid = "171f509a-1e60-42c5-9198-18f8e4f8ba85"
-authors = ["Shashi Gowda <gowda@mit.edu>"]
+name = "Harvest"
+uuid = "6f687420-736f-676e-616d-206573656874"
+authors = ["Shashi Gowda <gowda@mit.edu>", "Julian Samaroo <jpsamaroo@jpsamaroo.me>"]
 version = "0.1.0"
 
 [deps]

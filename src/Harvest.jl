@@ -1,4 +1,4 @@
-module FileTrees
+module Harvest
 
 export FileTree, File, path
 

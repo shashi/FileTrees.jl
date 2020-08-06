@@ -1,5 +1,7 @@
 # Harvest
 
+[![Build Status](https://travis-ci.org/shashi/Harvest.jl.svg?branch=master)](https://travis-ci.org/shashi/Harvest.jl) [![AppVeyor status](https://ci.appveyor.com/api/projects/status/ath7hlqi6aofi626/branch/master)](https://ci.appveyor.com/project/shashi/harvest-jl/branch/master) [![Coverage Status](https://coveralls.io/repos/github/shashi/Harvest.jl/badge.svg?branch=master)](https://coveralls.io/github/shashi/Harvest.jl?branch=master)
+
 Reap the fruits of your file trees.
 
 Harvest lets you walk, filter, load, restructure and save directory structures. Loading, processing and saving data can occur in parallel.

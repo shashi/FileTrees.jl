@@ -82,7 +82,7 @@ dir/
    └─ 2/
       └─ data.csv
 
-julia> cp(t, r"^([^/]*)/([^/]*)/data.csv$", s"\1/\2.csv")
+julia> cp(t, r"^([^/]*)/([^/]*)/data.csv\$", s"\1/\2.csv")
 dir/
 ├─ 1/
 │  ├─ 1/

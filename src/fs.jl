@@ -1,5 +1,5 @@
 function _rewrite_tree(tree, from_path, to_path, combine)
-    newtree = maketree([])
+    newtree = maketree(name(tree)=>[])
     for x in Leaves(tree)
         newname = replace(path(x), from_path => to_path)
         newtree = attach(newtree,
@@ -10,7 +10,44 @@ function _rewrite_tree(tree, from_path, to_path, combine)
     newtree
 end
 
-function Base.mv(t, from_path::Regex, to_path::SubstitutionString; combine=_merge_error)
+"""
+    mv(t::FileTree, from_path::Regex, to_path::SubstitutionString; combine)
+
+move nodes in the file tree whose path matches the `from_tree` regular expression pattern
+by renaming it to `to_path` pattern. Any sub-pattern in `from_path` which is surrounded by
+paranthesis will be read as a matched substring which can be accessed in the to_path
+substitution pattern using \\1, \\2 etc. positional matches.
+
+If a file overwrites an existing node after copy, `combine` will be called to combine
+them together. By default `combine` will error.
+
+## Example:
+
+```julia
+julia> t = maketree("dir" => [string(j) => [string(i)=>["data.csv"] for i = 1:2] for j=1:2])
+dir/
+├─ 1/
+│  ├─ 1/
+│  │  └─ data.csv
+│  └─ 2/
+│     └─ data.csv
+└─ 2/
+   ├─ 1/
+   │  └─ data.csv
+   └─ 2/
+      └─ data.csv
+
+julia> mv(t, r"^([^/]*)/([^/]*)/data.csv\$", s"\\1/\\2.csv")
+dir/
+├─ 1/
+│  ├─ 1.csv
+│  └─ 2.csv
+└─ 2/
+   ├─ 1.csv
+   └─ 2.csv
+```
+"""
+function Base.mv(t::FileTree, from_path::Regex, to_path::SubstitutionString; combine=_merge_error)
     matches, unmatches = detach(t, from_path)
     isempty(matches) && return t
 
@@ -18,7 +55,52 @@ function Base.mv(t, from_path::Regex, to_path::SubstitutionString; combine=_merg
     merge(unmatches, newtree; combine=combine)
 end
 
-function Base.cp(t, from_path::Regex, to_path::SubstitutionString; combine=_merge_error)
+"""
+    cp(t::FileTree, from_path::Regex, to_path::SubstitutionString; combine)
+
+copy nodes in the file tree whose path matches the `from_tree` regular expression pattern
+by renaming it to `to_path` pattern. Any sub-pattern in `from_path` which is surrounded by
+paranthesis will be read as a matched substring which can be accessed in the to_path
+substitution pattern using \\1, \\2 etc. positional matches.
+
+If a file overwrites an existing node after copy, `combine` will be called to combine
+them together. By default `combine` will error.
+
+## Example:
+
+```julia
+julia> t = maketree("dir" => [string(j) => [string(i)=>["data.csv"] for i = 1:2] for j=1:2])
+dir/
+├─ 1/
+│  ├─ 1/
+│  │  └─ data.csv
+│  └─ 2/
+│     └─ data.csv
+└─ 2/
+   ├─ 1/
+   │  └─ data.csv
+   └─ 2/
+      └─ data.csv
+
+julia> cp(t, r"^([^/]*)/([^/]*)/data.csv$", s"\1/\2.csv")
+dir/
+├─ 1/
+│  ├─ 1/
+│  │  └─ data.csv
+│  ├─ 1.csv
+│  ├─ 2/
+│  │  └─ data.csv
+│  └─ 2.csv
+└─ 2/
+   ├─ 1/
+   │  └─ data.csv
+   ├─ 1.csv
+   ├─ 2/
+   │  └─ data.csv
+   └─ 2.csv
+```
+"""
+function Base.cp(t::FileTree, from_path::Regex, to_path::SubstitutionString; combine=_merge_error)
     matches = t[from_path]
     isempty(matches) && return t
 
@@ -26,17 +108,23 @@ function Base.cp(t, from_path::Regex, to_path::SubstitutionString; combine=_merg
     merge(t, newtree; combine=combine)
 end
 
-function Base.rm(t, path)
+"""
+    rm(t::FileTree, pattern)
+
+remove nodes which match `pattern` from the file tree.
+`pattern` is the same as the pattern argument to `detach`.
+"""
+function Base.rm(t::FileTree, path)
     _, t1 = detach(t, path)
     return t1
 end
 
-function _mknode(T, t, path::AbstractString)
+function _mknode(T, t, path::AbstractString, value)
     spath = splitpath(path)
     subdir = if T == File
-        T(nothing, spath[end], NoValue())
+        T(nothing, spath[end], value)
     else
-        T(nothing, spath[end], [], NoValue())
+        T(nothing, spath[end], [], value)
     end
 
     if length(spath) == 1
@@ -47,5 +135,20 @@ function _mknode(T, t, path::AbstractString)
     end
 end
 
-Base.touch(t, path::AbstractString) = _mknode(File, t, path)
-Base.mkpath(t, path::AbstractString) = _mknode(FileTree, t, path)
+"""
+    touch(t::FileTree, path::AbstractString; value)
+
+Create an file node at `path` in the tree. Does not contain any value by default.
+"""
+function Base.touch(t::FileTree, path::AbstractString; value=NoValue())
+    _mknode(File, t, path, value)
+end
+
+"""
+    mkpath(t::FileTree, path::AbstractString; value)
+
+Create a directory node at `path` in the tree. Does not contain any value by default.
+"""
+function Base.mkpath(t::FileTree, path::AbstractString; value=NoValue())
+    _mknode(FileTree, t, path, value)
+end

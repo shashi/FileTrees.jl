@@ -1,4 +1,3 @@
-using DataStructures
 using AbstractTrees
 import AbstractTrees: children
 

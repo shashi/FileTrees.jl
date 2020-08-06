@@ -5,8 +5,8 @@ export lazy, exec
 lazy(f; kw...) = delayed(f; kw...)
 
 # If any input is lazy, make the output lazy
-_lazy_if_lazy(f, x) = any(x->x isa Union{Thunk, Chunk}, x) ? lazy(f)(x...) : f(x...)
-_lazy_if_lazy(f) = (x...) -> _lazy_if_lazy(f, x)
+maybe_lazy(f, x) = any(x->x isa Union{Thunk, Chunk}, x) ? lazy(f)(x...) : f(x...)
+maybe_lazy(f) = (x...) -> maybe_lazy(f, x)
 
 function compute(ctx, d::FileTree; kw...)
     thunks = []

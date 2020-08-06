@@ -54,8 +54,7 @@ end
 end
 
 @testset "merge" begin
-    @test_throws Any merge(t,t)
-    @test isequal(merge(t,t; combine=(x,y)->y), t)
+    @test isequal(merge(t,t), t)
 end
 
 @testset "treediff" begin

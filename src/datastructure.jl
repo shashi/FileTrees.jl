@@ -245,7 +245,7 @@ function Base.merge(t1::FileTree, t2::FileTree; combine=_merge_error, dotnorm=tr
                 if y isa FileTree
                     push!(cs, merge(x, y; combine=combine, dotnorm=false))
                 else
-                    push!(cs, combine(x, y))
+                    push!(cs, apply_combine(combine, x, y))
                 end
                 t2_merged[idx] = true
             else
@@ -259,12 +259,18 @@ function Base.merge(t1::FileTree, t2::FileTree; combine=_merge_error, dotnorm=tr
     dotnorm ? normdots(bigt; combine=combine) : bigt
 end
 
-function _apply_combine(f, x, y)
-    !hasvalue(x) && return value(y)
-    !hasvalue(y) && return value(x)
+function apply_combine(f, x, y)
+    !hasvalue(x) && return x(value=value(y))
+    !hasvalue(y) && return x(value=value(x))
 
-    x(value=_lazy_if_lazy(f)(value(x), value(y)))
+    x(value=maybe_lazy(f)(value(x), value(y)))
 end
+
+struct OnNodes
+    f
+end
+
+apply_combine(f::OnNodes, x, y) = f(x, y)
 
 function _combine(cs, combine)
     if !issorted(cs, by=name)
@@ -275,7 +281,7 @@ function _combine(cs, combine)
     out = []
     for c in cs
         if prev == name(c)
-            out[end] = combine(c, out[end])
+            out[end] = apply_combine(combine, c, out[end])
         else
             push!(out, c)
         end
@@ -295,7 +301,7 @@ end
 normdots(x::File; kw...) = x
 
 function Base.merge(x::Node, y::Node; combine=_merge_error)
-    name(x) == name(y) ? combine(x, y) : FileTree(nothing, ".", [x,y], NoValue())
+    name(x) == name(y) ? apply_combine(combine, x, y) : FileTree(nothing, ".", [x,y], NoValue())
 end
 
 function treediff(t1::FileTree, t2::FileTree)

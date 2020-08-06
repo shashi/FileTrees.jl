@@ -1,6 +1,6 @@
 export load, mapvalues, reducevalues, save, NoValue, hasvalue
 
-lazify(flag::Nothing, f) = _lazy_if_lazy(f)
+lazify(flag::Nothing, f) = maybe_lazy(f)
 lazify(flag::Bool, f) = flag ? lazy(f) : f
 
 """

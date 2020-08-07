@@ -4,16 +4,16 @@ import AbstractTrees: children
 export name, path, maketree
 struct NoValue end
 
-struct FileTree
-    parent::Union{FileTree, Nothing}
+struct Dir
+    parent::Union{Dir, Nothing}
     name::String
     children::Vector
     value::Any
 end
 
-FileTree(parent, name, children) = FileTree(parent, name, children, NoValue())
+Dir(parent, name, children) = Dir(parent, name, children, NoValue())
 
-function Base.isequal(f1::FileTree, f2::FileTree)
+function Base.isequal(f1::Dir, f2::Dir)
     !isequal(f1.name, f2.name) && return false
 
     c1 = issorted(f1.children, by=name) ? f1.children : sort(f1.children, by=name)
@@ -25,27 +25,27 @@ end
 
 # convenience method to replace a few parameters
 # and leave others unchanged
-function FileTree(t::FileTree;
+function Dir(t::Dir;
                   parent=t.parent,
                   name=t.name,
                   children=t.children,
                   value=t.value)
-    FileTree(parent, name, children, value)
+    Dir(parent, name, children, value)
 end
 
-(f::FileTree)(; kw...) = FileTree(f; kw...)
+(f::Dir)(; kw...) = Dir(f; kw...)
 
-FileTree(dir) = FileTree(nothing, dir)
+Dir(dir) = Dir(nothing, dir)
 
-function FileTree(parent, dir)
+function Dir(parent, dir)
     children = []
-    parent′ = FileTree(parent, dir, children)
+    parent′ = Dir(parent, dir, children)
 
     ls = readdir(dir)
     cd(dir) do
         children′ = map(ls) do f
             if isdir(f)
-                FileTree(parent′, f)
+                Dir(parent′, f)
             else
                 File(parent′, f)
             end
@@ -56,28 +56,28 @@ function FileTree(parent, dir)
     parent′
 end
 
-children(d::FileTree) = d.children
+children(d::Dir) = d.children
 
-parent(f::FileTree) = f.parent
+parent(f::Dir) = f.parent
 
-name(f::FileTree) = f.name
+name(f::Dir) = f.name
 
-Base.isempty(d::FileTree) = isempty(d.children)
+Base.isempty(d::Dir) = isempty(d.children)
 
-function rename(x::FileTree, newname)
-    set_parent(FileTree(x, name=newname))
+function rename(x::Dir, newname)
+    set_parent(Dir(x, name=newname))
 end
 
-function set_parent(x::FileTree, parent=x.parent)
-    p = FileTree(x, parent=parent, children=copy(x.children))
+function set_parent(x::Dir, parent=x.parent)
+    p = Dir(x, parent=parent, children=copy(x.children))
     copy!(p.children, set_parent.(x.children, (p,)))
     p
 end
 
-Base.show(io::IO, d::FileTree) = AbstractTrees.print_tree(io, d)
+Base.show(io::IO, d::Dir) = AbstractTrees.print_tree(io, d)
 
 struct File
-    parent::Union{Nothing, FileTree}
+    parent::Union{Nothing, Dir}
     name::String
     value::Any
 end
@@ -90,9 +90,9 @@ end
 
 Base.show(io::IO, f::File) = print(io, "File(" * path(f) * ")")
 
-function AbstractTrees.printnode(io::IO, f::Union{FileTree, File})
+function AbstractTrees.printnode(io::IO, f::Union{Dir, File})
     print(io, name(f))
-    if f isa FileTree
+    if f isa Dir
         print(io, "/")
     end
     if hasvalue(f)
@@ -119,18 +119,18 @@ Base.isempty(d::File) = false
 
 set_parent(x::File, parent=x.parent) = File(x, parent=parent)
 
-files(tree::FileTree) = FileTree(tree; children=filter(x->x isa File, tree.children))
+files(tree::Dir) = Dir(tree; children=filter(x->x isa File, tree.children))
 
-subdirs(tree::FileTree) = FileTree(tree; children=filter(x->x isa FileTree, tree.children))
+subdirs(tree::Dir) = Dir(tree; children=filter(x->x isa Dir, tree.children))
 
-Base.getindex(tree::FileTree, i::Int) = tree.children[i]
+Base.getindex(tree::Dir, i::Int) = tree.children[i]
 
-function Base.getindex(tree::FileTree, ix::Vector)
-    FileTree(tree;
+function Base.getindex(tree::Dir, ix::Vector)
+    Dir(tree;
             children=vcat(map(i->(x=tree[i]; i isa Regex ? x.children :  x), ix)...))
 end
 
-function Base.getindex(tree::FileTree, i::String)
+function Base.getindex(tree::Dir, i::String)
     spath = splitpath(i)
 
     if length(spath) > 1
@@ -147,14 +147,14 @@ function Base.getindex(tree::FileTree, i::String)
     tree[idx]
 end
 
-Base.filter(f, x::FileTree; walk=postwalk) =
+Base.filter(f, x::Dir; walk=postwalk) =
     walk(n->f(n) ? n : nothing, x; collect_children=cs->filter(!isnothing, cs))
 
 rename(x::File, newname) = File(x, name=newname)
 
 ### Stuff agnostic to Dir or File nature of "Node"s
 
-const Node = Union{FileTree, File}
+const Node = Union{Dir, File}
 
 _maketree(node::String) = File(nothing, node, NoValue())
 _maketree(node::NamedTuple) = File(nothing, node.name, node.value)
@@ -172,7 +172,7 @@ function _maketree(node, children)
         name = node
         value = NoValue()
     end
-    return FileTree(nothing, name, cs, value)
+    return Dir(nothing, name, cs, value)
 end
 
 maketree(node) = set_parent(_maketree(node))
@@ -190,11 +190,11 @@ hasvalue(x::Node) = !(value(x) isa NoValue)
 
 ## Tree walking
 
-function prewalk(f, t::FileTree; collect_children=identity)
+function prewalk(f, t::Dir; collect_children=identity)
     x = f(t)
-    if x isa FileTree
+    if x isa Dir
         cs = map(c->prewalk(f, c; collect_children=collect_children), t.children)
-        FileTree(x; children=collect_children(cs))
+        Dir(x; children=collect_children(cs))
     else
         return x
     end
@@ -202,24 +202,24 @@ end
 
 prewalk(f, t::File; collect_children=identity) = f(t)
 
-function postwalk(f, t::FileTree; collect_children=identity)
+function postwalk(f, t::Dir; collect_children=identity)
     cs = map(c->postwalk(f, c; collect_children=collect_children), t.children)
-    f(FileTree(t; children=collect_children(cs)))
+    f(Dir(t; children=collect_children(cs)))
 end
 
 postwalk(f, t::File; collect_children=identity) = f(t)
 
-function flatten(t::FileTree; joinpath=(x,y)->"$(x)_$y")
+function flatten(t::Dir; joinpath=(x,y)->"$(x)_$y")
     postwalk(t) do x
-        if x isa FileTree
-            cs = map(filter(x->x isa FileTree, children(x))) do sd
+        if x isa Dir
+            cs = map(filter(x->x isa Dir, children(x))) do sd
                 map(children(sd)) do thing
                     newname = joinpath(name(sd), name(thing))
                     typeof(thing)(thing; name=newname, parent=x)
                 end
             end |> Iterators.flatten |> collect
-            leftover = filter(x-> isempty(x) || !(x isa FileTree), children(x))
-            return FileTree(x; children=vcat(cs, leftover))
+            leftover = filter(x-> isempty(x) || !(x isa Dir), children(x))
+            return Dir(x; children=vcat(cs, leftover))
         else
             return x
         end
@@ -233,7 +233,7 @@ _merge_error(x, y) = error("Files with same name $(name(x)) found at $(dirname(x
 
 Merge two DirTools
 """
-function Base.merge(t1::FileTree, t2::FileTree; combine=_merge_error, dotnorm=true)
+function Base.merge(t1::Dir, t2::Dir; combine=_merge_error, dotnorm=true)
     bigt = if name(t1) == name(t2)
         t2_names = name.(children(t2))
         t2_merged = zeros(Bool, length(t2_names))
@@ -242,7 +242,7 @@ function Base.merge(t1::FileTree, t2::FileTree; combine=_merge_error, dotnorm=tr
             idx = findfirst(==(name(x)), t2_names)
             if !isnothing(idx)
                 y = t2[idx]
-                if y isa FileTree
+                if y isa Dir
                     push!(cs, merge(x, y; combine=combine, dotnorm=false))
                 else
                     push!(cs, apply_combine(combine, x, y))
@@ -252,9 +252,9 @@ function Base.merge(t1::FileTree, t2::FileTree; combine=_merge_error, dotnorm=tr
                 push!(cs, x)
             end
         end
-        FileTree(t1; children=vcat(cs, children(t2)[map(!, t2_merged)]))
+        Dir(t1; children=vcat(cs, children(t2)[map(!, t2_merged)]))
     else
-        FileTree(nothing, ".", [t1, t2], NoValue())
+        Dir(nothing, ".", [t1, t2], NoValue())
     end |> set_parent
     dotnorm ? normdots(bigt; combine=combine) : bigt
 end
@@ -288,21 +288,21 @@ function _combine(cs, combine)
     map(identity, out)
 end
 
-function normdots(x::FileTree; combine=_merge_error)
+function normdots(x::Dir; combine=_merge_error)
     c2 = map(children(x)) do y
         z=normdots(y; combine=combine)
         name(z) == "." ? children(z) : [z]
     end |> Iterators.flatten |> collect
-    FileTree(x; children=_combine(c2, combine))
+    Dir(x; children=_combine(c2, combine))
 end
 
 normdots(x::File; kw...) = x
 
 function Base.merge(x::Node, y::Node; combine=_merge_error)
-    name(x) == name(y) ? apply_combine(combine, x, y) : FileTree(nothing, ".", [x,y], NoValue())
+    name(x) == name(y) ? apply_combine(combine, x, y) : Dir(nothing, ".", [x,y], NoValue())
 end
 
-function treediff(t1::FileTree, t2::FileTree)
+function treediff(t1::Dir, t2::Dir)
     if name(t1) == name(t2)
         t2_names = name.(children(t2))
         cs = []
@@ -311,7 +311,7 @@ function treediff(t1::FileTree, t2::FileTree)
             if !isnothing(idx)
                 if t2[idx] isa File
                     @assert x isa File
-                elseif x isa FileTree && t2[idx] isa FileTree
+                elseif x isa Dir && t2[idx] isa Dir
                     d = treediff(x, t2[idx])
                     if !isempty(d)
                         push!(cs, d)
@@ -321,7 +321,7 @@ function treediff(t1::FileTree, t2::FileTree)
                 push!(cs, x)
             end
         end
-        FileTree(t1; children=cs) |> set_parent
+        Dir(t1; children=cs) |> set_parent
     else
         t1
     end

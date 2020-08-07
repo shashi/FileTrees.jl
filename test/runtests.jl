@@ -10,7 +10,7 @@ t = maketree(["a" => ["b" => ["a"],
 @testset "indexing" begin
     @test name(t) == "."
     @test t["a"]["b"]["a"] isa File
-    @test t["a"]["c"]["c"] isa FileTree
+    @test t["a"]["c"]["c"] isa Dir
 
     @test path(t["a"]["b"]["a"])  == "./a/b/a"
 
@@ -40,7 +40,7 @@ end
 end
 
 @testset "filter" begin
-    @test isequal(filter(f->f isa FileTree || name(f) == "c", t),
+    @test isequal(filter(f->f isa Dir || name(f) == "c", t),
                   maketree(["a"=>["b"=>[],
                                   "c"=>["c"=>[]]]]))
 end
@@ -112,7 +112,7 @@ end
         end
     end
 
-    t2 = FileTree("test_dir")
+    t2 = Dir("test_dir")
     t3 = load(t2) do f
         open(path(f), "r") do io
             String(read(io))
@@ -158,7 +158,7 @@ end
     @test isfile("test_dir_lazy/a/b/a")
 
 
-    t2 = FileTree("test_dir_lazy")
+    t2 = Dir("test_dir_lazy")
     t3 = load(t2; lazy=true) do f
         open(path(f), "r") do io
             (String(read(io)), now())

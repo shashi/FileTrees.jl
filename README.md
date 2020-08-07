@@ -12,7 +12,7 @@ Lazy directory operations let you freely restructure file trees so as to be conv
 
 ### Tree manipulation
 
-- FileTree
+- Dir
 - filter
 - merge
 - treediff

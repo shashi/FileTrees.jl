@@ -12,15 +12,15 @@ function mapvalued(f, t::Node; walk=postwalk)
 end
 
 """
-    load(f, t::FileTree; dirs=false)
+    load(f, t::Dir; dirs=false)
 
 Walk the tree and optionally load data for nodes in it.
 
 `f(file)` is the loader function which takes `File` as input.
 Call `path(file)` to get the String path to read the  file.
 
-If `dirs = true` then `f` can either get a `File` or `FileTree`.
-nodes within `FileTree` will have already been loaded.
+If `dirs = true` then `f` can either get a `File` or `Dir`.
+nodes within `Dir` will have already been loaded.
 
 If `NoValue()` is returned by `f`, no value is attached to the node.
 `hasvalue(x)` tells you if `x` already has a value or not.
@@ -28,7 +28,7 @@ If `NoValue()` is returned by `f`, no value is attached to the node.
 function load(f, t::Node; dirs=false, walk=postwalk, lazy=false)
 
     loader = x -> begin
-        (!dirs && x isa FileTree) && return x
+        (!dirs && x isa Dir) && return x
         f′ = lazify(lazy, f)
         typeof(x)(x, value=f′(x))
     end
@@ -37,7 +37,7 @@ function load(f, t::Node; dirs=false, walk=postwalk, lazy=false)
 end
 
 """
-    mapvalues(f, x::FileTree)
+    mapvalues(f, x::Dir)
 
 (See `load` to load values into nodes of a tree.)
 
@@ -51,13 +51,13 @@ function mapvalues(f, t::Node; lazy=nothing)
 end
 
 """
-    reducevalues(f, t::FileTree; associative=true)
+    reducevalues(f, t::Dir; associative=true)
 
 Use `f` to combine values in the tree.
 
 - `associative=true` assumes `f` can be applied in an associative way
 """
-function reducevalues(f, t::FileTree; associative=true, lazy=nothing)
+function reducevalues(f, t::Dir; associative=true, lazy=nothing)
     f′ = lazify(lazy, f)
     itr = value.(collect(Iterators.filter(hasvalue, Leaves(t))))
     associative ? assocreduce(f′, itr) : reduce(f′, itr)
@@ -76,7 +76,7 @@ end
 """
     save(f, x::Node)
 
-Save a FileTree to disk. Creates the directory structure
+Save a Dir to disk. Creates the directory structure
 and calls `f` with `File` for every file in the tree which
 has a value associated with it.
 

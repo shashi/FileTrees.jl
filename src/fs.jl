@@ -11,7 +11,7 @@ function _rewrite_tree(tree, from_path, to_path, combine)
 end
 
 """
-    mv(t::FileTree, from_path::Regex, to_path::SubstitutionString; combine)
+    mv(t::Dir, from_path::Regex, to_path::SubstitutionString; combine)
 
 move nodes in the file tree whose path matches the `from_tree` regular expression pattern
 by renaming it to `to_path` pattern. Any sub-pattern in `from_path` which is surrounded by
@@ -47,7 +47,7 @@ dir/
    └─ 2.csv
 ```
 """
-function Base.mv(t::FileTree, from_path::Regex, to_path::SubstitutionString; combine=_merge_error)
+function Base.mv(t::Dir, from_path::Regex, to_path::SubstitutionString; combine=_merge_error)
     matches, unmatches = detach(t, from_path)
     isempty(matches) && return t
 
@@ -56,7 +56,7 @@ function Base.mv(t::FileTree, from_path::Regex, to_path::SubstitutionString; com
 end
 
 """
-    cp(t::FileTree, from_path::Regex, to_path::SubstitutionString; combine)
+    cp(t::Dir, from_path::Regex, to_path::SubstitutionString; combine)
 
 copy nodes in the file tree whose path matches the `from_tree` regular expression pattern
 by renaming it to `to_path` pattern. Any sub-pattern in `from_path` which is surrounded by
@@ -100,7 +100,7 @@ dir/
    └─ 2.csv
 ```
 """
-function Base.cp(t::FileTree, from_path::Regex, to_path::SubstitutionString; combine=_merge_error)
+function Base.cp(t::Dir, from_path::Regex, to_path::SubstitutionString; combine=_merge_error)
     matches = t[from_path]
     isempty(matches) && return t
 
@@ -109,12 +109,12 @@ function Base.cp(t::FileTree, from_path::Regex, to_path::SubstitutionString; com
 end
 
 """
-    rm(t::FileTree, pattern)
+    rm(t::Dir, pattern)
 
 remove nodes which match `pattern` from the file tree.
 `pattern` is the same as the pattern argument to `detach`.
 """
-function Base.rm(t::FileTree, path)
+function Base.rm(t::Dir, path)
     _, t1 = detach(t, path)
     return t1
 end
@@ -136,19 +136,19 @@ function _mknode(T, t, path::AbstractString, value)
 end
 
 """
-    touch(t::FileTree, path::AbstractString; value)
+    touch(t::Dir, path::AbstractString; value)
 
 Create an file node at `path` in the tree. Does not contain any value by default.
 """
-function Base.touch(t::FileTree, path::AbstractString; value=NoValue())
+function Base.touch(t::Dir, path::AbstractString; value=NoValue())
     _mknode(File, t, path, value)
 end
 
 """
-    mkpath(t::FileTree, path::AbstractString; value)
+    mkpath(t::Dir, path::AbstractString; value)
 
 Create a directory node at `path` in the tree. Does not contain any value by default.
 """
-function Base.mkpath(t::FileTree, path::AbstractString; value=NoValue())
-    _mknode(FileTree, t, path, value)
+function Base.mkpath(t::Dir, path::AbstractString; value=NoValue())
+    _mknode(Dir, t, path, value)
 end

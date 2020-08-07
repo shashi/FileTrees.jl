@@ -1,6 +1,6 @@
 module DirTools
 
-export FileTree, File, path
+export Dir, File, path
 
 include("datastructure.jl")
 include("fs.jl")

@@ -4,24 +4,24 @@ import Glob: GlobMatch
 
 export @glob_str
 
-function FileTree(g::GlobMatch)
+function Dir(g::GlobMatch)
     name = "."
     x = if g.pattern[1] isa AbstractString
         name = g.pattern[1]
-        _glob_filter(FileTree(g.pattern[1]), g.pattern...)
+        _glob_filter(Dir(g.pattern[1]), g.pattern...)
     else
-        _glob_filter(FileTree("."), ".", g.pattern...)
+        _glob_filter(Dir("."), ".", g.pattern...)
     end
 
     if isnothing(x)
         # empty with only the dirname
-        FileTree(nothing, name, [], NoValue())
+        Dir(nothing, name, [], NoValue())
     else
         set_parent(x)
     end
 end
 
-function Base.getindex(t::FileTree, g::GlobMatch)
+function Base.getindex(t::Dir, g::GlobMatch)
     sub = _glob_filter(t, name(t), g.pattern...)
     if sub === nothing
         error("$g did not match in tree")
@@ -32,10 +32,10 @@ end
 _occursin(p::AbstractString, x) = p == x
 _occursin(p, x) = occursin(p, x)
 
-_glob_filter(t::FileTree) = t
+_glob_filter(t::Dir) = t
 _glob_filter(t::File) = t
 
-function _glob_filter(t::FileTree, p, ps...)
+function _glob_filter(t::Dir, p, ps...)
     if _occursin(p, name(t))
         if isempty(children(t)) && (isempty(ps) || (ps[1] isa AbstractString && isempty(ps[1])))
             return t
@@ -44,7 +44,7 @@ function _glob_filter(t::FileTree, p, ps...)
         if isempty(cs)
             return nothing
         else
-            return FileTree(t, children=cs)
+            return Dir(t, children=cs)
         end
     else
         return nothing
@@ -63,7 +63,7 @@ end
 
 #### Regexes
 
-function Base.getindex(t::FileTree, regex::Regex; toplevel=true)
+function Base.getindex(t::Dir, regex::Regex; toplevel=true)
     if !toplevel && !isnothing(match(regex, path(t)))
         return t
     end
@@ -75,7 +75,7 @@ function Base.getindex(t::FileTree, regex::Regex; toplevel=true)
         getindex(x, regex, toplevel=false)
     end
 
-    FileTree(t; children=filter(x->!isnothing(x) && !isempty(x), cs))
+    Dir(t; children=filter(x->!isnothing(x) && !isempty(x), cs))
 end
 
 function Base.getindex(t::File, regex::Regex; toplevel=false)

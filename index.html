@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   
-  
+   <link rel="stylesheet" href="/DirTools.jl/libs/highlight/github.min.css">
+   
   <link rel="stylesheet" href="/DirTools.jl/css/franklin.css">
 <link rel="stylesheet" href="/DirTools.jl/css/poole_hyde.css">
 <link rel="stylesheet" href="/DirTools.jl/css/custom.css">
@@ -44,10 +45,28 @@
 <div class="content container">
 
 <!-- Content appended here -->
-<div class="franklin-content"><h1 id="dirtoolsjl_documentation"><a href="#dirtoolsjl_documentation">DirTools<em>.jl</em> documentation</a></h1>
-<p><strong>DirTools contains tools to lazy-load, process and write file trees.</strong> <br/> Built-in parallelism allows you to max out compute on any machine.</p>
+<div class="franklin-content"><h1 id="what_is_dirtools"><a href="#what_is_dirtools">What is DirTools?</a></h1>
+
+<p style="font-size: 1.15em; color: #666; line-height:1.5em">
+DirTools is a set of tools to lazy-load, process and write file trees. Built-in parallelism allows you to max out compute on any machine.
+</p>
+
 <p>There are no restrictions on what files you can read and write. If you have functions to work with one file, you can use the same to work with a file tree.</p>
-<p>Lazy tree operations let you freely restructure file trees so as to be convenient to set up computations. Files in a file tree can have any value attached to them &#40;not necessarily those loaded from the file itself&#41;, values in these nodes can be combined by merging trees or subtrees.<div class="page-foot">
+<p>Lazy tree operations let you freely restructure file trees so as to be convenient to set up computations. Files in a file tree can have any value attached to them &#40;not necessarily those loaded from the file itself&#41;, values in these nodes can be combined by merging trees or subtrees.</p>
+<h2 id="introduction"><a href="#introduction">Introduction</a></h2>
+<p>The basic datastructure in DirTools is the <code>Dir</code> tree. The nodes of this tree can be themselves <code>Dir</code> or <code>File</code> objects. Each node contains a <code>name</code> field which shows its name.</p>
+<pre><code class="julia hljs"><span class="hljs-keyword">using</span> DirTools
+
+Dir(<span class="hljs-string">&quot;test_data&quot;</span>)</code></pre><pre><code class="plaintext hljs">ArgumentError: Package DirTools not found in current path:
+- Run `import Pkg; Pkg.add(&quot;DirTools&quot;)` to install the DirTools package.
+
+</code></pre>
+<div class="code-output"><pre><code class="plaintext hljs">ArgumentError: Package DirTools not found in current path:
+- Run `import Pkg; Pkg.add(&quot;DirTools&quot;)` to install the DirTools package.
+
+</code></pre></div>
+<p>A Dir tree, does not necessarily have to do with a directory on disk, it can be created on the fly, and may or may not be saved to disk.</p>
+<div class="page-foot">
   <div class="copyright">
     &copy; THE AUTHOR. Last modified: August 07, 2020. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a>.
   </div>
@@ -55,6 +74,10 @@
 </div><!-- CONTENT ENDS HERE -->
     </div>  <!-- div: content container -->
     
+    
+        
+
+
     
   </body>
 </html>

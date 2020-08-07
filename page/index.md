@@ -1,36 +1,8 @@
-# DirTools.jl
+# DirTools_.jl_ documentation
 
-[![Build Status](https://travis-ci.org/shashi/DirTools.jl.svg?branch=master)](https://travis-ci.org/shashi/DirTools.jl) [![AppVeyor status](https://ci.appveyor.com/api/projects/status/ath7hlqi6aofi626/branch/master)](https://ci.appveyor.com/project/shashi/harvest-jl/branch/master) [![Coverage Status](https://coveralls.io/repos/github/shashi/DirTools.jl/badge.svg?branch=master)](https://coveralls.io/github/shashi/DirTools.jl?branch=master)
+**DirTools contains tools to lazy-load, process and write file trees.** \\ Built-in parallelism allows you to max out compute on any machine.
 
-DirTools lets you create, lazy-load, process and write file trees. Built-in parallelism allows you to max out compute on any machine.
+There are no restrictions on what files you can read and write. If you have functions to work with one file, you can use the same to work with a file tree.
 
-There are no restrictions on what files you can read and write, as long as you have functions to work with one file, you can use the same to work with a directory of files.
+Lazy tree operations let you freely restructure file trees so as to be convenient to set up computations. Files in a file tree can have any value attached to them (not necessarily those loaded from the file itself), values in these nodes can be combined by merging trees or subtrees.
 
-Lazy directory operations let you freely restructure file trees so as to be convenient to set up computations. Tree manipulation functions help with this. Files in a Dir tree can have any value attached to them, values can be combined by merging trees or subtrees, and written to disk.
-
-## API
-
-### Tree manipulation
-
-- Dir
-- filter
-- merge
-- treediff
-- flatten
-- cp
-- mv
-- rm
-- touch
-- mkpath
-
-### Loading, and saving data
-
-- load
-- mapvalues
-- reducevalues
-- save
-
-### Laziness and Parallelism
-
-- lazy
-- exec

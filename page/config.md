@@ -23,7 +23,7 @@ The latter allows you to plug in values that you would have defined here.
 @def description = """
                    Parallelly process file trees
                    """
-@def authors     = "Shashi Gowda, Julian Samaroo"
+@def authors     = "<br> Shashi Gowda <br> Julian Samaroo"
 
 <!--  NAVBAR SPECS
   NOTE:

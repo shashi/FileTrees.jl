@@ -1,3 +1,16 @@
+@import url('https://fonts.googleapis.com/css2?family=Recursive:wght@350&display=swap');
+
+html, body {
+    font-family: 'Recursive', sans-serif;
+}
+
+.sidebar-sticky {
+    top:5em;
+}
+
+.content {
+    padding-top: 3em;
+}
 .franklin-content pre > code {
     border: 1px solid #6B8E2340;
     padding: 1.5em;
@@ -49,4 +62,8 @@
     font-size: 1.33em;
     font-style: normal;
     font-weight: bold;
+}
+
+.sidebar-about h1 {
+    font-family: 'Recursive', sans-serif;
 }

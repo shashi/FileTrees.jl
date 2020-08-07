@@ -4,6 +4,15 @@ import AbstractTrees: children
 export name, path, maketree
 struct NoValue end
 
+"""
+    Dir(parent, name, children, value)
+
+    Dir(d::Dir; parent, name, children, value)
+
+    Dir(dirname::String)
+
+    Dir(g::Glob)
+"""
 struct Dir
     parent::Union{Dir, Nothing}
     name::String

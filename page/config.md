@@ -139,3 +139,4 @@ commands that are defined and used in PkgPage.jl
 @def showall         = true
 
 \newcommand{\center}[1]{~~~<div style="text-align:center;">~~~#1~~~</div>~~~}
+\newcommand{\out}[1]{@@code-output \show{#1} @@}

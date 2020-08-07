@@ -58,7 +58,7 @@ _glob_map(yes, no, t::File, p) = _occursin(p, name(t)) ? yes(t) : no(t)
 _glob_map(yes, no, t::File, p...) = no(t)
 
 function mapmatches(f, t::Dir, g::GlobMatch)
-    _glob_map(f, identity, t, g.pattern...)
+    _glob_map(f, identity, t, g.pattern...) |> set_parent
 end
 
 function Base.detach(t, path::GlobMatch)

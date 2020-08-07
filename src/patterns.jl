@@ -29,30 +29,37 @@ function Base.getindex(t::Dir, g::GlobMatch)
     sub
 end
 
+Base.empty(d::Dir) = Dir(d; children=[])
+
 _occursin(p::AbstractString, x) = p == x
 _occursin(p, x) = occursin(p, x)
 
-_glob_filter(t::Dir) = t
-_glob_filter(t::File) = t
+_glob_filter(t::Node, ps...) = _glob_map(identity, x->nothing, t, ps...)
 
-function _glob_filter(t::Dir, p, ps...)
+_glob_map(yes, no, t::Node) = yes(t) # occurs when there's no pattern left to match
+
+function _glob_map(yes, no, t::Dir, p, ps...)
     if _occursin(p, name(t))
         if isempty(children(t)) && (isempty(ps) || (ps[1] isa AbstractString && isempty(ps[1])))
-            return t
+            return yes(t)
         end
-        cs = filter(!isnothing, map(c->_glob_filter(c, ps...), children(t)))
+        cs = filter(!isnothing, map(c->_glob_map(yes, no, c, ps...), children(t)))
         if isempty(cs)
-            return nothing
+            return no(t)
         else
             return Dir(t, children=cs)
         end
     else
-        return nothing
+        return no(t)
     end
 end
 
-_glob_filter(t::File, p) = _occursin(p, name(t)) ? File(nothing, name(t)) : nothing
-_glob_filter(t::File, p...) = nothing
+_glob_map(yes, no, t::File, p) = _occursin(p, name(t)) ? yes(t) : no(t)
+_glob_map(yes, no, t::File, p...) = no(t)
+
+function mapmatches(f, t::Dir, g::GlobMatch)
+    _glob_map(f, identity, t, g.pattern...)
+end
 
 function Base.detach(t, path::GlobMatch)
     subtree = t[path]

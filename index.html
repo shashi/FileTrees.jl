@@ -27,21 +27,27 @@
 <div class="sidebar">
   <div class="container sidebar-sticky">
     <div class="sidebar-about">
-      <h1 style="font-size:2.66em"><a href="/DirTools.jl/">DirTools<em>.jl</em></a></h1>
-      <p class="lead">Reap the fruits of your file trees.</p>
+      <h1 style="font-size:2.25em"><a href="/DirTools.jl/">DirTools<span style="opacity:0.4">.jl</span></a></h1>
+      <p class="lead">Get your hands DirTy</p>
     </div>
     <nav class="sidebar-nav">
       <a class="sidebar-nav-item active" href="/DirTools.jl/">Home</a>
       <a class="sidebar-nav-item " href="/DirTools.jl/api/">Full API</a>
     </nav>
-    <small>&copy; Shashi Gowda, Julian Samaroo.</small>
+
+    <div style="font-size: 0.85em">
+        <img src="https://raw.githubusercontent.com/JuliaLang/julia-logo-graphics/master/images/julia-logo-dark.svg" height="32" style="display: inline-block; margin-bottom: -8px">
+        powered.
+    </div>
   </div>
 </div>
 <div class="content container">
 
 <!-- Content appended here -->
-<div class="franklin-content"><h1 id="dirtoolsjl"><a href="#dirtoolsjl">DirTools.jl</a></h1>
-<p>DirTools allows you to read a directory of files, lazily load files, filter and restructure trees, perform mapreduce operations and save trees to disk. Optionally, operations that deal with data can be done in parallel.<div class="page-foot">
+<div class="franklin-content"><h1 id="dirtoolsjl_documentation"><a href="#dirtoolsjl_documentation">DirTools<em>.jl</em> documentation</a></h1>
+<p><strong>DirTools contains tools to lazy-load, process and write file trees.</strong> <br/> Built-in parallelism allows you to max out compute on any machine.</p>
+<p>There are no restrictions on what files you can read and write. If you have functions to work with one file, you can use the same to work with a file tree.</p>
+<p>Lazy tree operations let you freely restructure file trees so as to be convenient to set up computations. Files in a file tree can have any value attached to them &#40;not necessarily those loaded from the file itself&#41;, values in these nodes can be combined by merging trees or subtrees.<div class="page-foot">
   <div class="copyright">
     &copy; THE AUTHOR. Last modified: August 07, 2020. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a>.
   </div>

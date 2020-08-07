@@ -1,6 +1,6 @@
 using Test
-using Harvest
-using Harvest: Thunk
+using DirTools
+using DirTools: Thunk
 
 using Dates
 
@@ -14,7 +14,7 @@ t = maketree(["a" => ["b" => ["a"],
 
     @test path(t["a"]["b"]["a"])  == "./a/b/a"
 
-    t1 = Harvest.rename(t, "foo")
+    t1 = DirTools.rename(t, "foo")
     @test path(t1["a"]["b"]["a"])  == "foo/a/b/a"
 
     @test isequal(t[r"a|b"], t)
@@ -46,10 +46,10 @@ end
 end
 
 @testset "flatten" begin
-    @test isequal(Harvest.flatten(t, joinpath=(x,y)->"$(x)/$y"),
+    @test isequal(DirTools.flatten(t, joinpath=(x,y)->"$(x)/$y"),
                   maketree(["a/b/a", "a/c/b", "a/c/a", "a/c/c"=>[]]))
 
-    @test isequal(Harvest.flatten(t),
+    @test isequal(DirTools.flatten(t),
                   maketree(["a_b_a", "a_c_b", "a_c_a", "a_c_c"=>[]]))
 end
 
@@ -58,11 +58,11 @@ end
 end
 
 @testset "treediff" begin
-    @test isempty(Harvest.treediff(t,t))
-    @test isequal(Harvest.treediff(t,maketree([])), t)
+    @test isempty(DirTools.treediff(t,t))
+    @test isequal(DirTools.treediff(t,maketree([])), t)
 end
 
-import Harvest: attach
+import DirTools: attach
 
 @testset "touch mv and cp" begin
     global t1 = maketree([])
@@ -101,14 +101,14 @@ end
         rm("test_dir", recursive=true)
     end
 
-    @test Harvest.value(t1["a/b/a"]) == "./A/B/A"
+    @test DirTools.value(t1["a/b/a"]) == "./A/B/A"
 
     @test reducevalues(*, mapvalues(lowercase, t1)) == lowercase(reducevalues(*, t1))
 
     save(maketree("test_dir" => [t1])) do f
         @test f isa File
         open(path(f), "w") do io
-            print(io, Harvest.value(f))
+            print(io, DirTools.value(f))
         end
     end
 
@@ -121,7 +121,7 @@ end
 
     t4 = filter(!isempty, t1)
 
-    @test isequal(t3, Harvest.rename(t4, "test_dir"))
+    @test isequal(t3, DirTools.rename(t4, "test_dir"))
     if isdir("test_dir")
         rm("test_dir", recursive=true)
     end
@@ -136,14 +136,14 @@ end
 
     t1 = load(x->uppercase(path(x)), t, lazy=true)
 
-    @test Harvest.value(t1["a/b/a"]) isa Thunk
-    @test Harvest.value(exec(t1)["a/b/a"]) == "./A/B/A"
+    @test DirTools.value(t1["a/b/a"]) isa Thunk
+    @test DirTools.value(exec(t1)["a/b/a"]) == "./A/B/A"
 
     @test exec(reducevalues(*, mapvalues(lowercase, t1))) == lowercase(exec(reducevalues(*, t1)))
 
     s = save(maketree("test_dir_lazy" => [t1])) do f
         open(path(f), "w") do io
-            print(io, Harvest.value(f))
+            print(io, DirTools.value(f))
         end
     end
 
@@ -173,7 +173,7 @@ end
     t4 = filter(!isempty, t1) |> exec
 
     t5 = mapvalues(first, t3) |> exec
-    @test isequal(t5, Harvest.rename(t4, "test_dir_lazy"))
+    @test isequal(t5, DirTools.rename(t4, "test_dir_lazy"))
 
     if isdir("test_dir_lazy")
         rm("test_dir_lazy", recursive=true)

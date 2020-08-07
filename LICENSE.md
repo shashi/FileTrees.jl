@@ -1,4 +1,4 @@
-Harvest.jl is licensed under the MIT License:
+DirTools.jl is licensed under the MIT License:
 
 > Copyright (c) 2020: Shashi Gowda, Julian P. Samaroo
 >

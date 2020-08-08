@@ -1,4 +1,4 @@
 # This file was generated, do not modify it. # hide
-using DirTools
+yellowdf = exec(reducevalues(vcat, yellow′))
 
-Dir("test_data")
+first(yellowdf, 15)

@@ -36,10 +36,10 @@
       <a class="sidebar-nav-item " href="/DirTools.jl/api/">Full API</a>
     </nav>
 
-    <div style="font-size: 0.85em">
-        <img src="https://raw.githubusercontent.com/JuliaLang/julia-logo-graphics/master/images/julia-logo-dark.svg" height="32" style="display: inline-block; margin-bottom: -8px">
-        powered.
-    </div>
+  </div>
+  <div style="font-size: 0.85em; bottom: 3em; position: fixed">
+      <img src="https://raw.githubusercontent.com/JuliaLang/julia-logo-graphics/master/images/julia-logo-dark.svg" height="32" style="display: inline-block; margin-bottom: -8px; opacity: 0.7">
+      powered.
   </div>
 </div>
 <div class="content container">
@@ -52,23 +52,101 @@ DirTools is a set of tools to lazy-load, process and write file trees. Built-in 
 </p>
 
 <p>There are no restrictions on what files you can read and write. If you have functions to work with one file, you can use the same to work with a file tree.</p>
-<p>Lazy tree operations let you freely restructure file trees so as to be convenient to set up computations. Files in a file tree can have any value attached to them &#40;not necessarily those loaded from the file itself&#41;, values in these nodes can be combined by merging trees or subtrees.</p>
+<p>Lazy tree operations let you freely restructure file trees so as to be convenient to set up computations. Files in a file tree can have any value attached to them &#40;not necessarily those loaded from the file itself&#41;, you can map and reduce over these values, or combine them by merging or collapsing trees or subtrees.</p>
 <h2 id="introduction"><a href="#introduction">Introduction</a></h2>
 <p>The basic datastructure in DirTools is the <code>Dir</code> tree. The nodes of this tree can be themselves <code>Dir</code> or <code>File</code> objects. Each node contains a <code>name</code> field which shows its name.</p>
 <pre><code class="julia hljs"><span class="hljs-keyword">using</span> DirTools
 
-Dir(<span class="hljs-string">&quot;test_data&quot;</span>)</code></pre><pre><code class="plaintext hljs">ArgumentError: Package DirTools not found in current path:
+taxi_dir = Dir(<span class="hljs-string">&quot;taxi-data&quot;</span>)</code></pre><pre><code class="plaintext hljs">ArgumentError: Package DirTools not found in current path:
 - Run `import Pkg; Pkg.add(&quot;DirTools&quot;)` to install the DirTools package.
 
 </code></pre>
-<div class="code-output"><pre><code class="plaintext hljs">ArgumentError: Package DirTools not found in current path:
+<p>The files in the directory can be loaded using the <code>load</code> function. Here we use CSV and DataFrames to load the csv files.</p>
+<pre><code class="julia hljs"><span class="hljs-keyword">using</span> DataFrames, CSV
+
+dfs = DirTools.load(taxi_dir) <span class="hljs-keyword">do</span> file
+    DataFrame(CSV.File(path(file)))
+<span class="hljs-keyword">end</span></code></pre><pre><code class="plaintext hljs">ArgumentError: Package CSV not found in current path:
+- Run `import Pkg; Pkg.add(&quot;CSV&quot;)` to install the CSV package.
+
+</code></pre>
+<p><code>load</code> takes a callback which loads a single file. The <code>file</code> argument to the callback is a <code>File</code> object. It supports the <code>path</code>, <code>parent</code> and <code>value</code> functions.</p>
+<p><code>load</code> returns a new <code>Dir</code> which has the same structure as before, but contains the loaded data in each <code>File</code> node.</p>
+<p>A summary of the value loaded into each file is shown in parentheses. Let&#39;s look at one of these DataFrames by indexing into the tree and calling <code>value</code> on the file.</p>
+<pre><code class="julia hljs">value(dfs[<span class="hljs-string">&quot;2020/01/yellow.csv&quot;</span>])</code></pre><pre><code class="plaintext hljs">ArgumentError: Package DirTools not found in current path:
 - Run `import Pkg; Pkg.add(&quot;DirTools&quot;)` to install the DirTools package.
 
-</code></pre></div>
-<p>A Dir tree, does not necessarily have to do with a directory on disk, it can be created on the fly, and may or may not be saved to disk.</p>
+</code></pre>
+<p>We may want to combine all yellow taxi files into a single DataFrame using <code>reducevalues</code>.</p>
+<p>But first, we have to separate them out. There are several ways to do this, they are all correct.</p>
+<pre><code class="julia hljs"><span class="hljs-comment"># method 1</span>
+
+yellow = dfs[<span class="hljs-string">glob&quot;*/*/yellow.csv&quot;</span>]
+green = dfs[<span class="hljs-string">glob&quot;*/*/green.csv&quot;</span>]
+
+<span class="hljs-comment"># method 2</span>
+
+yellow = dfs[<span class="hljs-string">glob&quot;*/*/yellow.csv&quot;</span>]
+green = DirTools.treediff(dfs, yellow);
+
+<span class="hljs-meta">@show</span> yellow
+<span class="hljs-meta">@show</span> green</code></pre><pre><code class="plaintext hljs">LoadError: UndefVarError: @glob_str not defined
+in expression starting at none:3
+</code></pre>
+<p>Here is a cool command to restructure the <code>yellow</code> tree to have one less level. You can&#39;t do this in the shell without a loop, but here we can use regular expressions.</p>
+<pre><code class="julia hljs"><span class="hljs-comment"># method 3</span>
+
+yellow′ = mv(dfs, <span class="hljs-string">r&quot;(.*)/(.*)/yellow.csv&quot;</span>, <span class="hljs-string">s&quot;yellow/\1/\2.csv&quot;</span>)[<span class="hljs-string">&quot;yellow&quot;</span>]
+green′ = mv(dfs, <span class="hljs-string">r&quot;(.*)/(.*)/green.csv&quot;</span>, <span class="hljs-string">s&quot;green/\1/\2.csv&quot;</span>)[<span class="hljs-string">&quot;green&quot;</span>]
+
+<span class="hljs-meta">@show</span> yellow′
+<span class="hljs-meta">@show</span> green′</code></pre><pre><code class="plaintext hljs">UndefVarError: dfs not defined
+</code></pre>
+<p><code>mv</code> does not affect the file system, it only restructures the tree in memory. But you can save the new structure into disk. Let&#39;s write the <code>yellow</code> tree to disk, further, let&#39;s only save the first 10 columns of the data into these files.</p>
+<pre><code class="julia hljs">DirTools.save(DirTools.set_parent(yellow′, <span class="hljs-literal">nothing</span>)) <span class="hljs-keyword">do</span> file
+    CSV.write(path(file), value(file))
+<span class="hljs-keyword">end</span></code></pre><pre><code class="plaintext hljs">UndefVarError: DirTools not defined
+</code></pre>
+<p>It&#39;s saved&#33;</p>
+<pre><code class="julia hljs">Dir(<span class="hljs-string">&quot;yellow&quot;</span>)</code></pre><pre><code class="plaintext hljs">UndefVarError: Dir not defined
+</code></pre>
+<p>Coming back to our original goal, we can combine the yellow tree into a single DataFrame:</p>
+<pre><code class="julia hljs">yellowdf = reducevalues(vcat, yellow)
+
+first(yellowdf, <span class="hljs-number">15</span>)</code></pre><pre><code class="plaintext hljs">UndefVarError: reducevalues not defined
+</code></pre>
+<h2 id="parallelism_and_laziness"><a href="#parallelism_and_laziness">Parallelism and laziness</a></h2>
+<p>In the previous section, <code>load</code> simply loaded the data into memory when called, this does not happen in parallel by default. The way to load files in parallel is to load them with the <code>lazy&#61;true</code> flag. This creates lazy tree of computations &#40;called <code>Thunk</code>s&#41;. Any subsequent <code>mapvalues</code> or <code>reducevalues</code> will be lazy if called on a lazy-loaded tree. At any point to materialize lazy values, you can call the <code>exec</code> function.</p>
+<pre><code class="julia hljs">lazy_dfs = DirTools.load(taxi_dir; lazy=<span class="hljs-literal">true</span>) <span class="hljs-keyword">do</span> file
+    DataFrame(CSV.File(path(file)))
+<span class="hljs-keyword">end</span></code></pre><pre><code class="plaintext hljs">UndefVarError: DirTools not defined
+</code></pre>
+<p>Great thing about it is you can still filter the tree or restructure it.</p>
+<pre><code class="julia hljs">yellow′ = mv(lazy_dfs, <span class="hljs-string">r&quot;(.*)/(.*)/yellow.csv&quot;</span>, <span class="hljs-string">s&quot;yellow/\1/\2.csv&quot;</span>)[<span class="hljs-string">&quot;yellow&quot;</span>]</code></pre><pre><code class="plaintext hljs">UndefVarError: lazy_dfs not defined
+</code></pre>
+<p>tree restructuring keeps the values lazy.</p>
+<pre><code class="julia hljs">yellowdf = exec(reducevalues(vcat, yellow′))
+
+first(yellowdf, <span class="hljs-number">15</span>)</code></pre><pre><code class="plaintext hljs">UndefVarError: reducevalues not defined
+</code></pre>
+<p>Here calling <code>exec</code> is computes all the values required to compute the result.</p>
+<p>This computation is set up to be parallel:</p>
+<p>To obtain parallelism you need to start julia in a parallel way:</p>
+<pre><code class="sh hljs"><span class="hljs-built_in">export</span> JULIA_NUM_THREADS=10   <span class="hljs-comment"># 10 concurrent tasks per process (will use multi-threading)</span>
+julia -p 8                    <span class="hljs-comment"># 8 OS pocesses</span></code></pre>
+<p>In the REPL:</p>
+<pre><code class="julia hljs"><span class="hljs-meta">@everywhere</span> <span class="hljs-keyword">using</span> DirTools, CSV, DataFrames
+
+lazy_dfs = DirTools.load(taxi_dir; lazy=<span class="hljs-literal">true</span>) <span class="hljs-keyword">do</span> file
+    DataFrame(CSV.File(path(file)))
+<span class="hljs-keyword">end</span>
+
+reduce(vcat, lazy_dfs) |&gt; exec;</code></pre>
+<p>Here at most 10x8 files are loaded at a time into memory. And 80 tasks will work on them in parallel as the OS is able to schedule them. these 80 files are first reduced using the reduction function and then DirTools will move on to the next 80 files while releasing the first 80 from memory. This is very beneficial if you have 1000s of files.</p>
+<p>Happy Hacking&#33;</p>
 <div class="page-foot">
   <div class="copyright">
-    &copy; THE AUTHOR. Last modified: August 07, 2020. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a>.
+    &copy; THE AUTHOR. Last modified: August 08, 2020. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a>.
   </div>
 </div>
 </div><!-- CONTENT ENDS HERE -->

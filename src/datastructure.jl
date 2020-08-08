@@ -105,8 +105,7 @@ function AbstractTrees.printnode(io::IO, f::Union{Dir, File})
         print(io, "/")
     end
     if hasvalue(f)
-        T = typeof(value(f))
-        print(io," (", repr(T), ")")
+        print(io," (", summary(value(f)), ")")
     end
 end
 

@@ -5,9 +5,9 @@ using Franklin
 using Markdown
 
 function hfun_doc(params)
-    fname = params[1]
-    head = length(params) > 1 ? params[2] : fname
-    type = length(params) == 3 ? params[3] : ""
+    fname = join(params[1:max(1, length(params)-2)], " ")
+    head = params[end-1]
+    type = params[end]
     doc = eval(Meta.parse("using DirTools; @doc DirTools.$fname"))
     txt = Markdown.plain(doc)
     # possibly further processing here

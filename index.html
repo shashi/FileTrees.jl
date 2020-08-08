@@ -66,7 +66,7 @@ taxi_dir = Dir(<span class="hljs-string">&quot;taxi-data&quot;</span>)</code></p
 
 dfs = DirTools.load(taxi_dir) <span class="hljs-keyword">do</span> file
     DataFrame(CSV.File(path(file)))
-<span class="hljs-keyword">end</span></code></pre><pre><code class="plaintext hljs">ArgumentError: Package CSV [336ed68f-0bac-5ca0-87d4-7b16caf5d00b] is required but does not seem to be installed:
+<span class="hljs-keyword">end</span></code></pre><pre><code class="plaintext hljs">ArgumentError: Package DataFrames [a93c6f00-e57d-5684-b7b6-d8193f3e46c0] is required but does not seem to be installed:
  - Run `Pkg.instantiate()` to install all recorded dependencies.
 
 </code></pre>

@@ -57,25 +57,19 @@ DirTools is a set of tools to lazy-load, process and write file trees. Built-in 
 <p>The basic datastructure in DirTools is the <code>Dir</code> tree. The nodes of this tree can be themselves <code>Dir</code> or <code>File</code> objects. Each node contains a <code>name</code> field which shows its name.</p>
 <pre><code class="julia hljs"><span class="hljs-keyword">using</span> DirTools
 
-taxi_dir = Dir(<span class="hljs-string">&quot;taxi-data&quot;</span>)</code></pre><pre><code class="plaintext hljs">ArgumentError: Package DirTools [72696420-646e-6120-6e77-6f6420746567] is required but does not seem to be installed:
- - Run `Pkg.instantiate()` to install all recorded dependencies.
-
+taxi_dir = Dir(<span class="hljs-string">&quot;taxi-data&quot;</span>)</code></pre><pre><code class="plaintext hljs">Failed to precompile DirTools [72696420-646e-6120-6e77-6f6420746567] to /home/runner/.julia/compiled/v1.4/DirTools/oM1IZ_PZNSx.ji.
 </code></pre>
 <p>The files in the directory can be loaded using the <code>load</code> function. Here we use CSV and DataFrames to load the csv files.</p>
 <pre><code class="julia hljs"><span class="hljs-keyword">using</span> DataFrames, CSV
 
 dfs = DirTools.load(taxi_dir) <span class="hljs-keyword">do</span> file
     DataFrame(CSV.File(path(file)))
-<span class="hljs-keyword">end</span></code></pre><pre><code class="plaintext hljs">ArgumentError: Package DataFrames [a93c6f00-e57d-5684-b7b6-d8193f3e46c0] is required but does not seem to be installed:
- - Run `Pkg.instantiate()` to install all recorded dependencies.
-
+<span class="hljs-keyword">end</span></code></pre><pre><code class="plaintext hljs">UndefVarError: DirTools not defined
 </code></pre>
 <p><code>load</code> takes a callback which loads a single file. The <code>file</code> argument to the callback is a <code>File</code> object. It supports the <code>path</code>, <code>parent</code> and <code>value</code> functions.</p>
 <p><code>load</code> returns a new <code>Dir</code> which has the same structure as before, but contains the loaded data in each <code>File</code> node.</p>
 <p>A summary of the value loaded into each file is shown in parentheses. Let&#39;s look at one of these DataFrames by indexing into the tree and calling <code>value</code> on the file.</p>
-<pre><code class="julia hljs">value(dfs[<span class="hljs-string">&quot;2020/01/yellow.csv&quot;</span>])</code></pre><pre><code class="plaintext hljs">ArgumentError: Package DirTools [72696420-646e-6120-6e77-6f6420746567] is required but does not seem to be installed:
- - Run `Pkg.instantiate()` to install all recorded dependencies.
-
+<pre><code class="julia hljs">value(dfs[<span class="hljs-string">&quot;2020/01/yellow.csv&quot;</span>])</code></pre><pre><code class="plaintext hljs">Failed to precompile DirTools [72696420-646e-6120-6e77-6f6420746567] to /home/runner/.julia/compiled/v1.4/DirTools/oM1IZ_PZNSx.ji.
 </code></pre>
 <p>We may want to combine all yellow taxi files into a single DataFrame using <code>reducevalues</code>.</p>
 <p>But first, we have to separate them out. There are several ways to do this, they are all correct.</p>

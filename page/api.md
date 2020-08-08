@@ -4,25 +4,24 @@
 
 {{doc Dir Dir type}}
 
-- Dir
-- filter
-- merge
-- treediff
-- flatten
-- cp
-- mv
-- rm
-- touch
-- mkpath
+{{doc mv(::Dir, ::Regex, ::SubstitutionString; combine) mv method}}
 
-### Loading, and saving data
+{{doc cp(::Dir, ::Regex, ::SubstitutionString; combine) cp method}}
 
-- load
-- mapvalues
-- reducevalues
-- save
+{{doc rm(::Dir, path) rm method}}
+
+{{doc merge(::Dir, ::Dir; combine) merge method}}
+
+{{doc diff(::Dir, ::Dir) diff method}}
+
+### Loading, computing and saving data
+
+
+{{doc load load function}}
+{{doc mapvalues mapvalues function}}
+{{doc reducevalues  reducevalues function}}
+{{doc save save function}}
 
 ### Laziness and Parallelism
 
-- lazy
-- exec
+{{doc exec exec function}}

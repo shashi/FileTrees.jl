@@ -57,9 +57,9 @@ end
     @test isequal(merge(t,t), t)
 end
 
-@testset "treediff" begin
-    @test isempty(DirTools.treediff(t,t))
-    @test isequal(DirTools.treediff(t,maketree([])), t)
+@testset "diff" begin
+    @test isempty(DirTools.diff(t,t))
+    @test isequal(DirTools.diff(t,maketree([])), t)
 end
 
 import DirTools: attach

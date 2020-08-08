@@ -11,29 +11,5 @@ There are no restrictions on what files you can read and write, as long as you h
 
 Lazy directory operations let you freely restructure file trees so as to be convenient to set up computations. Tree manipulation functions help with this. Files in a Dir tree can have any value attached to them, values can be combined by merging trees or subtrees, and written to disk.
 
-## API
 
-### Tree manipulation
-
-- Dir
-- filter
-- merge
-- treediff
-- flatten
-- cp
-- mv
-- rm
-- touch
-- mkpath
-
-### Loading, and saving data
-
-- load
-- mapvalues
-- reducevalues
-- save
-
-### Laziness and Parallelism
-
-- lazy
-- exec
+<a href="https://shashi.github.io/DirTools.jl">See the docs &rarr;</a>

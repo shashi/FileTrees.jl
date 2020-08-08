@@ -237,9 +237,13 @@ end
 _merge_error(x, y) = error("Files with same name $(name(x)) found at $(dirname(x)) while merging")
 
 """
-    merge(t1, t2)
+    merge(t1::Dir, t2::Dir; combine)
 
-Merge two DirTools
+Merge two Dirs. If files at the same path contain values, the `combine` callback will
+be called with their values to result in a new value.
+
+If one of the dirs does not have a value, its corresponding argument will be `NoValue()`
+If any of the values is lazy, the output value is lazy as well.
 """
 function Base.merge(t1::Dir, t2::Dir; combine=_merge_error, dotnorm=true)
     bigt = if name(t1) == name(t2)
@@ -310,7 +314,13 @@ function Base.merge(x::Node, y::Node; combine=_merge_error)
     name(x) == name(y) ? apply_combine(combine, x, y) : Dir(nothing, ".", [x,y], NoValue())
 end
 
-function treediff(t1::Dir, t2::Dir)
+"""
+    diff(t1::Dir, t2::Dir)
+
+For each node in `t2` remove a node in `t1` at the same path if it exists.
+Returns the reduced tree.
+"""
+function Base.diff(t1::Dir, t2::Dir)
     if name(t1) == name(t2)
         t2_names = name.(children(t2))
         cs = []
@@ -320,7 +330,7 @@ function treediff(t1::Dir, t2::Dir)
                 if t2[idx] isa File
                     @assert x isa File
                 elseif x isa Dir && t2[idx] isa Dir
-                    d = treediff(x, t2[idx])
+                    d = diff(x, t2[idx])
                     if !isempty(d)
                         push!(cs, d)
                     end
@@ -345,12 +355,12 @@ function Base.detach(t, path::AbstractString)
     subtree = t[path]
     spath = splitpath(path)[1:end-1]
     t1 = foldl((x, acc) -> acc => [x], [subtree; reverse(spath);]) |> maketree
-    subtree, treediff(t, maketree(name(t)=>[t1]))
+    subtree, diff(t, maketree(name(t)=>[t1]))
 end
 
 function Base.detach(t, regex::Regex)
     subtree = t[regex]
-    subtree, treediff(t, subtree)
+    subtree, diff(t, subtree)
 end
 
 function clip(t, n; combine=_merge_error)

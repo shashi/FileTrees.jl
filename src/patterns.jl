@@ -64,7 +64,7 @@ end
 function Base.detach(t, path::GlobMatch)
     subtree = t[path]
     # the returned value has the full structure from the root of the tree
-    subtree, treediff(t, subtree)
+    subtree, diff(t, subtree)
 end
 
 

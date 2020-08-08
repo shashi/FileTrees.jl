@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+   <link rel="stylesheet" href="/DirTools.jl/libs/highlight/github.min.css">
+   
+  <link rel="stylesheet" href="/DirTools.jl/css/franklin.css">
+<link rel="stylesheet" href="/DirTools.jl/css/poole_hyde.css">
+<link rel="stylesheet" href="/DirTools.jl/css/custom.css">
+<!-- style adjustments -->
+<style>
+  html {font-size: 17px;}
+  .franklin-content {position: relative; padding-left: 8%; padding-right: 5%; line-height: 1.35em;}
+  @media (min-width: 940px) {
+    .franklin-content {width: 100%; margin-left: auto; margin-right: auto;}
+  }
+  @media (max-width: 768px) {
+    .franklin-content {padding-left: 6%; padding-right: 6%;}
+  }
+</style>
+<link rel="icon" href="/DirTools.jl/assets/favicon.png">
+
+   <title>DirTools.jl</title>  
+</head>
+<body>
+<div class="sidebar">
+  <div class="container sidebar-sticky">
+    <div class="sidebar-about">
+      <h1 style="font-size:2.25em"><a href="/DirTools.jl/">DirTools<span style="opacity:0.4">.jl</span></a></h1>
+      <p class="lead">Get your hands DirTy</p>
+    </div>
+    <nav class="sidebar-nav">
+      <a class="sidebar-nav-item " href="/DirTools.jl/">Home</a>
+      <a class="sidebar-nav-item " href="/DirTools.jl/api/">Full API</a>
+    </nav>
+
+  </div>
+  <div style="font-size: 0.85em; bottom: 3em; position: fixed">
+      <img src="https://raw.githubusercontent.com/JuliaLang/julia-logo-graphics/master/images/julia-logo-dark.svg" height="32" style="display: inline-block; margin-bottom: -8px; opacity: 0.7">
+      powered.
+  </div>
+</div>
+<div class="content container">
+
+<!-- Content appended here -->
+<div class="franklin-content"><h1 id="api_documentation"><a href="#api_documentation">API documentation</a></h1>
+<h3 id="tree_manipulation"><a href="#tree_manipulation">Tree manipulation</a></h3>
+  <div class="docstring">
+      <h2 class="doc-header" id="Dir">
+        <a href="#Dir">Dir</a>
+        <div class="doc-type">type</div></h2>
+      <div class="doc-content"><pre><code class="julia hljs">Dir(parent, name, children, value)
+
+Dir(d::Dir; parent, name, children, value)
+
+Dir(dirname::<span class="hljs-built_in">String</span>)
+
+Dir(g::Glob)</code></pre>
+</div>
+  </div>
+
+  <div class="docstring">
+      <h2 class="doc-header" id="mv(::Dir, ::Regex, ::SubstitutionString; combine)">
+        <a href="#mv(::Dir, ::Regex, ::SubstitutionString; combine)">mv</a>
+        <div class="doc-type">method</div></h2>
+      <div class="doc-content"><pre><code class="julia hljs">mv(t::Dir, from_path::<span class="hljs-built_in">Regex</span>, to_path::SubstitutionString; combine)</code></pre>
+<p>move nodes in the file tree whose path matches the <code>from_tree</code> regular expression pattern by renaming it to <code>to_path</code> pattern. Any sub-pattern in <code>from_path</code> which is surrounded by paranthesis will be read as a matched substring which can be accessed in the to_path substitution pattern using \1, \2 etc. positional matches.</p>
+<p>If a file overwrites an existing node after copy, <code>combine</code> will be called to combine them together. By default <code>combine</code> will error.</p>
+<h2 id="example"><a href="#example">Example:</a></h2>
+<pre><code class="julia hljs">julia&gt; t = maketree(<span class="hljs-string">&quot;dir&quot;</span> =&gt; [string(j) =&gt; [string(i)=&gt;[<span class="hljs-string">&quot;data.csv&quot;</span>] <span class="hljs-keyword">for</span> i = <span class="hljs-number">1</span>:<span class="hljs-number">2</span>] <span class="hljs-keyword">for</span> j=<span class="hljs-number">1</span>:<span class="hljs-number">2</span>])
+dir/
+├─ <span class="hljs-number">1</span>/
+│  ├─ <span class="hljs-number">1</span>/
+│  │  └─ data.csv
+│  └─ <span class="hljs-number">2</span>/
+│     └─ data.csv
+└─ <span class="hljs-number">2</span>/
+   ├─ <span class="hljs-number">1</span>/
+   │  └─ data.csv
+   └─ <span class="hljs-number">2</span>/
+      └─ data.csv
+
+julia&gt; mv(t, <span class="hljs-string">r&quot;^([^/]*)/([^/]*)/data.csv$&quot;</span>, <span class="hljs-string">s&quot;\1/\2.csv&quot;</span>)
+dir/
+├─ <span class="hljs-number">1</span>/
+│  ├─ <span class="hljs-number">1.</span>csv
+│  └─ <span class="hljs-number">2.</span>csv
+└─ <span class="hljs-number">2</span>/
+   ├─ <span class="hljs-number">1.</span>csv
+   └─ <span class="hljs-number">2.</span>csv</code></pre>
+</div>
+  </div>
+
+  <div class="docstring">
+      <h2 class="doc-header" id="cp(::Dir, ::Regex, ::SubstitutionString; combine)">
+        <a href="#cp(::Dir, ::Regex, ::SubstitutionString; combine)">cp</a>
+        <div class="doc-type">method</div></h2>
+      <div class="doc-content"><pre><code class="julia hljs">cp(t::Dir, from_path::<span class="hljs-built_in">Regex</span>, to_path::SubstitutionString; combine)</code></pre>
+<p>copy nodes in the file tree whose path matches the <code>from_tree</code> regular expression pattern by renaming it to <code>to_path</code> pattern. Any sub-pattern in <code>from_path</code> which is surrounded by paranthesis will be read as a matched substring which can be accessed in the to_path substitution pattern using \1, \2 etc. positional matches.</p>
+<p>If a file overwrites an existing node after copy, <code>combine</code> will be called to combine them together. By default <code>combine</code> will error.</p>
+<h2 id="example__2"><a href="#example__2">Example:</a></h2>
+<pre><code class="julia hljs">julia&gt; t = maketree(<span class="hljs-string">&quot;dir&quot;</span> =&gt; [string(j) =&gt; [string(i)=&gt;[<span class="hljs-string">&quot;data.csv&quot;</span>] <span class="hljs-keyword">for</span> i = <span class="hljs-number">1</span>:<span class="hljs-number">2</span>] <span class="hljs-keyword">for</span> j=<span class="hljs-number">1</span>:<span class="hljs-number">2</span>])
+dir/
+├─ <span class="hljs-number">1</span>/
+│  ├─ <span class="hljs-number">1</span>/
+│  │  └─ data.csv
+│  └─ <span class="hljs-number">2</span>/
+│     └─ data.csv
+└─ <span class="hljs-number">2</span>/
+   ├─ <span class="hljs-number">1</span>/
+   │  └─ data.csv
+   └─ <span class="hljs-number">2</span>/
+      └─ data.csv
+
+julia&gt; cp(t, <span class="hljs-string">r&quot;^([^/]*)/([^/]*)/data.csv$&quot;</span>, <span class="hljs-string">s&quot;/.csv&quot;</span>)
+dir/
+├─ <span class="hljs-number">1</span>/
+│  ├─ <span class="hljs-number">1</span>/
+│  │  └─ data.csv
+│  ├─ <span class="hljs-number">1.</span>csv
+│  ├─ <span class="hljs-number">2</span>/
+│  │  └─ data.csv
+│  └─ <span class="hljs-number">2.</span>csv
+└─ <span class="hljs-number">2</span>/
+   ├─ <span class="hljs-number">1</span>/
+   │  └─ data.csv
+   ├─ <span class="hljs-number">1.</span>csv
+   ├─ <span class="hljs-number">2</span>/
+   │  └─ data.csv
+   └─ <span class="hljs-number">2.</span>csv</code></pre>
+</div>
+  </div>
+
+  <div class="docstring">
+      <h2 class="doc-header" id="rm(::Dir, path)">
+        <a href="#rm(::Dir, path)">rm</a>
+        <div class="doc-type">method</div></h2>
+      <div class="doc-content"><pre><code class="julia hljs">rm(t::Dir, pattern)</code></pre>
+<p>remove nodes which match <code>pattern</code> from the file tree. <code>pattern</code> is the same as the pattern argument to <code>detach</code>.</p>
+</div>
+  </div>
+
+  <div class="docstring">
+      <h2 class="doc-header" id="merge(::Dir, ::Dir; combine)">
+        <a href="#merge(::Dir, ::Dir; combine)">merge</a>
+        <div class="doc-type">method</div></h2>
+      <div class="doc-content"><pre><code class="julia hljs">merge(t1::Dir, t2::Dir; combine)</code></pre>
+<p>Merge two Dirs. If files at the same path contain values, the <code>combine</code> callback will be called with their values to result in a new value.</p>
+<p>If one of the dirs does not have a value, its corresponding argument will be <code>NoValue&#40;&#41;</code> If any of the values is lazy, the output value is lazy as well.</p>
+</div>
+  </div>
+
+  <div class="docstring">
+      <h2 class="doc-header" id="diff(::Dir, ::Dir)">
+        <a href="#diff(::Dir, ::Dir)">diff</a>
+        <div class="doc-type">method</div></h2>
+      <div class="doc-content"><pre><code class="julia hljs">diff(t1::Dir, t2::Dir)</code></pre>
+<p>For each node in <code>t2</code> remove a node in <code>t1</code> at the same path if it exists. Returns the reduced tree.</p>
+</div>
+  </div>
+
+  <div class="docstring">
+      <h2 class="doc-header" id="mapmatches">
+        <a href="#mapmatches">mapmatches</a>
+        <div class="doc-type">method</div></h2>
+      <div class="doc-content"><p>No documentation found.</p>
+<p><code>DirTools.mapmatches</code> is a <code>Function</code>.</p>
+<pre><code class="julia hljs"><span class="hljs-comment"># 1 method for generic function &quot;mapmatches&quot;:</span>
+[<span class="hljs-number">1</span>] mapmatches(f, t::DirTools.Dir, g::Glob.GlobMatch) <span class="hljs-keyword">in</span> DirTools at /home/runner/.julia/packages/DirTools/<span class="hljs-number">1</span>Ja4z/src/patterns.jl:<span class="hljs-number">61</span></code></pre>
+</div>
+  </div>
+
+<h3 id="loading_computing_and_saving_data"><a href="#loading_computing_and_saving_data">Loading, computing and saving data</a></h3>
+  <div class="docstring">
+      <h2 class="doc-header" id="load">
+        <a href="#load">load</a>
+        <div class="doc-type">function</div></h2>
+      <div class="doc-content"><pre><code class="julia hljs">load(f, t::Dir; dirs=<span class="hljs-literal">false</span>)</code></pre>
+<p>Walk the tree and optionally load data for nodes in it.</p>
+<p><code>f&#40;file&#41;</code> is the loader function which takes <code>File</code> as input. Call <code>path&#40;file&#41;</code> to get the String path to read the  file.</p>
+<p>If <code>dirs &#61; true</code> then <code>f</code> can either get a <code>File</code> or <code>Dir</code>. nodes within <code>Dir</code> will have already been loaded.</p>
+<p>If <code>NoValue&#40;&#41;</code> is returned by <code>f</code>, no value is attached to the node. <code>hasvalue&#40;x&#41;</code> tells you if <code>x</code> already has a value or not.</p>
+</div>
+  </div>
+
+  <div class="docstring">
+      <h2 class="doc-header" id="mapvalues">
+        <a href="#mapvalues">mapvalues</a>
+        <div class="doc-type">function</div></h2>
+      <div class="doc-content"><pre><code class="julia hljs">mapvalues(f, x::Dir)</code></pre>
+<p>&#40;See <code>load</code> to load values into nodes of a tree.&#41;</p>
+<p>Apply <code>f</code> to the value of all nodes in <code>x</code> which have a value. Returns a new tree where every value is replaced with the result of applying <code>f</code>.</p>
+<p><code>f</code> may return <code>NoValue&#40;&#41;</code> to cause no value to be associated with a node.</p>
+</div>
+  </div>
+
+  <div class="docstring">
+      <h2 class="doc-header" id="reducevalues">
+        <a href="#reducevalues">reducevalues</a>
+        <div class="doc-type">function</div></h2>
+      <div class="doc-content"><pre><code class="julia hljs">reducevalues(f, t::Dir; associative=<span class="hljs-literal">true</span>)</code></pre>
+<p>Use <code>f</code> to combine values in the tree.</p>
+<ul>
+<li><p><code>associative&#61;true</code> assumes <code>f</code> can be applied in an associative way</p>
+</li>
+</ul>
+</div>
+  </div>
+
+  <div class="docstring">
+      <h2 class="doc-header" id="save">
+        <a href="#save">save</a>
+        <div class="doc-type">function</div></h2>
+      <div class="doc-content"><pre><code class="julia hljs">save(f, x::Node)</code></pre>
+<p>Save a Dir to disk. Creates the directory structure and calls <code>f</code> with <code>File</code> for every file in the tree which has a value associated with it.</p>
+<p>&#40;see <code>load</code> and <code>mapvalues</code> for associating values with files.&#41;</p>
+</div>
+  </div>
+
+<h3 id="laziness_and_parallelism"><a href="#laziness_and_parallelism">Laziness and Parallelism</a></h3>
+  <div class="docstring">
+      <h2 class="doc-header" id="exec">
+        <a href="#exec">exec</a>
+        <div class="doc-type">function</div></h2>
+      <div class="doc-content"><p>No documentation found.</p>
+<p><code>DirTools.exec</code> is a <code>Function</code>.</p>
+<pre><code class="julia hljs"><span class="hljs-comment"># 3 methods for generic function &quot;exec&quot;:</span>
+[<span class="hljs-number">1</span>] exec(d::DirTools.Dir) <span class="hljs-keyword">in</span> DirTools at /home/runner/.julia/packages/DirTools/<span class="hljs-number">1</span>Ja4z/src/parallelism.jl:<span class="hljs-number">28</span>
+[<span class="hljs-number">2</span>] exec(d::<span class="hljs-built_in">Union</span>{Dagger.Thunk, Dagger.Chunk}) <span class="hljs-keyword">in</span> DirTools at /home/runner/.julia/packages/DirTools/<span class="hljs-number">1</span>Ja4z/src/parallelism.jl:<span class="hljs-number">29</span>
+[<span class="hljs-number">3</span>] exec(x) <span class="hljs-keyword">in</span> DirTools at /home/runner/.julia/packages/DirTools/<span class="hljs-number">1</span>Ja4z/src/parallelism.jl:<span class="hljs-number">30</span></code></pre>
+</div>
+  </div>
+
+<div class="page-foot">
+  <div class="copyright">
+    &copy; THE AUTHOR. Last modified: August 08, 2020. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a>.
+  </div>
+</div>
+</div><!-- CONTENT ENDS HERE -->
+    </div>  <!-- div: content container -->
+    
+    
+        
+
+
+    
+  </body>
+</html>

@@ -38,7 +38,8 @@ jobs:
     # `@def prepath = "YourPackage.jl/web"`
     - run: julia -e '
             using Pkg;
-            Pkg.add(["NodeJS", "PkgPage", "DataFrames"]);
+            Pkg.add(["NodeJS", "PkgPage", "DataFrames", "CSV"]);
+            Pkg.add("https://github.com/shashi/DirTools.jl.git");
             using NodeJS;
             run(`$(npm_cmd()) install highlight.js purgecss`);
             import PkgPage;

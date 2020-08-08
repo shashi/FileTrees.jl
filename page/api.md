@@ -14,12 +14,17 @@
 
 {{doc diff(::Dir, ::Dir) diff method}}
 
+{{doc mapmatches mapmatches method}}
+
 ### Loading, computing and saving data
 
 
 {{doc load load function}}
+
 {{doc mapvalues mapvalues function}}
+
 {{doc reducevalues  reducevalues function}}
+
 {{doc save save function}}
 
 ### Laziness and Parallelism

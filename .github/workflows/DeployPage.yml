@@ -38,12 +38,14 @@ jobs:
     # `@def prepath = "YourPackage.jl/web"`
     - run: julia -e '
             using Pkg;
-            Pkg.instantiate();
+            Pkg.activate("page/");
+            Pkg.add(PackageSpec(url="https://github.com/shashi/DirTools.jl.git"));
+            Pkg.resolve();
             Pkg.add(["NodeJS", "PkgPage", "DataFrames"]);
             using NodeJS;
             run(`$(npm_cmd()) install highlight.js purgecss`);
             import PkgPage;
-            PkgPage.optimize(input="page", output="")' --project page/
+            PkgPage.optimize(input="page", output="")'
     - name: Build and Deploy
       uses: JamesIves/github-pages-deploy-action@releases/v3
       with:

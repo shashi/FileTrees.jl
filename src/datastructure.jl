@@ -351,18 +351,6 @@ function attach(t, path::AbstractString, t′; combine=_merge_error)
     merge(t, maketree(name(t)=>[t1]); combine=combine)
 end
 
-function Base.detach(t, path::AbstractString)
-    subtree = t[path]
-    spath = splitpath(path)[1:end-1]
-    t1 = foldl((x, acc) -> acc => [x], [subtree; reverse(spath);]) |> maketree
-    subtree, diff(t, maketree(name(t)=>[t1]))
-end
-
-function Base.detach(t, regex::Regex)
-    subtree = t[regex]
-    subtree, diff(t, subtree)
-end
-
 function clip(t, n; combine=_merge_error)
     n==0 && return t
     cs = map(children(t)) do x

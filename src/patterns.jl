@@ -61,15 +61,15 @@ function mapmatches(f, t::Dir, g::GlobMatch)
     _glob_map(f, identity, t, g.pattern...) |> set_parent
 end
 
-function Base.detach(t, path::GlobMatch)
-    subtree = t[path]
-    # the returned value has the full structure from the root of the tree
-    subtree, diff(t, subtree)
-end
-
-
 #### Regexes
 
+"""
+    getindex(t::Dir, regex::Regex)
+    t[regex]
+
+Returns a filtered trees where paths match the `regex` regular expression.
+Surround the regular expression in `^` and `\$` (to match the entire string).
+"""
 function Base.getindex(t::Dir, regex::Regex; toplevel=true)
     if !toplevel && !isnothing(match(regex, path(t)))
         return t

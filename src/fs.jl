@@ -48,11 +48,11 @@ dir/
 ```
 """
 function Base.mv(t::Dir, from_path::Regex, to_path::SubstitutionString; combine=_merge_error)
-    matches, unmatches = detach(t, from_path)
+    matches = t[from_path]
     isempty(matches) && return t
 
     newtree = _rewrite_tree(matches, from_path, to_path, combine)
-    merge(unmatches, newtree; combine=combine)
+    merge(diff(t, matches), newtree; combine=combine)
 end
 
 """
@@ -108,16 +108,19 @@ function Base.cp(t::Dir, from_path::Regex, to_path::SubstitutionString; combine=
     merge(t, newtree; combine=combine)
 end
 
+# getindex but return the rooted tree 
+function _getsubtree(x, path::AbstractString)
+    spath = splitpath(path)[1:end-1]
+    maketree(name(x) => foldl((x, acc) -> acc => [x], [x[path]; reverse(spath);]))
+end
+_getsubtree(x, path) = x[path]
+
 """
     rm(t::Dir, pattern)
 
 remove nodes which match `pattern` from the file tree.
-`pattern` is the same as the pattern argument to `detach`.
 """
-function Base.rm(t::Dir, path)
-    _, t1 = detach(t, path)
-    return t1
-end
+Base.rm(t::Dir, path) = diff(t, _getsubtree(path))
 
 function _mknode(T, t, path::AbstractString, value)
     spath = splitpath(path)

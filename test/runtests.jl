@@ -12,10 +12,10 @@ t = maketree(["a" => ["b" => ["a"],
     @test t["a"]["b"]["a"] isa File
     @test t["a"]["c"]["c"] isa Dir
 
-    @test path(t["a"]["b"]["a"])  == "./a/b/a"
+    @test path(t["a"]["b"]["a"], "/")  == "./a/b/a"
 
     t1 = DirTools.rename(t, "foo")
-    @test path(t1["a"]["b"]["a"])  == "foo/a/b/a"
+    @test path(t1["a"]["b"]["a"], "/")  == "foo/a/b/a"
 
     @test isequal(t[r"a|b"], t)
 

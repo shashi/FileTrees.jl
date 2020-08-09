@@ -189,9 +189,16 @@ maketree(node::Vector) = maketree("."=>node)
 
 Base.basename(d::Node) = d.name
 
-path(d::Node) = parent(d) === nothing ? d.name : joinpath(path(parent(d)), d.name)
+function path(d::Node, delim=nothing)
+    parent(d) === nothing && return d.name
+    if delim === nothing
+        joinpath(path(parent(d)), d.name)
+    else
+        string(path(parent(d, delim)), delim, d.name)
+    end
+end
 
-Base.dirname(d::Node) = dirname(path(d))
+Base.dirname(d::Node, delim=nothing) = dirname(path(d, delim))
 
 Base.getindex(d::Node) = d.value
 

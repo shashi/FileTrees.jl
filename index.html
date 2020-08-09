@@ -221,7 +221,11 @@ first(yellowdf, <span class="hljs-number">15</span>)</code></pre><pre><code clas
 │ 14  │ 1        │ 2019-02-01 00:25:30  │ 2019-02-01 00:28:14   │ 1               │ 0.8           │ 1          │ N                  │ 140          │ 263          │ 2            │ 5.0         │ 0.5     │ 0.5     │ 0.0        │ 0.0          │ 0.3                   │ 6.3          │ 0.0                  │
 │ 15  │ 1        │ 2019-02-01 00:38:02  │ 2019-02-01 00:40:57   │ 1               │ 0.8           │ 1          │ N                  │ 229          │ 141          │ 2            │ 4.5         │ 0.5     │ 0.5     │ 0.0        │ 0.0          │ 0.3                   │ 5.8          │ 0.0                  │</code></pre>
 <h1 id="parallelism_and_laziness"><a href="#parallelism_and_laziness">Parallelism and laziness</a></h1>
-<p>In the previous section, <code>load</code> simply loaded the data into memory when called, this does not happen in parallel by default. The way to load files in parallel is to load them with the <code>lazy&#61;true</code> flag. This creates lazy tree of computations &#40;called <code>Thunk</code>s&#41;. Any subsequent <code>mapvalues</code> or <code>reducevalues</code> will be lazy if called on a lazy-loaded tree. At any point to materialize lazy values, you can call the <code>exec</code> function.</p>
+<p>If <code>load</code> is called with <code>lazy&#61;true</code> flag, data is not immediately loaded in memory, but a task is created at each file node for loading the file.</p>
+<p>Lazy-loading allows you to save precious memory if you&#39;re not going to use most of the data. &#40;e.g. If you just want to look at yellow taxi data but you end up loading the whole dataset, it&#39;s ok when in lazy mode&#41;.</p>
+<p>In contrast, in the previous section, <code>load</code> without <code>lazy&#61;true</code> simply loaded the data one file at a time eagerly.</p>
+<p>When you lazy-load and chain operations on the lazy loaded data, you are also telling DirTools about the dependency of tasks involved in the computation, hence <code>exec</code> on a lazy tree or value will be able to perform these tasks in parallel.</p>
+<p>This creates lazy tree of computations &#40;called <code>Thunk</code>s&#41;. Any subsequent <code>mapvalues</code> or <code>reducevalues</code> will be lazy if called on a lazy-loaded tree. At any point to materialize lazy values, you can call the <code>exec</code> function.</p>
 <pre><code class="julia hljs">lazy_dfs = DirTools.load(taxi_dir; lazy=<span class="hljs-literal">true</span>) <span class="hljs-keyword">do</span> file
     DataFrame(CSV.File(path(file)))
 <span class="hljs-keyword">end</span></code></pre><pre><code class="plaintext hljs">taxi-data/
@@ -271,7 +275,7 @@ first(yellowdf, <span class="hljs-number">15</span>)</code></pre><pre><code clas
 │ 13  │ 1        │ 2019-02-01 00:45:38  │ 2019-02-01 00:51:10   │ 1               │ 0.8           │ 1          │ N                  │ 95           │ 95           │ 2            │ 5.5         │ 0.5     │ 0.5     │ 0.0        │ 0.0          │ 0.3                   │ 6.8          │ 0.0                  │
 │ 14  │ 1        │ 2019-02-01 00:25:30  │ 2019-02-01 00:28:14   │ 1               │ 0.8           │ 1          │ N                  │ 140          │ 263          │ 2            │ 5.0         │ 0.5     │ 0.5     │ 0.0        │ 0.0          │ 0.3                   │ 6.3          │ 0.0                  │
 │ 15  │ 1        │ 2019-02-01 00:38:02  │ 2019-02-01 00:40:57   │ 1               │ 0.8           │ 1          │ N                  │ 229          │ 141          │ 2            │ 4.5         │ 0.5     │ 0.5     │ 0.0        │ 0.0          │ 0.3                   │ 5.8          │ 0.0                  │</code></pre>
-<p>Here calling <code>exec</code> is computes all the values required to compute the result.</p>
+<p>Here calling <code>exec</code> computes all the values required to compute the result.</p>
 <p>This computation is set up to be parallel:</p>
 <p>To obtain parallelism you need to start julia in a parallel way:</p>
 <pre><code class="sh hljs"><span class="hljs-built_in">export</span> JULIA_NUM_THREADS=10   <span class="hljs-comment"># 10 concurrent tasks per process (will use multi-threading)</span>

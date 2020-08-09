@@ -1,8 +1,4 @@
-using AbstractTrees
-import AbstractTrees: children
-import Base: parent
 
-export name, path, maketree
 struct NoValue end
 
 """
@@ -74,13 +70,17 @@ name(f::Dir) = f.name
 
 Base.isempty(d::Dir) = isempty(d.children)
 
+Base.empty(d::Dir) = Dir(d; children=[])
+
 function rename(x::Dir, newname)
-    set_parent(Dir(x, name=newname))
+    setparent(Dir(x, name=newname))
 end
 
-function set_parent(x::Dir, parent=parent(x))
+setvalue(x::Dir, val) = Dir(x; value=val)
+
+function setparent(x::Dir, parent=parent(x))
     p = Dir(x, parent=parent, children=copy(x.children))
-    copy!(p.children, set_parent.(x.children, (p,)))
+    copy!(p.children, setparent.(x.children, (p,)))
     p
 end
 
@@ -126,7 +126,11 @@ name(f::File) = f.name
 
 Base.isempty(d::File) = false
 
-set_parent(x::File, parent=parent(x)) = File(x, parent=parent)
+Base.empty(d::File) = d
+
+setvalue(x::File, val) = File(x, value=val)
+
+setparent(x::File, parent=parent(x)) = File(x, parent=parent)
 
 files(tree::Dir) = Dir(tree; children=filter(x->x isa File, tree.children))
 
@@ -184,7 +188,7 @@ function _maketree(node, children)
     return Dir(nothing, name, cs, value)
 end
 
-maketree(node) = set_parent(_maketree(node))
+maketree(node) = setparent(_maketree(node))
 maketree(node::Vector) = maketree("."=>node)
 
 Base.basename(d::Node) = d.name
@@ -194,7 +198,7 @@ function path(d::Node, delim=nothing)
     if delim === nothing
         joinpath(path(parent(d)), d.name)
     else
-        string(path(parent(d, delim)), delim, d.name)
+        string(path(parent(d), delim), delim, d.name)
     end
 end
 
@@ -258,13 +262,13 @@ function Base.merge(t1::Dir, t2::Dir; combine=_merge_error, dotnorm=true)
         Dir(t1; children=vcat(cs, children(t2)[map(!, t2_merged)]))
     else
         Dir(nothing, ".", [t1, t2], NoValue())
-    end |> set_parent
+    end |> setparent
     dotnorm ? normdots(bigt; combine=combine) : bigt
 end
 
 function apply_combine(f, x, y)
     (!hasvalue(x) && !hasvalue(y)) && return y
-    x(value=maybe_lazy(f)(x[], y[]))
+    setvalue(x, maybe_lazy(f)(x[], y[]))
 end
 
 struct OnNodes
@@ -330,7 +334,7 @@ function Base.diff(t1::Dir, t2::Dir)
                 push!(cs, x)
             end
         end
-        Dir(t1; children=cs) |> set_parent
+        Dir(t1; children=cs) |> setparent
     else
         t1
     end
@@ -347,5 +351,5 @@ function clip(t, n; combine=_merge_error)
     cs = map(children(t)) do x
         y = clip(x, n-1)
     end
-    reduce((x,y)->merge(x,y,combine=combine), cs) |> set_parent
+    reduce((x,y)->merge(x,y,combine=combine), cs) |> setparent
 end

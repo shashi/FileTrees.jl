@@ -40,7 +40,7 @@ A summary of the value loaded into each file is shown in parentheses. Let's look
 
 ```julia:dir1
 using DirTools: value # hide
-value(dfs["2020/01/yellow.csv"])
+dfs["2020/01/yellow.csv"][]
 ```
 
 We may want to combine all yellow taxi files into a single DataFrame using `reducevalues`.
@@ -56,7 +56,7 @@ green = dfs[glob"*/*/green.csv"]
 # method 2
 
 yellow = dfs[glob"*/*/yellow.csv"]
-green = DirTools.treediff(dfs, yellow);
+green = diff(dfs, yellow);
 
 @show yellow
 @show green
@@ -77,8 +77,8 @@ green′ = mv(dfs, r"(.*)/(.*)/green.csv", s"green/\1/\2.csv")["green"]
 `mv` does not affect the file system, it only restructures the tree in memory. But you can save the new structure into disk. Let's write the `yellow` tree to disk, further, let's only save the first 10 columns of the data into these files.
 
 ```julia:dir1
-DirTools.save(DirTools.set_parent(yellow′, nothing)) do file
-    CSV.write(path(file), value(file))
+DirTools.save(setparent(yellow′, nothing)) do file
+    CSV.write(path(file), file[])
 end
 ```
 
@@ -133,14 +133,15 @@ julia -p 8                    # 8 OS pocesses
 
 In the REPL:
 
-```julia
+```julia:cool
+using Distributed
 @everywhere using DirTools, CSV, DataFrames
 
 lazy_dfs = DirTools.load(taxi_dir; lazy=true) do file
     DataFrame(CSV.File(path(file)))
 end
 
-reduce(vcat, lazy_dfs) |> exec;
+first(exec(reducevalues(vcat, lazy_dfs[r"yellow.csv$"])), 15)
 ```
 
 Here at most 10x8 files are loaded at a time into memory. And 80 tasks will work on them in parallel as the OS is able to schedule them. these 80 files are first reduced using the reduction function and then DirTools will move on to the next 80 files while releasing the first 80 from memory. This is very beneficial if you have 1000s of files.

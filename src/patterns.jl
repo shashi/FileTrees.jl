@@ -1,9 +1,3 @@
-using Glob
-
-import Glob: GlobMatch
-
-export @glob_str
-
 function Dir(g::GlobMatch)
     name = "."
     x = if g.pattern[1] isa AbstractString
@@ -17,7 +11,7 @@ function Dir(g::GlobMatch)
         # empty with only the dirname
         Dir(nothing, name, [], NoValue())
     else
-        set_parent(x)
+        setparent(x)
     end
 end
 
@@ -29,14 +23,14 @@ function Base.getindex(t::Dir, g::GlobMatch)
     sub
 end
 
-Base.empty(d::Dir) = Dir(d; children=[])
-
 _occursin(p::AbstractString, x) = p == x
 _occursin(p, x) = occursin(p, x)
 
 _glob_filter(t::Node, ps...) = _glob_map(identity, x->nothing, t, ps...)
 
-_glob_map(yes, no, t::Node) = yes(t) # occurs when there's no pattern left to match
+_glob_map(yes, no, t::File) = yes(t)
+
+_glob_map(yes, no, t::Dir) = yes(t)
 
 function _glob_map(yes, no, t::Dir, p, ps...)
     if _occursin(p, name(t))
@@ -57,10 +51,6 @@ end
 _glob_map(yes, no, t::File, p) = _occursin(p, name(t)) ? yes(t) : no(t)
 _glob_map(yes, no, t::File, p...) = no(t)
 
-function mapmatches(f, t::Dir, g::GlobMatch)
-    _glob_map(f, identity, t, g.pattern...) |> set_parent
-end
-
 #### Regexes
 
 """
@@ -70,21 +60,33 @@ end
 Returns a filtered trees where paths match the `regex` regular expression.
 Surround the regular expression in `^` and `\$` (to match the entire string).
 """
-function Base.getindex(t::Dir, regex::Regex; toplevel=true)
-    if !toplevel && !isnothing(match(regex, path(t)))
-        return t
+
+function Base.getindex(x::Union{Dir, File}, regex::Regex)
+    t = _regex_map(identity, x->nothing, x, regex)
+    isnothing(t) ?  empty(x) : t
+end
+
+function _regex_map(yes, no, t::Dir, regex::Regex, toplevel=true)
+    if !toplevel && !isnothing(match(regex, path(t, "/")))
+        return yes(t)
     end
 
     cs = map(children(t)) do x
         if toplevel
-            x = set_parent(x, nothing)
+            x = setparent(x, nothing)
         end
-        getindex(x, regex, toplevel=false)
+        _regex_map(yes, no, x, regex, false)
     end
 
-    Dir(t; children=filter(x->!isnothing(x) && !isempty(x), cs))
+    cs = filter(!isnothing, cs)
+
+    if isempty(cs)
+        return no(t)
+    else
+        return Dir(t; children=cs)
+    end
 end
 
-function Base.getindex(t::File, regex::Regex; toplevel=false)
-    !isnothing(match(regex, path(t))) ? t : nothing
+function _regex_map(yes, no, t::File, regex::Regex, toplevel=false)
+    !isnothing(match(regex, path(t, "/"))) ? yes(t) : no(t)
 end

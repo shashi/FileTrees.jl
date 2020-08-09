@@ -53,7 +53,7 @@ dir/
    └─ 2.csv
 ```
 """
-function Base.mv(t::Dir, from_path::Regex, to_path::SubstitutionString; combine=_merge_error)
+function mv(t::Dir, from_path::Regex, to_path::SubstitutionString; combine=_merge_error)
     matches = t[from_path]
     isempty(matches) && return t
 
@@ -106,7 +106,7 @@ dir/
    └─ 2.csv
 ```
 """
-function Base.cp(t::Dir, from_path::Regex, to_path::SubstitutionString; combine=_merge_error)
+function cp(t::Dir, from_path::Regex, to_path::SubstitutionString; combine=_merge_error)
     matches = t[from_path]
     isempty(matches) && return t
 
@@ -116,8 +116,7 @@ end
 
 # getindex but return the rooted tree 
 function _getsubtree(x, path::AbstractString)
-    spath = splitpath(path)[1:end-1]
-    maketree(name(x) => foldl((x, acc) -> acc => [x], [x[path]; reverse(spath);]))
+    _getsubtree(x, GlobMatch(splitpath(path)))
 end
 _getsubtree(x, path) = x[path]
 
@@ -126,7 +125,7 @@ _getsubtree(x, path) = x[path]
 
 remove nodes which match `pattern` from the file tree.
 """
-Base.rm(t::Dir, path) = diff(t, _getsubtree(path))
+rm(t::Dir, path) = diff(t, _getsubtree(t, path))
 
 function _mknode(T, t, path::AbstractString, value)
     spath = splitpath(path)
@@ -149,7 +148,7 @@ end
 
 Create an file node at `path` in the tree. Does not contain any value by default.
 """
-function Base.touch(t::Dir, path::AbstractString; value=NoValue())
+function touch(t::Dir, path::AbstractString; value=NoValue())
     _mknode(File, t, path, value)
 end
 
@@ -158,6 +157,6 @@ end
 
 Create a directory node at `path` in the tree. Does not contain any value by default.
 """
-function Base.mkpath(t::Dir, path::AbstractString; value=NoValue())
+function mkpath(t::Dir, path::AbstractString; value=NoValue())
     _mknode(Dir, t, path, value)
 end

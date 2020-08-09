@@ -1,5 +1,3 @@
-export mapvalues, reducevalues, NoValue, hasvalue
-
 lazify(flag::Nothing, f) = maybe_lazy(f)
 lazify(flag::Bool, f) = flag ? lazy(f) : f
 
@@ -30,7 +28,7 @@ function load(f, t::Node; dirs=false, walk=postwalk, lazy=false)
     loader = x -> begin
         (!dirs && x isa Dir) && return x
         f′ = lazify(lazy, f)
-        typeof(x)(x, value=f′(x))
+        setvalue(x, f′(x))
     end
 
     walk(loader, t)
@@ -47,7 +45,7 @@ Returns a new tree where every value is replaced with the result of applying `f`
 `f` may return `NoValue()` to cause no value to be associated with a node.
 """
 function mapvalues(f, t::Node; lazy=nothing, walk=postwalk)
-    mapvalued(x -> typeof(x)(x; value=lazify(lazy, f)(x[])), t; walk=postwalk)
+    mapvalued(x -> setvalue(x, lazify(lazy, f)(x[])), t; walk=postwalk)
 end
 
 """
@@ -74,6 +72,50 @@ function assocreduce(f, xs)
 end
 
 """
+    mapsubtrees(f, t::Dir, pattern::Union{GlobMatch, Regex})
+
+For every node that matches the pattern provided, apply the function `f`.
+
+If `f` returns either a `File` or `Dir`, this new node will replace the matched node.
+
+If `f` returns `nothing`, the matched node will be deleted
+
+If `f` returns any other value, the value will be used as the value of the node
+and the node itself will be emptied of children.
+
+This will allow use of mapsubtrees for complex use cases.
+
+Suppose you would like to combine the values of a subdirectory with the
+function `hcat` and in turn those values using `vcat`, you can use
+`mapsubtrees` to accomplish this:
+
+```julia
+reducevalues(vcat, mapsubtrees(x->reducevalues(hcat, x), t, glob"*/*"))
+```
+"""
+function mapsubtrees(f, t::Dir, g::GlobMatch)
+    _glob_map(identity, t, g.pattern...) do match
+        x = f(match)
+        if !(x isa Union{Dir, File})
+            setvalue(empty(match), x)
+        else
+            match
+        end
+    end |> setparent
+end
+
+function mapsubtrees(f, t::Dir, r::Regex)
+    _regex_map(identity, t, r) do match
+        x = f(match)
+        if !(x isa Union{Dir, File})
+            setvalue(empty(match), x)
+        else
+            match
+        end
+    end |> setparent
+end
+
+"""
     save(f, x::Node)
 
 Save a Dir to disk. Creates the directory structure
@@ -89,10 +131,10 @@ function save(f, t::Node; lazy=nothing)
         function saver(file, val)
             mkpath(dirname(file))
             # XXX: serialization pitfall!
-            f(typeof(file)(file; value=val))
+            f(setvalue(file, val))
         end
 
-        typeof(x)(x; value=lazify(lazy, saver)(x, x[]))
+        setvalue(x, lazify(lazy, saver)(x, x[]))
     end
     # placeholder task that waits and returns nothing
     reducevalues((x,y)->nothing, t′)

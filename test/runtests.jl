@@ -88,7 +88,7 @@ import DirTools: attach
 end
 
 @testset "values" begin
-    t1 = load(x->uppercase(path(x)), t)
+    t1 = DirTools.load(x->uppercase(path(x)), t)
     if isdir("test_dir")
         rm("test_dir", recursive=true)
     end
@@ -105,7 +105,7 @@ end
     end
 
     t2 = Dir("test_dir")
-    t3 = load(t2) do f
+    t3 = DirTools.load(t2) do f
         open(path(f), "r") do io
             String(read(io))
         end
@@ -126,7 +126,7 @@ end
     end
 
 
-    t1 = load(x->uppercase(path(x)), t, lazy=true)
+    t1 = DirTools.load(x->uppercase(path(x)), t, lazy=true)
 
     @test t1["a/b/a"][] isa Thunk
     @test exec(t1)["a/b/a"][] == "./A/B/A"
@@ -151,7 +151,7 @@ end
 
 
     t2 = Dir("test_dir_lazy")
-    t3 = load(t2; lazy=true) do f
+    t3 = DirTools.load(t2; lazy=true) do f
         open(path(f), "r") do io
             (String(read(io)), now())
         end

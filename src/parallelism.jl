@@ -1,7 +1,3 @@
-import Dagger
-import Dagger: compute, delayed, Chunk, Thunk
-export lazy, exec
-
 lazy(f; kw...) = delayed(f; kw...)
 
 # If any input is lazy, make the output lazy

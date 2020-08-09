@@ -14,7 +14,7 @@
 
 {{doc diff(::Dir, ::Dir) diff method}}
 
-{{doc mapmatches mapmatches method}}
+{{doc mapsubtrees mapsubtrees method}}
 
 ### Loading, computing and saving data
 

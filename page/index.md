@@ -129,8 +129,15 @@ first(yellowdf, 15)
 
 # Parallelism and laziness
 
-In the previous section, `load` simply loaded the data into memory when called, this does not happen in parallel by default. The way to load files in parallel is to load them with the `lazy=true` flag. This creates lazy tree of computations (called `Thunk`s). Any subsequent `mapvalues` or `reducevalues` will be lazy if called on a lazy-loaded tree. At any point to materialize lazy values, you can call the `exec` function.
+If `load` is called with `lazy=true` flag, data is not immediately loaded in memory, but a task is created at each file node for loading the file.
 
+Lazy-loading allows you to save precious memory if you're not going to use most of the data. (e.g. If you just want to look at yellow taxi data but you end up loading the whole dataset, it's ok when in lazy mode).
+
+In contrast, in the previous section, `load` without `lazy=true` simply loaded the data one file at a time eagerly.
+
+When you lazy-load and chain operations on the lazy loaded data, you are also telling DirTools about the dependency of tasks involved in the computation, hence `exec` on a lazy tree or value will be able to perform these tasks in parallel.
+
+ This creates lazy tree of computations (called `Thunk`s). Any subsequent `mapvalues` or `reducevalues` will be lazy if called on a lazy-loaded tree. At any point to materialize lazy values, you can call the `exec` function.
 
 ```julia:dir1
 
@@ -152,7 +159,7 @@ yellowdf = exec(reducevalues(vcat, yellow′))
 first(yellowdf, 15)
 ```
 
-Here calling `exec` is computes all the values required to compute the result.
+Here calling `exec` computes all the values required to compute the result.
 
 This computation is set up to be parallel:
 

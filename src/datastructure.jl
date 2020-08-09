@@ -1,5 +1,6 @@
 using AbstractTrees
 import AbstractTrees: children
+import Base: parent
 
 export name, path, maketree
 struct NoValue end

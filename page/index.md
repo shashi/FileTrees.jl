@@ -135,9 +135,7 @@ Lazy-loading allows you to save precious memory if you're not going to use most 
 
 In contrast, in the previous section, `load` without `lazy=true` simply loaded the data one file at a time eagerly.
 
-When you lazy-load and chain operations on the lazy loaded data, you are also telling DirTools about the dependency of tasks involved in the computation, hence `exec` on a lazy tree or value will be able to perform these tasks in parallel.
-
- This creates lazy tree of computations (called `Thunk`s). Any subsequent `mapvalues` or `reducevalues` will be lazy if called on a lazy-loaded tree. At any point to materialize lazy values, you can call the `exec` function.
+When you lazy-load and chain operations on the lazy loaded data, you are also telling DirTools about the dependency of tasks involved in the computation. `mapvalues` or `reducevalues` on lazy-loaded data will themselves return trees with lazy values or a lazy value respectively. To compute lazy values, you can call the `exec` function. This will do the computation in parallel.
 
 ```julia:dir1
 
@@ -146,12 +144,9 @@ lazy_dfs = DirTools.load(taxi_dir; lazy=true) do file
 end
 ```
 
-Great thing about it is you can still filter the tree or restructure it.
-
 ```julia:dir1
 yellow′ = mv(lazy_dfs, r"(.*)/(.*)/yellow.csv", s"yellow/\1/\2.csv")["yellow"]
 ```
-tree restructuring keeps the values lazy.
 
 ```julia:dir1
 yellowdf = exec(reducevalues(vcat, yellow′))
@@ -159,9 +154,7 @@ yellowdf = exec(reducevalues(vcat, yellow′))
 first(yellowdf, 15)
 ```
 
-Here calling `exec` computes all the values required to compute the result.
-
-This computation is set up to be parallel:
+Here calling `exec` computes all the values required to compute the result. This means the green taxi data is never loaded into memory in this particular case.
 
 To obtain parallelism you need to start julia in a parallel way:
 
@@ -184,13 +177,15 @@ end
 first(exec(reducevalues(vcat, lazy_dfs[r"yellow.csv$"])), 15)
 ```
 
-If running in an environment with 8 procs with 10 threads each. 80 tasks will work on them in parallel (as ultimately allowed by the OS). Once a task has finished, the data required to execute the task is freed from memory. So in this example, the DataFrames loaded from disk are freed from memory right after they've been reduced with `vcat`.
+If running in an environment with 8 procs with 10 threads each, 80 tasks will work on them in parallel (they are ultimately scheduled by the OS). Once a task has finished, the data required to execute the task is freed from memory if no longer required by any other task. So in this example, the DataFrames loaded from disk are freed from memory right after they've been reduced with `vcat`.
 
-`reducevalues` performs an associative reduce to aide in the freeing of memory: the first two files are loaded, vcat is called on them, and the input dataframes are freed from memory.
+`reducevalues` performs an associative reduce to aide in the freeing of memory: the first two files are loaded, `vcat` is called on them, and the input dataframes are freed from memory. And then when the next two files have been similarly `vcat`ed, the two resulting values are then `vcat`ed and freed, and so on.
 
 If you wish to compute on more data than you have memory to hold, the following information should help you:
 
-As discussed in this example, there are 80 concurrent tasks at any given time executing a task in the graph. So at any given time, the peak memory usage will be the peak memory usage of 80 of the tasks in the task graph.
+As discussed in this example, there are 80 concurrent tasks at any given time executing a task in the graph. So at any given time, the peak memory usage will be the peak memory usage of 80 of the tasks in the task graph. Hence one can plan how many processes and threads should be started at the beginning of a computation so as to keep the memory usage manageable.
+
+It is also necessary to keep in mind what amount of memory a call to `exec` will produce, since that memory allocation cannot be avoided. This means `reducevalues` where the reduction computes a small value (such as sum or mean) works best.
 
 # Caching
 

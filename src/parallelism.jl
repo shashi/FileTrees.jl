@@ -4,6 +4,7 @@ lazy(f; kw...) = delayed(f; kw...)
 maybe_lazy(f, x) = any(x->x isa Union{Thunk, Chunk}, x) ? lazy(f)(x...) : f(x...)
 maybe_lazy(f) = (x...) -> maybe_lazy(f, x)
 
+compute(d::Dir; cache=true, kw...) = compute(Dagger.Context(), dir; cache=cache, kw...)
 function compute(ctx, d::Dir; cache=true, kw...)
     thunks = []
     mapvalues(d; lazy=false) do x
@@ -24,6 +25,6 @@ function compute(ctx, d::Dir; cache=true, kw...)
     end
 end
 
-exec(d::Dir) = mapvalues(exec, compute(Dagger.Context(), d, cache=false); lazy=false)
+exec(d::Dir) = mapvalues(exec, compute(d, cache=false); lazy=false)
 exec(d::Union{Thunk, Chunk}) = collect(compute(d))
 exec(x) = x

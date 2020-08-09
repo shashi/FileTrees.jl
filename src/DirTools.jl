@@ -30,7 +30,7 @@ include("values.jl")
 import Dagger
 import Dagger: compute, delayed, Chunk, Thunk
 
-export lazy, exec
+export lazy, exec, compute
 
 include("parallelism.jl")
 

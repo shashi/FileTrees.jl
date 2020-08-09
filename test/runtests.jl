@@ -101,14 +101,14 @@ end
         rm("test_dir", recursive=true)
     end
 
-    @test DirTools.value(t1["a/b/a"]) == "./A/B/A"
+    @test t1["a/b/a"][] == "./A/B/A"
 
     @test reducevalues(*, mapvalues(lowercase, t1)) == lowercase(reducevalues(*, t1))
 
-    save(maketree("test_dir" => [t1])) do f
+    DirTools.save(maketree("test_dir" => [t1])) do f
         @test f isa File
         open(path(f), "w") do io
-            print(io, DirTools.value(f))
+            print(io, f[])
         end
     end
 
@@ -136,14 +136,14 @@ end
 
     t1 = load(x->uppercase(path(x)), t, lazy=true)
 
-    @test DirTools.value(t1["a/b/a"]) isa Thunk
-    @test DirTools.value(exec(t1)["a/b/a"]) == "./A/B/A"
+    @test t1["a/b/a"][] isa Thunk
+    @test exec(t1)["a/b/a"][] == "./A/B/A"
 
     @test exec(reducevalues(*, mapvalues(lowercase, t1))) == lowercase(exec(reducevalues(*, t1)))
 
-    s = save(maketree("test_dir_lazy" => [t1])) do f
+    s = DirTools.save(maketree("test_dir_lazy" => [t1])) do f
         open(path(f), "w") do io
-            print(io, DirTools.value(f))
+            print(io, f[])
         end
     end
 

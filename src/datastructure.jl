@@ -36,7 +36,7 @@ end
 # convenience method to replace a few parameters
 # and leave others unchanged
 function Dir(t::Dir;
-                  parent=t.parent,
+                  parent=parent(t),
                   name=t.name,
                   children=t.children,
                   value=t.value)
@@ -78,7 +78,7 @@ function rename(x::Dir, newname)
     set_parent(Dir(x, name=newname))
 end
 
-function set_parent(x::Dir, parent=x.parent)
+function set_parent(x::Dir, parent=parent(x))
     p = Dir(x, parent=parent, children=copy(x.children))
     copy!(p.children, set_parent.(x.children, (p,)))
     p
@@ -94,7 +94,7 @@ end
 
 File(parent, name) = File(parent, name, NoValue())
 
-function File(f::File; parent=f.parent, name=f.name, value=f.value)
+function File(f::File; parent=parent(f), name=f.name, value=f.value)
     File(parent, name, value)
 end
 
@@ -126,7 +126,7 @@ name(f::File) = f.name
 
 Base.isempty(d::File) = false
 
-set_parent(x::File, parent=x.parent) = File(x, parent=parent)
+set_parent(x::File, parent=parent(x)) = File(x, parent=parent)
 
 files(tree::Dir) = Dir(tree; children=filter(x->x isa File, tree.children))
 
@@ -189,7 +189,7 @@ maketree(node::Vector) = maketree("."=>node)
 
 Base.basename(d::Node) = d.name
 
-path(d::Node) = d.parent === nothing ? d.name : joinpath(path(d.parent), d.name)
+path(d::Node) = parent(d) === nothing ? d.name : joinpath(path(parent(d)), d.name)
 
 Base.dirname(d::Node) = dirname(path(d))
 
@@ -346,12 +346,12 @@ function Base.diff(t1::Dir, t2::Dir)
     end
 end
 
-function attach(t, path::AbstractString, t′; combine=_merge_error)
-    spath = splitpath(path)
-    t1 = foldl((x, acc) -> acc => [x], [t′; reverse(spath);]) |> maketree
-    merge(t, maketree(name(t)=>[t1]); combine=combine)
-end
+"""
+    clip(t, n; combine)
 
+Remove `n` top-level directories. `combine` will be called
+to merge any nodes with equal names found at any level being clipped.
+"""
 function clip(t, n; combine=_merge_error)
     n==0 && return t
     cs = map(children(t)) do x

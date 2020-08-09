@@ -1,3 +1,9 @@
+function attach(t, path::AbstractString, t′; combine=_merge_error)
+    spath = splitpath(path)
+    t1 = foldl((x, acc) -> acc => [x], [t′; reverse(spath);]) |> maketree
+    merge(t, maketree(name(t)=>[t1]); combine=combine)
+end
+
 function _rewrite_tree(tree, from_path, to_path, combine)
     newtree = maketree(name(tree)=>[])
     for x in Leaves(tree)

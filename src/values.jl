@@ -1,4 +1,4 @@
-export load, mapvalues, reducevalues, save, NoValue, hasvalue
+export mapvalues, reducevalues, NoValue, hasvalue
 
 lazify(flag::Nothing, f) = maybe_lazy(f)
 lazify(flag::Bool, f) = flag ? lazy(f) : f

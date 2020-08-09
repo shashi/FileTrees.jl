@@ -28,6 +28,6 @@ function compute(ctx, d::Dir; cache=true, kw...)
     end
 end
 
-exec(d::Dir) = mapvalues(exec, compute(Dagger.Context(), d, compute=false); lazy=false)
+exec(d::Dir) = mapvalues(exec, compute(Dagger.Context(), d, cache=false); lazy=false)
 exec(d::Union{Thunk, Chunk}) = collect(compute(d))
 exec(x) = x

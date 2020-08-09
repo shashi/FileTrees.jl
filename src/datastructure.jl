@@ -105,7 +105,7 @@ function AbstractTrees.printnode(io::IO, f::Union{Dir, File})
         print(io, "/")
     end
     if hasvalue(f)
-        print(io," (", summary(value(f)), ")")
+        print(io," (", summary(f[]), ")")
     end
 end
 
@@ -192,9 +192,9 @@ path(d::Node) = d.parent === nothing ? d.name : joinpath(path(d.parent), d.name)
 
 Base.dirname(d::Node) = dirname(path(d))
 
-value(d::Node) = d.value
+Base.getindex(d::Node) = d.value
 
-hasvalue(x::Node) = !(value(x) isa NoValue)
+hasvalue(x::Node) = !(x[] isa NoValue)
 
 ## Tree walking
 
@@ -273,7 +273,7 @@ end
 
 function apply_combine(f, x, y)
     (!hasvalue(x) && !hasvalue(y)) && return y
-    x(value=maybe_lazy(f)(value(x), value(y)))
+    x(value=maybe_lazy(f)(x[], y[]))
 end
 
 struct OnNodes

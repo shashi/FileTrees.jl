@@ -47,7 +47,7 @@ Returns a new tree where every value is replaced with the result of applying `f`
 `f` may return `NoValue()` to cause no value to be associated with a node.
 """
 function mapvalues(f, t::Node; lazy=nothing)
-    mapvalued(x -> typeof(x)(x; value=lazify(lazy, f)(value(x))), t)
+    mapvalued(x -> typeof(x)(x; value=lazify(lazy, f)(x[])), t)
 end
 
 """
@@ -59,7 +59,7 @@ Use `f` to combine values in the tree.
 """
 function reducevalues(f, t::Dir; associative=true, lazy=nothing)
     f′ = lazify(lazy, f)
-    itr = value.(collect(Iterators.filter(hasvalue, Leaves(t))))
+    itr = getindex.(collect(Iterators.filter(hasvalue, Leaves(t))))
     associative ? assocreduce(f′, itr) : reduce(f′, itr)
 end
 
@@ -92,7 +92,7 @@ function save(f, t::Node; lazy=nothing)
             f(typeof(file)(file; value=val))
         end
 
-        typeof(x)(x; value=lazify(lazy, saver)(x, value(x)))
+        typeof(x)(x; value=lazify(lazy, saver)(x, x[]))
     end
     # placeholder task that waits and returns nothing
     reducevalues((x,y)->nothing, t′)

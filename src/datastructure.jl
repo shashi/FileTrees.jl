@@ -218,23 +218,6 @@ end
 
 postwalk(f, t::File; collect_children=identity) = f(t)
 
-function flatten(t::Dir; joinpath=(x,y)->"$(x)_$y")
-    postwalk(t) do x
-        if x isa Dir
-            cs = map(filter(x->x isa Dir, children(x))) do sd
-                map(children(sd)) do thing
-                    newname = joinpath(name(sd), name(thing))
-                    typeof(thing)(thing; name=newname, parent=x)
-                end
-            end |> Iterators.flatten |> collect
-            leftover = filter(x-> isempty(x) || !(x isa Dir), children(x))
-            return Dir(x; children=vcat(cs, leftover))
-        else
-            return x
-        end
-    end
-end
-
 _merge_error(x, y) = error("Files with same name $(name(x)) found at $(dirname(x)) while merging")
 
 """

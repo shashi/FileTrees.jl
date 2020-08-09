@@ -45,14 +45,6 @@ end
                                   "c"=>["c"=>[]]]]))
 end
 
-@testset "flatten" begin
-    @test isequal(DirTools.flatten(t, joinpath=(x,y)->"$(x)/$y"),
-                  maketree(["a/b/a", "a/c/b", "a/c/a", "a/c/c"=>[]]))
-
-    @test isequal(DirTools.flatten(t),
-                  maketree(["a_b_a", "a_c_b", "a_c_a", "a_c_c"=>[]]))
-end
-
 @testset "merge" begin
     @test isequal(merge(t,t), t)
 end

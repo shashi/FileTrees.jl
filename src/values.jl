@@ -46,8 +46,8 @@ Returns a new tree where every value is replaced with the result of applying `f`
 
 `f` may return `NoValue()` to cause no value to be associated with a node.
 """
-function mapvalues(f, t::Node; lazy=nothing)
-    mapvalued(x -> typeof(x)(x; value=lazify(lazy, f)(x[])), t)
+function mapvalues(f, t::Node; lazy=nothing, walk=postwalk)
+    mapvalued(x -> typeof(x)(x; value=lazify(lazy, f)(x[])), t; walk=postwalk)
 end
 
 """

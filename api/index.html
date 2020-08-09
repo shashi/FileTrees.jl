@@ -138,7 +138,7 @@ dir/
         <a href="#rm(::Dir, path)">rm</a>
         <div class="doc-type">method</div></h2>
       <div class="doc-content"><pre><code class="julia hljs">rm(t::Dir, pattern)</code></pre>
-<p>remove nodes which match <code>pattern</code> from the file tree. <code>pattern</code> is the same as the pattern argument to <code>detach</code>.</p>
+<p>remove nodes which match <code>pattern</code> from the file tree.</p>
 </div>
   </div>
 
@@ -162,13 +162,17 @@ dir/
   </div>
 
   <div class="docstring">
-      <h2 class="doc-header" id="mapmatches">
-        <a href="#mapmatches">mapmatches</a>
+      <h2 class="doc-header" id="mapsubtrees">
+        <a href="#mapsubtrees">mapsubtrees</a>
         <div class="doc-type">method</div></h2>
-      <div class="doc-content"><p>No documentation found.</p>
-<p><code>DirTools.mapmatches</code> is a <code>Function</code>.</p>
-<pre><code class="julia hljs"><span class="hljs-comment"># 1 method for generic function &quot;mapmatches&quot;:</span>
-[<span class="hljs-number">1</span>] mapmatches(f, t::DirTools.Dir, g::Glob.GlobMatch) <span class="hljs-keyword">in</span> DirTools at /home/runner/.julia/packages/DirTools/<span class="hljs-number">1</span>Ja4z/src/patterns.jl:<span class="hljs-number">61</span></code></pre>
+      <div class="doc-content"><pre><code class="julia hljs">mapsubtrees(f, t::Dir, pattern::<span class="hljs-built_in">Union</span>{GlobMatch, <span class="hljs-built_in">Regex</span>})</code></pre>
+<p>For every node that matches the pattern provided, apply the function <code>f</code>.</p>
+<p>If <code>f</code> returns either a <code>File</code> or <code>Dir</code>, this new node will replace the matched node.</p>
+<p>If <code>f</code> returns <code>nothing</code>, the matched node will be deleted</p>
+<p>If <code>f</code> returns any other value, the value will be used as the value of the node and the node itself will be emptied of children.</p>
+<p>This will allow use of mapsubtrees for complex use cases.</p>
+<p>Suppose you would like to combine the values of a subdirectory with the function <code>hcat</code> and in turn those values using <code>vcat</code>, you can use <code>mapsubtrees</code> to accomplish this:</p>
+<pre><code class="julia hljs">reducevalues(vcat, mapsubtrees(x-&gt;reducevalues(hcat, x), t, <span class="hljs-string">glob&quot;*/*&quot;</span>))</code></pre>
 </div>
   </div>
 
@@ -227,15 +231,15 @@ dir/
       <div class="doc-content"><p>No documentation found.</p>
 <p><code>DirTools.exec</code> is a <code>Function</code>.</p>
 <pre><code class="julia hljs"><span class="hljs-comment"># 3 methods for generic function &quot;exec&quot;:</span>
-[<span class="hljs-number">1</span>] exec(d::DirTools.Dir) <span class="hljs-keyword">in</span> DirTools at /home/runner/.julia/packages/DirTools/<span class="hljs-number">1</span>Ja4z/src/parallelism.jl:<span class="hljs-number">28</span>
-[<span class="hljs-number">2</span>] exec(d::<span class="hljs-built_in">Union</span>{Dagger.Thunk, Dagger.Chunk}) <span class="hljs-keyword">in</span> DirTools at /home/runner/.julia/packages/DirTools/<span class="hljs-number">1</span>Ja4z/src/parallelism.jl:<span class="hljs-number">29</span>
-[<span class="hljs-number">3</span>] exec(x) <span class="hljs-keyword">in</span> DirTools at /home/runner/.julia/packages/DirTools/<span class="hljs-number">1</span>Ja4z/src/parallelism.jl:<span class="hljs-number">30</span></code></pre>
+[<span class="hljs-number">1</span>] exec(d::DirTools.Dir) <span class="hljs-keyword">in</span> DirTools at /home/runner/.julia/packages/DirTools/LxPsB/src/parallelism.jl:<span class="hljs-number">27</span>
+[<span class="hljs-number">2</span>] exec(d::<span class="hljs-built_in">Union</span>{Dagger.Thunk, Dagger.Chunk}) <span class="hljs-keyword">in</span> DirTools at /home/runner/.julia/packages/DirTools/LxPsB/src/parallelism.jl:<span class="hljs-number">28</span>
+[<span class="hljs-number">3</span>] exec(x) <span class="hljs-keyword">in</span> DirTools at /home/runner/.julia/packages/DirTools/LxPsB/src/parallelism.jl:<span class="hljs-number">29</span></code></pre>
 </div>
   </div>
 
 <div class="page-foot">
   <div class="copyright">
-    &copy; THE AUTHOR. Last modified: August 08, 2020. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a>.
+    &copy; THE AUTHOR. Last modified: August 09, 2020. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a>.
   </div>
 </div>
 </div><!-- CONTENT ENDS HERE -->

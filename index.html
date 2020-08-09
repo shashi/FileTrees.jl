@@ -51,10 +51,11 @@
 DirTools is a set of tools to lazy-load, process and write file trees. Built-in parallelism allows you to max out compute on any machine.
 </p>
 
-<p>There are no restrictions on what files you can read and write. If you have functions to work with one file, you can use the same to work with a file tree.</p>
 <p>Lazy tree operations let you freely restructure file trees so as to be convenient to set up computations. Files in a file tree can have any value attached to them &#40;not necessarily those loaded from the file itself&#41;, you can map and reduce over these values, or combine them by merging or collapsing trees or subtrees.</p>
-<h2 id="introduction"><a href="#introduction">Introduction</a></h2>
-<p>The basic datastructure in DirTools is the <code>Dir</code> tree. The nodes of this tree can be themselves <code>Dir</code> or <code>File</code> objects. Each node contains a <code>name</code> field which shows its name.</p>
+<div class="franklin-toc"><ol><li><a href="#what_is_dirtools">What is DirTools?</a></li><li><a href="#loading_directories">Loading directories</a></li><li><a href="#indexing">Indexing</a></li><li><a href="#mv">mv</a></li><li><a href="#save">save</a></li><li><a href="#reduction">Reduction</a></li><li><a href="#parallelism_and_laziness">Parallelism and laziness</a></li><li><a href="#caching">Caching</a></li><li><a href="#advanced_tree_manipulation_subtrees">Advanced tree manipulation: subtrees</a></li></ol></div>
+<h1 id="loading_directories"><a href="#loading_directories">Loading directories</a></h1>
+<p>The basic datastructure in DirTools is the <a href="api/#Dir"><code>Dir</code></a> tree. The nodes of this tree can be themselves <code>Dir</code> or <code>File</code> objects.</p>
+<p>You can read in a directory structure from disk by simply calling <code>Dir</code> with the directory name.</p>
 <pre><code class="julia hljs"><span class="hljs-keyword">using</span> DirTools
 
 taxi_dir = Dir(<span class="hljs-string">&quot;taxi-data&quot;</span>)</code></pre><pre><code class="plaintext hljs">taxi-data/
@@ -73,7 +74,7 @@ taxi_dir = Dir(<span class="hljs-string">&quot;taxi-data&quot;</span>)</code></p
       ├─ green.csv
       └─ yellow.csv
 </code></pre>
-<p>The files in the directory can be loaded using the <code>load</code> function. Here we use CSV and DataFrames to load the csv files.</p>
+<p>The files in the directory can be loaded using the <a href="api/#load"><code>load</code></a> function. Here we will use CSV and DataFrames to load the csv files.</p>
 <pre><code class="julia hljs"><span class="hljs-keyword">using</span> DataFrames, CSV
 
 dfs = DirTools.load(taxi_dir) <span class="hljs-keyword">do</span> file
@@ -94,24 +95,44 @@ dfs = DirTools.load(taxi_dir) <span class="hljs-keyword">do</span> file
       ├─ green.csv (9×20 DataFrame)
       └─ yellow.csv (9×18 DataFrame)
 </code></pre>
-<p><code>load</code> takes a callback which loads a single file. The <code>file</code> argument to the callback is a <code>File</code> object. It supports the <code>path</code>, <code>parent</code> and <code>value</code> functions.</p>
+<p>A summary of the value loaded into each file is shown in parentheses. The <code>file</code> argument passed to the load callback is a <code>File</code> object. It supports the <a href="api/#name"><code>name</code></a>, <a href="api/#path"><code>path</code></a> and <a href="api/#parent"><code>parent</code></a> functions.</p>
 <p><code>load</code> returns a new <code>Dir</code> which has the same structure as before, but contains the loaded data in each <code>File</code> node.</p>
-<p>A summary of the value loaded into each file is shown in parentheses. Let&#39;s look at one of these DataFrames by indexing into the tree and calling <code>value</code> on the file.</p>
-<pre><code class="julia hljs">dfs[<span class="hljs-string">&quot;2020/01/yellow.csv&quot;</span>][]</code></pre><pre><code class="plaintext hljs">UndefVarError: value not defined
-</code></pre>
-<p>We may want to combine all yellow taxi files into a single DataFrame using <code>reducevalues</code>.</p>
-<p>But first, we have to separate them out. There are several ways to do this, they are all correct.</p>
+<h1 id="indexing"><a href="#indexing">Indexing</a></h1>
+<p>Let&#39;s look at one of these DataFrames by indexing into the tree. The syntax <code>file&#91;&#93;</code> on a file object returns the loaded data.</p>
+<pre><code class="julia hljs">yellow_jan_20 = dfs[<span class="hljs-string">&quot;2020/01/yellow.csv&quot;</span>]
+
+yellow_jan_20[] <span class="hljs-comment"># file[] gets the value</span></code></pre><pre><code class="plaintext hljs">9×18 DataFrame
+│ Row │ VendorID │ tpep_pickup_datetime │ tpep_dropoff_datetime │ passenger_count │ trip_distance │ RatecodeID │ store_and_fwd_flag │ PULocationID │ DOLocationID │ payment_type │ fare_amount │ extra   │ mta_tax │ tip_amount │ tolls_amount │ improvement_surcharge │ total_amount │ congestion_surcharge │
+│     │ Int64    │ String               │ String                │ Int64           │ Float64       │ Int64      │ String             │ Int64        │ Int64        │ Int64        │ Float64     │ Float64 │ Float64 │ Float64    │ Int64        │ Float64               │ Float64      │ Float64              │
+├─────┼──────────┼──────────────────────┼───────────────────────┼─────────────────┼───────────────┼────────────┼────────────────────┼──────────────┼──────────────┼──────────────┼─────────────┼─────────┼─────────┼────────────┼──────────────┼───────────────────────┼──────────────┼──────────────────────┤
+│ 1   │ 1        │ 2020-01-01 00:28:15  │ 2020-01-01 00:33:03   │ 1               │ 1.2           │ 1          │ N                  │ 238          │ 239          │ 1            │ 6.0         │ 3.0     │ 0.5     │ 1.47       │ 0            │ 0.3                   │ 11.27        │ 2.5                  │
+│ 2   │ 1        │ 2020-01-01 00:35:39  │ 2020-01-01 00:43:04   │ 1               │ 1.2           │ 1          │ N                  │ 239          │ 238          │ 1            │ 7.0         │ 3.0     │ 0.5     │ 1.5        │ 0            │ 0.3                   │ 12.3         │ 2.5                  │
+│ 3   │ 1        │ 2020-01-01 00:47:41  │ 2020-01-01 00:53:52   │ 1               │ 0.6           │ 1          │ N                  │ 238          │ 238          │ 1            │ 6.0         │ 3.0     │ 0.5     │ 1.0        │ 0            │ 0.3                   │ 10.8         │ 2.5                  │
+│ 4   │ 1        │ 2020-01-01 00:55:23  │ 2020-01-01 01:00:14   │ 1               │ 0.8           │ 1          │ N                  │ 238          │ 151          │ 1            │ 5.5         │ 0.5     │ 0.5     │ 1.36       │ 0            │ 0.3                   │ 8.16         │ 0.0                  │
+│ 5   │ 2        │ 2020-01-01 00:01:58  │ 2020-01-01 00:04:16   │ 1               │ 0.0           │ 1          │ N                  │ 193          │ 193          │ 2            │ 3.5         │ 0.5     │ 0.5     │ 0.0        │ 0            │ 0.3                   │ 4.8          │ 0.0                  │
+│ 6   │ 2        │ 2020-01-01 00:09:44  │ 2020-01-01 00:10:37   │ 1               │ 0.03          │ 1          │ N                  │ 7            │ 193          │ 2            │ 2.5         │ 0.5     │ 0.5     │ 0.0        │ 0            │ 0.3                   │ 3.8          │ 0.0                  │
+│ 7   │ 2        │ 2020-01-01 00:39:25  │ 2020-01-01 00:39:29   │ 1               │ 0.0           │ 1          │ N                  │ 193          │ 193          │ 1            │ 2.5         │ 0.5     │ 0.5     │ 0.01       │ 0            │ 0.3                   │ 3.81         │ 0.0                  │
+│ 8   │ 2        │ 2019-12-18 15:27:49  │ 2019-12-18 15:28:59   │ 1               │ 0.0           │ 5          │ N                  │ 193          │ 193          │ 1            │ 0.01        │ 0.0     │ 0.0     │ 0.0        │ 0            │ 0.3                   │ 2.81         │ 2.5                  │
+│ 9   │ 2        │ 2019-12-18 15:30:35  │ 2019-12-18 15:31:35   │ 4               │ 0.0           │ 1          │ N                  │ 193          │ 193          │ 1            │ 2.5         │ 0.5     │ 0.5     │ 0.0        │ 0            │ 0.3                   │ 6.3          │ 2.5                  │</code></pre>
+<p>Yellow and Green taxi data have different set of columns. It may be convenient to separate them out into two trees. There are several ways to do this, they are all correct.</p>
 <pre><code class="julia hljs"><span class="hljs-comment"># method 1</span>
 
 yellow = dfs[<span class="hljs-string">glob&quot;*/*/yellow.csv&quot;</span>]
-green = dfs[<span class="hljs-string">glob&quot;*/*/green.csv&quot;</span>]
-
-<span class="hljs-comment"># method 2</span>
+green = dfs[<span class="hljs-string">glob&quot;*/*/green.csv&quot;</span>];</code></pre>
+<p>Here we used a <a href="https://linux.die.net/man/3/glob">glob</a> expression constructed with the <code>glob&quot;&quot;</code> string macro. This macro is provided by <a href="https://github.com/vtjnash/Glob.jl">Glob.jl</a> and is re-exported by DirTools.</p>
+<pre><code class="julia hljs"><span class="hljs-comment"># method 2</span>
 
 yellow = dfs[<span class="hljs-string">glob&quot;*/*/yellow.csv&quot;</span>]
-green = diff(dfs, yellow);
+green = diff(dfs, yellow);</code></pre>
+<p><a href="api/#diff"><code>diff</code></a> allows you to &quot;subtract&quot; a tree structure from another. Here we have only yellow and green taxi files, so diff only leaves the green files behind.</p>
+<p>Let&#39;s see how they look:</p>
+<pre><code class="julia hljs"><span class="hljs-comment"># method 3</span>
 
-<span class="hljs-meta">@show</span> yellow
+yellow = dfs[<span class="hljs-string">r&quot;yellow.csv$&quot;</span>]
+green = diff(dfs, yellow);</code></pre>
+<p>Here we are indexing the tree with a regular expression. The regular expression in this case matches any path ending with the string &quot;yellow.csv&quot;.</p>
+<p>All the above methods should return the exact same yellow and green trees:</p>
+<pre><code class="julia hljs"><span class="hljs-meta">@show</span> yellow
 <span class="hljs-meta">@show</span> green</code></pre><pre><code class="plaintext hljs">yellow = taxi-data/
 ├─ 2019/
 │  ├─ 01/
@@ -138,6 +159,7 @@ green = taxi-data/
 
 </code></pre>
 <p>Here is a cool command to restructure the <code>yellow</code> tree to have one less level. You can&#39;t do this in the shell without a loop, but here we can use regular expressions.</p>
+<h1 id="mv"><a href="#mv">mv</a></h1>
 <pre><code class="julia hljs"><span class="hljs-comment"># method 3</span>
 
 yellow′ = mv(dfs, <span class="hljs-string">r&quot;(.*)/(.*)/yellow.csv&quot;</span>, <span class="hljs-string">s&quot;yellow/\1/\2.csv&quot;</span>)[<span class="hljs-string">&quot;yellow&quot;</span>]
@@ -162,6 +184,7 @@ green′ = green/
 
 </code></pre>
 <p><code>mv</code> does not affect the file system, it only restructures the tree in memory. But you can save the new structure into disk. Let&#39;s write the <code>yellow</code> tree to disk, further, let&#39;s only save the first 10 columns of the data into these files.</p>
+<h1 id="save"><a href="#save">save</a></h1>
 <pre><code class="julia hljs">DirTools.save(setparent(yellow′, <span class="hljs-literal">nothing</span>)) <span class="hljs-keyword">do</span> file
     CSV.write(path(file), file[])
 <span class="hljs-keyword">end</span></code></pre>
@@ -174,7 +197,8 @@ green′ = green/
    ├─ 01.csv
    └─ 02.csv
 </code></pre>
-<p>Coming back to our original goal, we can combine the yellow tree into a single DataFrame:</p>
+<h1 id="reduction"><a href="#reduction">Reduction</a></h1>
+<p>Now that we have files with the same schema in different trees,  we can reduce either tree with <code>vcat</code> function on DataFrames to combine the dataframes into a single dataframe:</p>
 <pre><code class="julia hljs">yellowdf = reducevalues(vcat, yellow)
 
 first(yellowdf, <span class="hljs-number">15</span>)</code></pre><pre><code class="plaintext hljs">15×18 DataFrame
@@ -196,7 +220,7 @@ first(yellowdf, <span class="hljs-number">15</span>)</code></pre><pre><code clas
 │ 13  │ 1        │ 2019-02-01 00:45:38  │ 2019-02-01 00:51:10   │ 1               │ 0.8           │ 1          │ N                  │ 95           │ 95           │ 2            │ 5.5         │ 0.5     │ 0.5     │ 0.0        │ 0.0          │ 0.3                   │ 6.8          │ 0.0                  │
 │ 14  │ 1        │ 2019-02-01 00:25:30  │ 2019-02-01 00:28:14   │ 1               │ 0.8           │ 1          │ N                  │ 140          │ 263          │ 2            │ 5.0         │ 0.5     │ 0.5     │ 0.0        │ 0.0          │ 0.3                   │ 6.3          │ 0.0                  │
 │ 15  │ 1        │ 2019-02-01 00:38:02  │ 2019-02-01 00:40:57   │ 1               │ 0.8           │ 1          │ N                  │ 229          │ 141          │ 2            │ 4.5         │ 0.5     │ 0.5     │ 0.0        │ 0.0          │ 0.3                   │ 5.8          │ 0.0                  │</code></pre>
-<h2 id="parallelism_and_laziness"><a href="#parallelism_and_laziness">Parallelism and laziness</a></h2>
+<h1 id="parallelism_and_laziness"><a href="#parallelism_and_laziness">Parallelism and laziness</a></h1>
 <p>In the previous section, <code>load</code> simply loaded the data into memory when called, this does not happen in parallel by default. The way to load files in parallel is to load them with the <code>lazy&#61;true</code> flag. This creates lazy tree of computations &#40;called <code>Thunk</code>s&#41;. Any subsequent <code>mapvalues</code> or <code>reducevalues</code> will be lazy if called on a lazy-loaded tree. At any point to materialize lazy values, you can call the <code>exec</code> function.</p>
 <pre><code class="julia hljs">lazy_dfs = DirTools.load(taxi_dir; lazy=<span class="hljs-literal">true</span>) <span class="hljs-keyword">do</span> file
     DataFrame(CSV.File(path(file)))
@@ -253,10 +277,11 @@ first(yellowdf, <span class="hljs-number">15</span>)</code></pre><pre><code clas
 <pre><code class="sh hljs"><span class="hljs-built_in">export</span> JULIA_NUM_THREADS=10   <span class="hljs-comment"># 10 concurrent tasks per process (will use multi-threading)</span>
 julia -p 8                    <span class="hljs-comment"># 8 OS pocesses</span></code></pre>
 <p>In the REPL:</p>
-<pre><code class="julia hljs"><span class="hljs-keyword">using</span> Distributed
+<pre><code class="julia hljs"><span class="hljs-keyword">using</span> Distributed, .Threads
 <span class="hljs-meta">@everywhere</span> <span class="hljs-keyword">using</span> DirTools, CSV, DataFrames
 
 lazy_dfs = DirTools.load(taxi_dir; lazy=<span class="hljs-literal">true</span>) <span class="hljs-keyword">do</span> file
+    <span class="hljs-comment"># println(&quot;Loading $(path(file)) on $(myid()) on thread $(threadid())&quot;)</span>
     DataFrame(CSV.File(path(file)))
 <span class="hljs-keyword">end</span>
 
@@ -279,7 +304,23 @@ first(exec(reducevalues(vcat, lazy_dfs[<span class="hljs-string">r&quot;yellow.c
 │ 13  │ 1        │ 2019-02-01 00:45:38  │ 2019-02-01 00:51:10   │ 1               │ 0.8           │ 1          │ N                  │ 95           │ 95           │ 2            │ 5.5         │ 0.5     │ 0.5     │ 0.0        │ 0.0          │ 0.3                   │ 6.8          │ 0.0                  │
 │ 14  │ 1        │ 2019-02-01 00:25:30  │ 2019-02-01 00:28:14   │ 1               │ 0.8           │ 1          │ N                  │ 140          │ 263          │ 2            │ 5.0         │ 0.5     │ 0.5     │ 0.0        │ 0.0          │ 0.3                   │ 6.3          │ 0.0                  │
 │ 15  │ 1        │ 2019-02-01 00:38:02  │ 2019-02-01 00:40:57   │ 1               │ 0.8           │ 1          │ N                  │ 229          │ 141          │ 2            │ 4.5         │ 0.5     │ 0.5     │ 0.0        │ 0.0          │ 0.3                   │ 5.8          │ 0.0                  │</code></pre>
-<p>Here at most 10x8 files are loaded at a time into memory. And 80 tasks will work on them in parallel as the OS is able to schedule them. these 80 files are first reduced using the reduction function and then DirTools will move on to the next 80 files while releasing the first 80 from memory. This is very beneficial if you have 1000s of files.</p>
+<p>If running in an environment with 8 procs with 10 threads each. 80 tasks will work on them in parallel &#40;as ultimately allowed by the OS&#41;. Once a task has finished, the data required to execute the task is freed from memory. So in this example, the DataFrames loaded from disk are freed from memory right after they&#39;ve been reduced with <code>vcat</code>.</p>
+<p><code>reducevalues</code> performs an associative reduce to aide in the freeing of memory: the first two files are loaded, vcat is called on them, and the input dataframes are freed from memory.</p>
+<p>If you wish to compute on more data than you have memory to hold, the following information should help you:</p>
+<p>As discussed in this example, there are 80 concurrent tasks at any given time executing a task in the graph. So at any given time, the peak memory usage will be the peak memory usage of 80 of the tasks in the task graph.</p>
+<h1 id="caching"><a href="#caching">Caching</a></h1>
+<p>The <code>compute</code> function is different from the <code>exec</code> function in that, it will compute the results of the tasks in the tree and leave the data on remote processes rather than fetch it to the master process. Calling <code>compute</code> on a tree will also cause any subsequent requests to compute the same tasks to be served from a cache memory rather than recomputed.</p>
+<h1 id="advanced_tree_manipulation_subtrees"><a href="#advanced_tree_manipulation_subtrees">Advanced tree manipulation: subtrees</a></h1>
+<p><a href="api/#mapsubtrees"><code>mapsubtrees</code></a> is a powerful function since it allows you to recursively apply tree operations on subtrees of a tree.</p>
+<p>This allows a lot of great functionality. Here is a brief list,</p>
+<ul>
+<li><p>flatten a tree to be only 2 levels: <code>mapsubtrees&#40;flatten, glob&quot;*/*&quot;&#41;</code></p>
+</li>
+<li><p>collapse the directories at level 3: <code>mapsubtrees&#40;x-&gt;clip&#40;x, 1&#41;, glob&quot;*/*&quot;&#41;</code></p>
+</li>
+<li><p>reduce 2nd level directories with hcat, but 1st level with <code>vcat</code>: <code>reducevalues&#40;vcat, mapsubtrees&#40;x-&gt;reducevalues&#40;hcat, x&#41;, glob&quot;*&quot;&#41;&#41;</code> Note that this will work on lazy trees by creating lazy nodes as well.</p>
+</li>
+</ul>
 <p>Happy Hacking&#33;</p>
 <div class="page-foot">
   <div class="copyright">

@@ -39,7 +39,7 @@ jobs:
     - run: julia -e '
             using Pkg;
             Pkg.activate("page/");
-            Pkg.add(PackageSpec(url="https://github.com/shashi/DirTools.jl.git"));
+            Pkg.add(PackageSpec(url="https://github.com/shashi/FileTrees.jl.git"));
             Pkg.resolve();
             Pkg.add(["NodeJS", "PkgPage", "DataFrames"]);
             using NodeJS;

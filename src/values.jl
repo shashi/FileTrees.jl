@@ -10,15 +10,15 @@ function mapvalued(f, t::Node; walk=postwalk)
 end
 
 """
-    load(f, t::Dir; dirs=false)
+    load(f, t::FileTree; dirs=false)
 
 Walk the tree and optionally load data for nodes in it.
 
 `f(file)` is the loader function which takes `File` as input.
 Call `path(file)` to get the String path to read the  file.
 
-If `dirs = true` then `f` can either get a `File` or `Dir`.
-nodes within `Dir` will have already been loaded.
+If `dirs = true` then `f` can either get a `File` or `FileTree`.
+nodes within `FileTree` will have already been loaded.
 
 If `NoValue()` is returned by `f`, no value is attached to the node.
 `hasvalue(x)` tells you if `x` already has a value or not.
@@ -26,7 +26,7 @@ If `NoValue()` is returned by `f`, no value is attached to the node.
 function load(f, t::Node; dirs=false, walk=postwalk, lazy=false)
 
     loader = x -> begin
-        (!dirs && x isa Dir) && return x
+        (!dirs && x isa FileTree) && return x
         f′ = lazify(lazy, f)
         setvalue(x, f′(x))
     end
@@ -35,7 +35,7 @@ function load(f, t::Node; dirs=false, walk=postwalk, lazy=false)
 end
 
 """
-    mapvalues(f, x::Dir)
+    mapvalues(f, x::FileTree)
 
 (See `load` to load values into nodes of a tree.)
 
@@ -49,13 +49,13 @@ function mapvalues(f, t::Node; lazy=nothing, walk=postwalk)
 end
 
 """
-    reducevalues(f, t::Dir; associative=true)
+    reducevalues(f, t::FileTree; associative=true)
 
 Use `f` to combine values in the tree.
 
 - `associative=true` assumes `f` can be applied in an associative way
 """
-function reducevalues(f, t::Dir; associative=true, lazy=nothing)
+function reducevalues(f, t::FileTree; associative=true, lazy=nothing)
     f′ = lazify(lazy, f)
     itr = getindex.(collect(Iterators.filter(hasvalue, Leaves(t))))
     associative ? assocreduce(f′, itr) : reduce(f′, itr)
@@ -72,11 +72,11 @@ function assocreduce(f, xs)
 end
 
 """
-    mapsubtrees(f, t::Dir, pattern::Union{GlobMatch, Regex})
+    mapsubtrees(f, t::FileTree, pattern::Union{GlobMatch, Regex})
 
 For every node that matches the pattern provided, apply the function `f`.
 
-If `f` returns either a `File` or `Dir`, this new node will replace the matched node.
+If `f` returns either a `File` or `FileTree`, this new node will replace the matched node.
 
 If `f` returns `nothing`, the matched node will be deleted
 
@@ -93,10 +93,10 @@ function `hcat` and in turn those values using `vcat`, you can use
 reducevalues(vcat, mapsubtrees(x->reducevalues(hcat, x), t, glob"*/*"))
 ```
 """
-function mapsubtrees(f, t::Dir, g::GlobMatch)
+function mapsubtrees(f, t::FileTree, g::GlobMatch)
     _glob_map(identity, t, g.pattern...) do match
         x = f(match)
-        if !(x isa Union{Dir, File})
+        if !(x isa Union{FileTree, File})
             setvalue(empty(match), x)
         else
             match
@@ -104,10 +104,10 @@ function mapsubtrees(f, t::Dir, g::GlobMatch)
     end |> setparent
 end
 
-function mapsubtrees(f, t::Dir, r::Regex)
+function mapsubtrees(f, t::FileTree, r::Regex)
     _regex_map(identity, t, r) do match
         x = f(match)
-        if !(x isa Union{Dir, File})
+        if !(x isa Union{FileTree, File})
             setvalue(empty(match), x)
         else
             match
@@ -118,7 +118,7 @@ end
 """
     save(f, x::Node)
 
-Save a Dir to disk. Creates the directory structure
+Save a FileTree to disk. Creates the directory structure
 and calls `f` with `File` for every file in the tree which
 has a value associated with it.
 

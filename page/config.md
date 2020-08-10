@@ -18,8 +18,8 @@ The latter allows you to plug in values that you would have defined here.
              `prepath` to an empty string. Finally, adjust this if you want the
              deployed page to be in a subfolder e.g.: `YourPackage.jl/web/`.
 -->
-@def title       = "DirTools.jl"
-@def prepath     = "DirTools.jl"
+@def title       = "FileTrees.jl"
+@def prepath     = "FileTrees.jl"
 @def description = """
                    Parallelly process file trees
                    """
@@ -78,7 +78,7 @@ The latter allows you to plug in values that you would have defined here.
 
 @def add_github_view  = true
 @def add_github_star  = true
-@def github_repo      = "shashi/DirTools.jl"
+@def github_repo      = "shashi/FileTrees.jl"
 
 <!-- SECTION LAYOUT
 NOTE:

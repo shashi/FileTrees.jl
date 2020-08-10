@@ -1,10 +1,10 @@
-module DirTools
+module FileTrees
 
 using AbstractTrees
 import AbstractTrees: children
 import Base: parent, getindex
 
-export Dir, File, name, path, maketree, children, rename, setvalue, setparent
+export FileTree, File, name, path, maketree, children, rename, setvalue, setparent
 
 include("datastructure.jl")
 

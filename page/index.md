@@ -1,25 +1,35 @@
-# What is DirTools?
+# What is FileTrees?
 
 ~~~
 <p style="font-size: 1.15em; color: #666; line-height:1.5em">
-DirTools is a set of tools to lazy-load, process and write file trees. Built-in parallelism allows you to max out compute on any machine.
+FileTrees is a set of tools to lazy-load, process and write file trees. Built-in parallelism allows you to max out compute on any machine.
 </p>
 ~~~
 
 Lazy tree operations let you freely restructure file trees so as to be convenient to set up computations. Files in a file tree can have any value attached to them (not necessarily those loaded from the file itself), you can map and reduce over these values, or combine them by merging or collapsing trees or subtrees.
 
+**On this website**
+
+~~~
+<ul>
+<li><a href="api/">API documentation</a></li>
+<li><a href="patterns/">Pattern matching on paths</a></li>
+</ul>
+~~~
+
+**In this article**
 \toc
 
 # Loading directories
 
-The basic datastructure in DirTools is the [`Dir`](api/#Dir) tree. The nodes of this tree can be themselves `Dir` or `File` objects.
+The basic datastructure in FileTrees is the [`FileTree`](api/#FileTree) tree. The nodes of this tree can be themselves `FileTree` or `File` objects.
 
-You can read in a directory structure from disk by simply calling `Dir` with the directory name.
+You can read in a directory structure from disk by simply calling `FileTree` with the directory name.
 
 ```julia:dir1
-using DirTools
+using FileTrees
 
-taxi_dir = Dir("taxi-data")
+taxi_dir = FileTree("taxi-data")
 ```
 
 The files in the directory can be loaded using the [`load`](api/#load) function.
@@ -29,14 +39,14 @@ Here we will use CSV and DataFrames to load the csv files.
 
 using DataFrames, CSV
 
-dfs = DirTools.load(taxi_dir) do file
+dfs = FileTrees.load(taxi_dir) do file
     DataFrame(CSV.File(path(file)))
 end
 ```
 
 A summary of the value loaded into each file is shown in parentheses. The `file` argument passed to the load callback is a `File` object. It supports the [`name`](api/#name), [`path`](api/#path) and [`parent`](api/#parent) functions.
 
-`load` returns a new `Dir` which has the same structure as before, but contains the loaded data in each `File` node.
+`load` returns a new `FileTree` which has the same structure as before, but contains the loaded data in each `File` node.
 
 # Indexing
 
@@ -57,7 +67,7 @@ yellow = dfs[glob"*/*/yellow.csv"]
 green = dfs[glob"*/*/green.csv"];
 ```
 
-Here we used a [glob](https://linux.die.net/man/3/glob) expression constructed with the `glob""` string macro. This macro is provided by [Glob.jl](https://github.com/vtjnash/Glob.jl) and is re-exported by DirTools.
+Here we used a [glob](https://linux.die.net/man/3/glob) expression constructed with the `glob""` string macro. This macro is provided by [Glob.jl](https://github.com/vtjnash/Glob.jl) and is re-exported by FileTrees.
 
 ```julia:dir1
 # method 2
@@ -107,14 +117,14 @@ green′ = mv(dfs, r"(.*)/(.*)/green.csv", s"green/\1/\2.csv")["green"]
 # save
 
 ```julia:dir1
-DirTools.save(setparent(yellow′, nothing)) do file
+FileTrees.save(setparent(yellow′, nothing)) do file
     CSV.write(path(file), file[])
 end
 ```
 
 It's saved!
 ```julia:dir1
-Dir("yellow")
+FileTree("yellow")
 ```
 
 # Reduction
@@ -135,11 +145,11 @@ Lazy-loading allows you to save precious memory if you're not going to use most 
 
 In contrast, in the previous section, `load` without `lazy=true` simply loaded the data one file at a time eagerly.
 
-When you lazy-load and chain operations on the lazy loaded data, you are also telling DirTools about the dependency of tasks involved in the computation. `mapvalues` or `reducevalues` on lazy-loaded data will themselves return trees with lazy values or a lazy value respectively. To compute lazy values, you can call the `exec` function. This will do the computation in parallel.
+When you lazy-load and chain operations on the lazy loaded data, you are also telling FileTrees about the dependency of tasks involved in the computation. `mapvalues` or `reducevalues` on lazy-loaded data will themselves return trees with lazy values or a lazy value respectively. To compute lazy values, you can call the `exec` function. This will do the computation in parallel.
 
 ```julia:dir1
 
-lazy_dfs = DirTools.load(taxi_dir; lazy=true) do file
+lazy_dfs = FileTrees.load(taxi_dir; lazy=true) do file
     DataFrame(CSV.File(path(file)))
 end
 ```
@@ -167,9 +177,9 @@ In the REPL:
 
 ```julia:cool
 using Distributed, .Threads
-@everywhere using DirTools, CSV, DataFrames
+@everywhere using FileTrees, CSV, DataFrames
 
-lazy_dfs = DirTools.load(taxi_dir; lazy=true) do file
+lazy_dfs = FileTrees.load(taxi_dir; lazy=true) do file
     # println("Loading $(path(file)) on $(myid()) on thread $(threadid())")
     DataFrame(CSV.File(path(file)))
 end

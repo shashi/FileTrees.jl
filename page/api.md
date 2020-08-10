@@ -2,17 +2,17 @@
 
 ### Tree manipulation
 
-{{doc Dir Dir type}}
+{{doc FileTree FileTree type}}
 
-{{doc mv(::Dir, ::Regex, ::SubstitutionString; combine) mv method}}
+{{doc mv(::FileTree, ::Regex, ::SubstitutionString; combine) mv method}}
 
-{{doc cp(::Dir, ::Regex, ::SubstitutionString; combine) cp method}}
+{{doc cp(::FileTree, ::Regex, ::SubstitutionString; combine) cp method}}
 
-{{doc rm(::Dir, path) rm method}}
+{{doc rm(::FileTree, path) rm method}}
 
-{{doc merge(::Dir, ::Dir; combine) merge method}}
+{{doc merge(::FileTree, ::FileTree; combine) merge method}}
 
-{{doc diff(::Dir, ::Dir) diff method}}
+{{doc diff(::FileTree, ::FileTree) diff method}}
 
 {{doc mapsubtrees mapsubtrees method}}
 

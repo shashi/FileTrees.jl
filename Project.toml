@@ -1,4 +1,4 @@
-name = "DirTools"
+name = "FileTrees"
 uuid = "72696420-646e-6120-6e77-6f6420746567"
 authors = ["Shashi Gowda <gowda@mit.edu>", "Julian Samaroo <jpsamaroo@jpsamaroo.me>"]
 version = "0.1.0"

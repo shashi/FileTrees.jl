@@ -1,21 +1,21 @@
-function Dir(g::GlobMatch)
+function FileTree(g::GlobMatch)
     name = "."
     x = if g.pattern[1] isa AbstractString
         name = g.pattern[1]
-        _glob_filter(Dir(g.pattern[1]), g.pattern...)
+        _glob_filter(FileTree(g.pattern[1]), g.pattern...)
     else
-        _glob_filter(Dir("."), ".", g.pattern...)
+        _glob_filter(FileTree("."), ".", g.pattern...)
     end
 
     if isnothing(x)
         # empty with only the dirname
-        Dir(nothing, name, [], NoValue())
+        FileTree(nothing, name, [], NoValue())
     else
         setparent(x)
     end
 end
 
-function Base.getindex(t::Dir, g::GlobMatch)
+function Base.getindex(t::FileTree, g::GlobMatch)
     sub = _glob_filter(t, name(t), g.pattern...)
     if sub === nothing
         error("$g did not match in tree")
@@ -30,9 +30,9 @@ _glob_filter(t::Node, ps...) = _glob_map(identity, x->nothing, t, ps...)
 
 _glob_map(yes, no, t::File) = yes(t)
 
-_glob_map(yes, no, t::Dir) = yes(t)
+_glob_map(yes, no, t::FileTree) = yes(t)
 
-function _glob_map(yes, no, t::Dir, p, ps...)
+function _glob_map(yes, no, t::FileTree, p, ps...)
     if _occursin(p, name(t))
         if isempty(children(t)) && (isempty(ps) || (ps[1] isa AbstractString && isempty(ps[1])))
             return yes(t)
@@ -41,7 +41,7 @@ function _glob_map(yes, no, t::Dir, p, ps...)
         if isempty(cs)
             return no(t)
         else
-            return Dir(t, children=cs)
+            return FileTree(t, children=cs)
         end
     else
         return no(t)
@@ -54,19 +54,19 @@ _glob_map(yes, no, t::File, p...) = no(t)
 #### Regexes
 
 """
-    getindex(t::Dir, regex::Regex)
+    getindex(t::FileTree, regex::Regex)
     t[regex]
 
 Returns a filtered trees where paths match the `regex` regular expression.
 Surround the regular expression in `^` and `\$` (to match the entire string).
 """
 
-function Base.getindex(x::Union{Dir, File}, regex::Regex)
+function Base.getindex(x::Union{FileTree, File}, regex::Regex)
     t = _regex_map(identity, x->nothing, x, regex)
     isnothing(t) ?  empty(x) : t
 end
 
-function _regex_map(yes, no, t::Dir, regex::Regex, toplevel=true)
+function _regex_map(yes, no, t::FileTree, regex::Regex, toplevel=true)
     if !toplevel && !isnothing(match(regex, path(t, "/")))
         return yes(t)
     end
@@ -83,7 +83,7 @@ function _regex_map(yes, no, t::Dir, regex::Regex, toplevel=true)
     if isempty(cs)
         return no(t)
     else
-        return Dir(t; children=cs)
+        return FileTree(t; children=cs)
     end
 end
 

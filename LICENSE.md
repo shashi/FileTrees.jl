@@ -1,4 +1,4 @@
-DirTools.jl is licensed under the MIT License:
+FileTrees.jl is licensed under the MIT License:
 
 > Copyright (c) 2020: Shashi Gowda, Julian P. Samaroo
 >

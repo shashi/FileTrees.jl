@@ -1,6 +1,6 @@
 using Test
-using DirTools
-using DirTools: Thunk
+using FileTrees
+using FileTrees: Thunk
 
 using Dates
 
@@ -10,11 +10,11 @@ t = maketree(["a" => ["b" => ["a"],
 @testset "indexing" begin
     @test name(t) == "."
     @test t["a"]["b"]["a"] isa File
-    @test t["a"]["c"]["c"] isa Dir
+    @test t["a"]["c"]["c"] isa FileTree
 
     @test path(t["a"]["b"]["a"], "/")  == "./a/b/a"
 
-    t1 = DirTools.rename(t, "foo")
+    t1 = FileTrees.rename(t, "foo")
     @test path(t1["a"]["b"]["a"], "/")  == "foo/a/b/a"
 
     @test isequal(t[r"a|b"], t)
@@ -40,7 +40,7 @@ end
 end
 
 @testset "filter" begin
-    @test isequal(filter(f->f isa Dir || name(f) == "c", t),
+    @test isequal(filter(f->f isa FileTree || name(f) == "c", t),
                   maketree(["a"=>["b"=>[],
                                   "c"=>["c"=>[]]]]))
 end
@@ -50,11 +50,11 @@ end
 end
 
 @testset "diff" begin
-    @test isempty(DirTools.diff(t,t))
-    @test isequal(DirTools.diff(t,maketree([])), t)
+    @test isempty(FileTrees.diff(t,t))
+    @test isequal(FileTrees.diff(t,maketree([])), t)
 end
 
-import DirTools: attach
+import FileTrees: attach
 
 @testset "touch mv and cp" begin
     global t1 = maketree([])
@@ -88,7 +88,7 @@ import DirTools: attach
 end
 
 @testset "values" begin
-    t1 = DirTools.load(x->uppercase(path(x)), t)
+    t1 = FileTrees.load(x->uppercase(path(x)), t)
     if isdir("test_dir")
         rm("test_dir", recursive=true)
     end
@@ -97,15 +97,15 @@ end
 
     @test reducevalues(*, mapvalues(lowercase, t1)) == lowercase(reducevalues(*, t1))
 
-    DirTools.save(maketree("test_dir" => [t1])) do f
+    FileTrees.save(maketree("test_dir" => [t1])) do f
         @test f isa File
         open(path(f), "w") do io
             print(io, f[])
         end
     end
 
-    t2 = Dir("test_dir")
-    t3 = DirTools.load(t2) do f
+    t2 = FileTree("test_dir")
+    t3 = FileTrees.load(t2) do f
         open(path(f), "r") do io
             String(read(io))
         end
@@ -113,7 +113,7 @@ end
 
     t4 = filter(!isempty, t1)
 
-    @test isequal(t3, DirTools.rename(t4, "test_dir"))
+    @test isequal(t3, FileTrees.rename(t4, "test_dir"))
     if isdir("test_dir")
         rm("test_dir", recursive=true)
     end
@@ -126,14 +126,14 @@ end
     end
 
 
-    t1 = DirTools.load(x->uppercase(path(x)), t, lazy=true)
+    t1 = FileTrees.load(x->uppercase(path(x)), t, lazy=true)
 
     @test t1["a/b/a"][] isa Thunk
     @test exec(t1)["a/b/a"][] == "./A/B/A"
 
     @test exec(reducevalues(*, mapvalues(lowercase, t1))) == lowercase(exec(reducevalues(*, t1)))
 
-    s = DirTools.save(maketree("test_dir_lazy" => [t1])) do f
+    s = FileTrees.save(maketree("test_dir_lazy" => [t1])) do f
         open(path(f), "w") do io
             print(io, f[])
         end
@@ -150,8 +150,8 @@ end
     @test isfile("test_dir_lazy/a/b/a")
 
 
-    t2 = Dir("test_dir_lazy")
-    t3 = DirTools.load(t2; lazy=true) do f
+    t2 = FileTree("test_dir_lazy")
+    t3 = FileTrees.load(t2; lazy=true) do f
         open(path(f), "r") do io
             (String(read(io)), now())
         end
@@ -165,7 +165,7 @@ end
     t4 = filter(!isempty, t1) |> exec
 
     t5 = mapvalues(first, t3) |> exec
-    @test isequal(t5, DirTools.rename(t4, "test_dir_lazy"))
+    @test isequal(t5, FileTrees.rename(t4, "test_dir_lazy"))
 
     if isdir("test_dir_lazy")
         rm("test_dir_lazy", recursive=true)

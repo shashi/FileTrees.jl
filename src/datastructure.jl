@@ -253,7 +253,8 @@ end
 
 postwalk(f, t::File; collect_children=identity) = f(t)
 
-_merge_error(x, y) = error("Files with same name $(name(x)) found at $(dirname(x)) while merging")
+struct UndefMergeError end
+_merge_error(x, y) = throw(UndefMergeError())
 
 """
     merge(t1::FileTree, t2::FileTree; combine)
@@ -292,7 +293,13 @@ end
 
 function apply_combine(f, x, y)
     (!hasvalue(x) && !hasvalue(y)) && return y
-    setvalue(x, maybe_lazy(f)(x[], y[]))
+    try
+        setvalue(x, maybe_lazy(f)(x[], y[]))
+    catch err
+        !(err isa UndefMergeError) && rethrow(err)
+        error("$(name(x)) clashed with an existing file name at path $(path(x)).\n" *
+              "Pass `combine=f` to define how to combine them.")
+    end
 end
 
 struct OnNodes

@@ -31,9 +31,34 @@
       <h1 style="font-size:2em"><a href="/FileTrees.jl/">FileTrees<span style="opacity:0.4">.jl</span></a></h1>
       <p class="lead">Easy parallel file loading</p>
     </div>
-    <nav class="sidebar-nav">
-      <a class="sidebar-nav-item active" href="/FileTrees.jl/">Home</a>
-      <a class="sidebar-nav-item " href="/FileTrees.jl/api/">Full API</a>
+    <style>
+@media (min-width: 768px) {
+    .sidebar-nav {
+        margin-top: 3em;
+    }
+}
+    .sidebar-nav .sidebar-nav-item.active {
+        box-sizing: border-box;
+        border-bottom: 1px #f1f1f1 solid;
+        margin-right: -1em;
+        margin-left: -0.5em;
+        padding-left: 0.5em;
+        color: white;
+        font-weight: normal !important;
+    }
+    .sidebar-nav .sidebar-nav-item {
+        color: #cccccc;
+        margin: 0.5em 0;
+    }
+    </style>
+    <nav class="sidebar-nav" style="opacity: 0.9">
+      <a class="sidebar-nav-item active" href="/FileTrees.jl/">Home page</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/create-trees/">Creating file trees</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/values/">File processing</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/patterns/">Pattern matching</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/tree-manipulation/">Manipulating file trees</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/lazy-parallel/">Laziness and parallelism</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/api/">API documentation</a>
     </nav>
 
   </div>
@@ -56,17 +81,19 @@ FileTrees is a set of tools to lazy-load, process and write file trees. Built-in
 
 <ul>
 <li><a href="create-trees/">Creating file trees</a></li>
-<li><a href="tree-manipulation/">Manipulating file trees</a></li>
+<li><a href="values/">Values in file trees: file loading etc.</a></li>
 <li><a href="patterns/">Pattern matching on paths</a></li>
-<li><a href="values/">Working with values in file trees</a></li>
+<li><a href="tree-manipulation/">Manipulating file trees</a></li>
 <li><a href="lazy-parallel/">Lazy values and parallelism</a></li>
 <li><a href="api/">API documentation</a></li>
 </ul>
 
-<p><strong>In this article</strong> <div class="franklin-toc"><ol><li><a href="#loading_directories">Loading directories</a></li><li><a href="#looking_files_up">Looking files up</a></li><li><a href="#moving_files_with_string_search_and_replace">Moving files with string search and replace</a></li><li><a href="#saving_to_a_directory">Saving to a directory</a></li><li><a href="#reduction">Reduction</a></li></ol></div></p>
+<p><strong>In this article</strong></p>
+<p>We will look at a brief walk through of some of the most important functionality in this article using an example dataset.</p>
+<div class="franklin-toc"><ol><li><a href="#loading_directories">Loading directories</a></li><li><a href="#looking_files_up">Looking files up</a></li><li><a href="#reducing_values_in_trees">reducing values in trees</a></li><li><a href="#saving_to_a_directory">Saving to a directory</a></li></ol></div>
 <h1 id="loading_directories"><a href="#loading_directories">Loading directories</a></h1>
-<p>The basic datastructure in FileTrees is the <a href="api/#FileTree"><code>FileTree</code></a> tree. The nodes of this tree can be themselves <code>FileTree</code> or <code>File</code> objects.</p>
-<p>You can read in a directory structure from disk by simply calling <code>FileTree</code> with the directory name.</p>
+<p>The basic datastructure in FileTrees is the <a href="api/#FileTree"><code>FileTree</code></a>.</p>
+<p>Calling <code>FileTree</code> with a directory name will walk the directory on disk and construct a <code>FileTree</code>.</p>
 <pre><code class="julia hljs"><span class="hljs-keyword">using</span> FileTrees
 
 taxi_dir = FileTree(<span class="hljs-string">&quot;taxi-data&quot;</span>)</code></pre><pre><code class="plaintext hljs">taxi-data/
@@ -212,45 +239,7 @@ green = taxi-data/
 </code></pre>
 <p>Here is a cool command to restructure the <code>yellow</code> tree to have one less level. You can&#39;t do this in the shell without a loop, but here we can use regular expressions.</p>
 <p>See the <a href="patterns/">pattern matching</a> documentation to learn more about how to use pattern matching to manipulate trees.</p>
-<h1 id="moving_files_with_string_search_and_replace"><a href="#moving_files_with_string_search_and_replace">Moving files with string search and replace</a></h1>
-<pre><code class="julia hljs"><span class="hljs-comment"># method 3</span>
-
-yellow′ = mv(dfs, <span class="hljs-string">r&quot;(.*)/(.*)/yellow.csv&quot;</span>, <span class="hljs-string">s&quot;yellow/\1/\2.csv&quot;</span>)[<span class="hljs-string">&quot;yellow&quot;</span>]
-green′ = mv(dfs, <span class="hljs-string">r&quot;(.*)/(.*)/green.csv&quot;</span>, <span class="hljs-string">s&quot;green/\1/\2.csv&quot;</span>)[<span class="hljs-string">&quot;green&quot;</span>]
-
-<span class="hljs-meta">@show</span> yellow′
-<span class="hljs-meta">@show</span> green′</code></pre><pre><code class="plaintext hljs">yellow′ = yellow/
-├─ 2019/
-│  ├─ 01.csv (9×18 DataFrame)
-│  └─ 02.csv (9×18 DataFrame)
-└─ 2020/
-   ├─ 01.csv (9×18 DataFrame)
-   └─ 02.csv (9×18 DataFrame)
-
-green′ = green/
-├─ 2019/
-│  ├─ 01.csv (9×20 DataFrame)
-│  └─ 02.csv (9×20 DataFrame)
-└─ 2020/
-   ├─ 01.csv (9×20 DataFrame)
-   └─ 02.csv (9×20 DataFrame)
-
-</code></pre>
-<p><code>mv</code> does not affect the file system, it only restructures the tree in memory. But you can save the new structure into disk. Let&#39;s write the <code>yellow</code> tree to disk, further, let&#39;s only save the first 10 columns of the data into these files.</p>
-<h1 id="saving_to_a_directory"><a href="#saving_to_a_directory">Saving to a directory</a></h1>
-<pre><code class="julia hljs">FileTrees.save(setparent(yellow′, <span class="hljs-literal">nothing</span>)) <span class="hljs-keyword">do</span> file
-    CSV.write(path(file), file[])
-<span class="hljs-keyword">end</span></code></pre>
-<p>It&#39;s saved&#33;</p>
-<pre><code class="julia hljs">FileTree(<span class="hljs-string">&quot;yellow&quot;</span>)</code></pre><pre><code class="plaintext hljs">yellow/
-├─ 2019/
-│  ├─ 01.csv
-│  └─ 02.csv
-└─ 2020/
-   ├─ 01.csv
-   └─ 02.csv
-</code></pre>
-<h1 id="reduction"><a href="#reduction">Reduction</a></h1>
+<h1 id="reducing_values_in_trees"><a href="#reducing_values_in_trees">reducing values in trees</a></h1>
 <p>Now that we have files with the same schema in different trees,  we can reduce either tree with <code>vcat</code> function on DataFrames to combine the dataframes into a single dataframe:</p>
 <pre><code class="julia hljs">yellowdf = reducevalues(vcat, yellow)
 
@@ -296,6 +285,39 @@ first(yellowdf, <span class="hljs-number">15</span>)</code></pre><pre><code clas
 │ 14  │ 1        │ 2019-02-01 00:25:30  │ 2019-02-01 00:28:14   │ 1               │ 0.8           │ 1          │ N                  │ 140          │ 263          │ 2            │ 5.0         │ 0.5     │ 0.5     │ 0.0        │ 0.0          │ 0.3                   │ 6.3          │ 0.0                  │
 │ 15  │ 1        │ 2019-02-01 00:38:02  │ 2019-02-01 00:40:57   │ 1               │ 0.8           │ 1          │ N                  │ 229          │ 141          │ 2            │ 4.5         │ 0.5     │ 0.5     │ 0.0        │ 0.0          │ 0.3                   │ 5.8          │ 0.0                  │</code></pre>
 <p>Note that in the lazy case the green csv files are never loaded since they are not required to compute the final result&#33;</p>
+<h1 id="saving_to_a_directory"><a href="#saving_to_a_directory">Saving to a directory</a></h1>
+<pre><code class="julia hljs">df1 = dfs[<span class="hljs-string">r&quot;yellow.csv$&quot;</span>]
+
+<span class="hljs-comment"># this mv moves X/Y/yellow.csv to yellow/X/Y.csv</span>
+<span class="hljs-comment"># see the Tree manipulation section of the docs for more</span>
+
+df2 = mv(df1, <span class="hljs-string">r&quot;^([^/]*)/([^/]*)/yellow.csv$&quot;</span>,
+              <span class="hljs-string">s&quot;yellow/\1/\2.csv&quot;</span>)[<span class="hljs-string">&quot;yellow&quot;</span>]
+
+<span class="hljs-meta">@show</span> df2
+
+FileTrees.save(setparent(df2, <span class="hljs-literal">nothing</span>)) <span class="hljs-keyword">do</span> file
+    CSV.write(path(file), file[])
+<span class="hljs-keyword">end</span></code></pre><pre><code class="plaintext hljs">df2 = yellow/
+├─ 2019/
+│  ├─ 01.csv (9×18 DataFrame)
+│  └─ 02.csv (9×18 DataFrame)
+└─ 2020/
+   ├─ 01.csv (9×18 DataFrame)
+   └─ 02.csv (9×18 DataFrame)
+
+</code></pre>
+<p>It&#39;s saved&#33;</p>
+<pre><code class="julia hljs"><span class="hljs-comment"># let&#x27;s read back the new directory</span>
+FileTree(<span class="hljs-string">&quot;yellow&quot;</span>)</code></pre><pre><code class="plaintext hljs">yellow/
+├─ 2019/
+│  ├─ 01.csv
+│  └─ 02.csv
+└─ 2020/
+   ├─ 01.csv
+   └─ 02.csv
+</code></pre>
+
 <p>Happy Hacking&#33;</p>
 <div class="page-foot">
   <div class="copyright">

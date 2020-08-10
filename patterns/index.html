@@ -30,9 +30,34 @@
       <h1 style="font-size:2em"><a href="/FileTrees.jl/">FileTrees<span style="opacity:0.4">.jl</span></a></h1>
       <p class="lead">Easy parallel file loading</p>
     </div>
-    <nav class="sidebar-nav">
-      <a class="sidebar-nav-item " href="/FileTrees.jl/">Home</a>
-      <a class="sidebar-nav-item " href="/FileTrees.jl/api/">Full API</a>
+    <style>
+@media (min-width: 768px) {
+    .sidebar-nav {
+        margin-top: 3em;
+    }
+}
+    .sidebar-nav .sidebar-nav-item.active {
+        box-sizing: border-box;
+        border-bottom: 1px #f1f1f1 solid;
+        margin-right: -1em;
+        margin-left: -0.5em;
+        padding-left: 0.5em;
+        color: white;
+        font-weight: normal !important;
+    }
+    .sidebar-nav .sidebar-nav-item {
+        color: #cccccc;
+        margin: 0.5em 0;
+    }
+    </style>
+    <nav class="sidebar-nav" style="opacity: 0.9">
+      <a class="sidebar-nav-item " href="/FileTrees.jl/">Home page</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/create-trees/">Creating file trees</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/values/">File processing</a>
+      <a class="sidebar-nav-item active" href="/FileTrees.jl/patterns/">Pattern matching</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/tree-manipulation/">Manipulating file trees</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/lazy-parallel/">Laziness and parallelism</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/api/">API documentation</a>
     </nav>
 
   </div>

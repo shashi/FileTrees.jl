@@ -31,9 +31,34 @@
       <h1 style="font-size:2em"><a href="/FileTrees.jl/">FileTrees<span style="opacity:0.4">.jl</span></a></h1>
       <p class="lead">Easy parallel file loading</p>
     </div>
-    <nav class="sidebar-nav">
-      <a class="sidebar-nav-item " href="/FileTrees.jl/">Home</a>
-      <a class="sidebar-nav-item " href="/FileTrees.jl/api/">Full API</a>
+    <style>
+@media (min-width: 768px) {
+    .sidebar-nav {
+        margin-top: 3em;
+    }
+}
+    .sidebar-nav .sidebar-nav-item.active {
+        box-sizing: border-box;
+        border-bottom: 1px #f1f1f1 solid;
+        margin-right: -1em;
+        margin-left: -0.5em;
+        padding-left: 0.5em;
+        color: white;
+        font-weight: normal !important;
+    }
+    .sidebar-nav .sidebar-nav-item {
+        color: #cccccc;
+        margin: 0.5em 0;
+    }
+    </style>
+    <nav class="sidebar-nav" style="opacity: 0.9">
+      <a class="sidebar-nav-item " href="/FileTrees.jl/">Home page</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/create-trees/">Creating file trees</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/values/">File processing</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/patterns/">Pattern matching</a>
+      <a class="sidebar-nav-item active" href="/FileTrees.jl/tree-manipulation/">Manipulating file trees</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/lazy-parallel/">Laziness and parallelism</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/api/">API documentation</a>
     </nav>
 
   </div>
@@ -49,10 +74,10 @@
 <p>The tree manipulation functions are <code>mv</code>, <code>cp</code>, <code>mapsubtrees</code>, <code>merge</code>, <code>diff</code>, <code>clip</code>, <code>flatten</code>.</p>
 <p>A lot of tree manipulation involves pattern matching, so we recommend you read <a href="/FileTrees.jl/patterns">the section on pattern matching first</a>.</p>
 <h2 id="mv_and_cp"><a href="#mv_and_cp"><code>mv</code> and <code>cp</code></a></h2>
-<p><code>mv</code> and <code>cp</code> not only allow you to move and copy nodes within a <code>FileTree</code> but also merge many files by copying them to the same path&#33;</p>
+<p><code>mv</code> and <code>cp</code> not only allow you to move or copy nodes within a <code>FileTree</code> but also merge many files by copying them to the same path.</p>
 <p>The signature of <code>mv</code> is <code>mv&#40;tree::FileTree, r::Regex, s::SubstitutionString; combine&#41;</code>.</p>
-<p>For every file in <code>tree</code> whose path matches the regular expression <code>r</code>, rewrite its path as decided by <code>s</code>.</p>
-<p><code>combine</code> is a callback that is called with the values of two files when a file is moved to an already existing or already created path.</p>
+<p>For every file in <code>tree</code> whose path matches the regular expression <code>r</code>, rewrite its path as decided by <code>s</code>. All paths are to be matched with delimiter <code>/</code> on all platforms &#40;including Windows&#41;.</p>
+<p><code>combine</code> is a callback that is called with the values of two files when a file is moved to an already existing or already created path. By default it is set to error on name clashes where either of the nodes has a non-null value.</p>
 <p><code>s</code> can be a SubstitutionString, which is conveniently constructed using the <a href="https://docs.julialang.org/en/v1/base/strings/#Base.@s_str"><code>s&quot;&quot;</code> string macro</a>.</p>
 <blockquote>
 <p>Within the string, sequences of the form <code>\N</code> refer to the Nth capture group in the regex, and <code>\g&lt;groupname&gt;</code> refers to a named capture group with name <code>groupname</code>.</p>

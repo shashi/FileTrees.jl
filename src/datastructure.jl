@@ -1,4 +1,9 @@
 
+# when string matching patterns, we always use "/" as the
+# delimiter. good luck if your path system allows "/" in
+# file names!
+canonical_path(p::AbstractPath) = join(p.segments, "/")
+
 struct NoValue end
 
 """
@@ -73,7 +78,7 @@ Base.isempty(d::FileTree) = isempty(d.children)
 Base.empty(d::FileTree) = FileTree(d; children=[])
 
 function rename(x::FileTree, newname)
-    setparent(FileTree(x, name=newname))
+    setparent(FileTree(x, name=string(newname)))
 end
 
 setvalue(x::FileTree, val) = FileTree(x; value=val)
@@ -98,7 +103,7 @@ function File(f::File; parent=parent(f), name=f.name, value=f.value)
     File(parent, name, value)
 end
 
-Base.show(io::IO, f::File) = print(io, "File(" * path(f) * ")")
+Base.show(io::IO, f::File) = print(io, string("File(", path(f), ")"))
 
 function AbstractTrees.printnode(io::IO, f::Union{FileTree, File})
     print(io, name(f))
@@ -143,8 +148,10 @@ function Base.getindex(tree::FileTree, ix::Vector)
             children=vcat(map(i->(x=tree[i]; i isa Regex ? x.children :  x), ix)...))
 end
 
-function Base.getindex(tree::FileTree, i::String)
-    spath = splitpath(i)
+Base.getindex(tree::FileTree, i::AbstractString) = tree[Path(i)]
+
+function Base.getindex(tree::FileTree, i::AbstractPath)
+    spath = i.segments
 
     if length(spath) > 1
         for s in spath
@@ -152,11 +159,13 @@ function Base.getindex(tree::FileTree, i::String)
         end
         return tree
     end
+    p = string(i)
 
-    idx = findfirst(x->name(x)==i, children(tree))
+    idx = findfirst(x->name(x)==p, children(tree))
     if idx === nothing
         error("No file matched getindex $i")
     end
+
     tree[idx]
 end
 
@@ -187,7 +196,7 @@ end
 Base.filter(f, x::FileTree; walk=postwalk) =
     walk(n->f(n) ? n : nothing, x; collect_children=cs->filter(!isnothing, cs))
 
-rename(x::File, newname) = File(x, name=newname)
+rename(x::File, newname) = File(x, name=string(newname))
 
 ### Stuff agnostic to FileTree or File nature of "Node"s
 
@@ -215,18 +224,14 @@ end
 maketree(node) = setparent(_maketree(node))
 maketree(node::Vector) = maketree("."=>node)
 
-Base.basename(d::Node) = d.name
+Base.basename(d::Node) = Path(d.name)
 
-function path(d::Node, delim=nothing)
-    parent(d) === nothing && return d.name
-    if delim === nothing
-        joinpath(path(parent(d)), d.name)
-    else
-        string(path(parent(d), delim), delim, d.name)
-    end
+function path(d::Node)
+    parent(d) === nothing && return Path(d.name)
+    path(parent(d)) / Path(d.name)
 end
 
-Base.dirname(d::Node, delim=nothing) = dirname(path(d, delim))
+Base.dirname(d::Node) = dirname(path(d))
 
 Base.getindex(d::Node) = d.value
 

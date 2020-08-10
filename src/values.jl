@@ -129,7 +129,11 @@ function save(f, t::Node; lazy=nothing)
         isempty(x) && return NoValue()
 
         function saver(file, val)
-            mkpath(dirname(file))
+            d = string(dirname(file))
+            # TODO: this does not work if `string` is not called
+            if !isdir(d)
+                mkpath(d)
+            end
             # XXX: serialization pitfall!
             f(setvalue(file, val))
         end

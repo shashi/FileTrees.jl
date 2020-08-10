@@ -1,10 +1,14 @@
 module FileTrees
 
+using FilePathsBase
 using AbstractTrees
 import AbstractTrees: children
 import Base: parent, getindex
 
 export FileTree, File, name, path, maketree, children, rename, setvalue, setparent
+
+import FilePathsBase: /, Path, @p_str
+export @p_str
 
 include("datastructure.jl")
 

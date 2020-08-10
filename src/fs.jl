@@ -1,13 +1,15 @@
-function attach(t, path::AbstractString, t′; combine=_merge_error)
-    spath = splitpath(path)
-    t1 = foldl((x, acc) -> acc => [x], [t′; reverse(spath);]) |> maketree
+const PathLike = Union{AbstractString, AbstractPath}
+
+function attach(t, path::PathLike, t′; combine=_merge_error)
+    spath = Path(path).segments
+    t1 = foldl((x, acc) -> acc => [x], [t′; reverse(spath)...]) |> maketree
     merge(t, maketree(name(t)=>[t1]); combine=combine)
 end
 
 function _rewrite_tree(tree, from_path, to_path, combine)
     newtree = maketree(name(tree)=>[])
     for x in Leaves(tree)
-        newname = replace(path(x), from_path => to_path)
+        newname = replace(canonical_path(path(x)), from_path => to_path)
         dir = dirname(newname)
         dir = isempty(dir) ? "." : dir
         newtree = attach(newtree,
@@ -116,9 +118,9 @@ function cp(t::FileTree, from_path::Regex, to_path::SubstitutionString; combine=
     merge(t, newtree; combine=combine)
 end
 
-# getindex but return the rooted tree 
-function _getsubtree(x, path::AbstractString)
-    _getsubtree(x, GlobMatch(splitpath(path)))
+# getindex but return the rooted tree
+function _getsubtree(x, path::PathLike)
+    _getsubtree(x, GlobMatch(string(path)))
 end
 _getsubtree(x, path) = x[path]
 
@@ -129,8 +131,8 @@ remove nodes which match `pattern` from the file tree.
 """
 rm(t::FileTree, path) = diff(t, _getsubtree(t, path))
 
-function _mknode(T, t, path::AbstractString, value)
-    spath = splitpath(path)
+function _mknode(T, t, path::PathLike, value)
+    spath = Path(path).segments
     subdir = if T == File
         T(nothing, spath[end], value)
     else
@@ -150,7 +152,7 @@ end
 
 Create an file node at `path` in the tree. Does not contain any value by default.
 """
-function touch(t::FileTree, path::AbstractString; value=NoValue())
+function touch(t::FileTree, path::PathLike; value=NoValue())
     _mknode(File, t, path, value)
 end
 
@@ -159,6 +161,6 @@ end
 
 Create a directory node at `path` in the tree. Does not contain any value by default.
 """
-function mkpath(t::FileTree, path::AbstractString; value=NoValue())
+function mkpath(t::FileTree, path::PathLike; value=NoValue())
     _mknode(FileTree, t, path, value)
 end

@@ -1,6 +1,6 @@
 # FileTrees
 
-[![Build Status](https://travis-ci.org/shashi/FileTrees.jl.svg?branch=master)](https://travis-ci.org/shashi/FileTrees.jl) [![AppVeyor status](https://ci.appveyor.com/api/projects/status/ath7hlqi6aofi626/branch/master)](https://ci.appveyor.com/project/shashi/harvest-jl/branch/master) [![Coverage Status](https://coveralls.io/repos/github/shashi/FileTrees.jl/badge.svg?branch=master)](https://coveralls.io/github/shashi/FileTrees.jl?branch=master)
+[![Build Status](https://travis-ci.org/shashi/FileTrees.jl.svg?branch=master)](https://travis-ci.org/shashi/FileTrees.jl) [![AppVeyor status](https://ci.appveyor.com/api/projects/status/ath7hlqi6aofi626/branch/master)](https://ci.appveyor.com/project/shashi/filetrees-jl/branch/master) [![Coverage Status](https://coveralls.io/repos/github/shashi/FileTrees.jl/badge.svg?branch=master)](https://coveralls.io/github/shashi/FileTrees.jl?branch=master)
 
 
 **Note:** this package is a work in progress, the API is undocumented and still in flux. Talk to me or Julian about using or contributing.

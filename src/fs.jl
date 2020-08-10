@@ -8,8 +8,10 @@ function _rewrite_tree(tree, from_path, to_path, combine)
     newtree = maketree(name(tree)=>[])
     for x in Leaves(tree)
         newname = replace(path(x), from_path => to_path)
+        dir = dirname(newname)
+        dir = isempty(dir) ? "." : dir
         newtree = attach(newtree,
-                         dirname(newname),
+                         dir,
                          rename(x, basename(newname));
                          combine=combine)
     end

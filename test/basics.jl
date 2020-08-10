@@ -1,7 +1,9 @@
+using Distributed
 @everywhere using Test
 @everywhere using FileTrees
 @everywhere using FileTrees: Thunk
 @everywhere using Dates
+@everywhere import FilePathsBase: /
 
 @testset "maketree" begin
     global t = maketree(["a" => ["b" => ["a"],
@@ -23,10 +25,10 @@ end
     @test t["a"]["b"]["a"] isa File
     @test t["a"]["c"]["c"] isa FileTree
 
-    @test path(t["a"]["b"]["a"], "/")  == "./a/b/a"
+    @test path(t["a"]["b"]["a"])  == p"." /"a"/"b"/"a"
 
     t1 = FileTrees.rename(t, "foo")
-    @test path(t1["a"]["b"]["a"], "/")  == "foo/a/b/a"
+    @test path(t1["a"]["b"]["a"])  == p"foo" /"a"/"b"/"a"
 
     @test isequal(t[r"a|b"], t)
 
@@ -87,12 +89,12 @@ import FileTrees: attach
 end
 
 @testset "values" begin
-    t1 = FileTrees.load(x->uppercase(path(x)), t)
+    t1 = FileTrees.load(x->string(path(x)), t)
     if isdir("test_dir")
         rm("test_dir", recursive=true)
     end
 
-    @test t1["a/b/a"][] == "./A/B/A"
+    @test t1["a/b/a"][] == string(p"." / "a" / "b" / "a")
 
     @test reducevalues(*, mapvalues(lowercase, t1)) == lowercase(reducevalues(*, t1))
 
@@ -125,10 +127,10 @@ end
     end
 
 
-    t1 = FileTrees.load(x->uppercase(path(x)), t, lazy=true)
+    t1 = FileTrees.load(x->uppercase(string(path(x))), t, lazy=true)
 
     @test t1["a/b/a"][] isa Thunk
-    @test exec(t1)["a/b/a"][] == "./A/B/A"
+    @test exec(t1)["a/b/a"][] == string(p"."/"A"/"B"/"A")
 
     @test exec(reducevalues(*, mapvalues(lowercase, t1))) == lowercase(exec(reducevalues(*, t1)))
 

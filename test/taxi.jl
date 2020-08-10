@@ -4,10 +4,10 @@ using Distributed
 @testset "taxi tests" begin
     dir = joinpath(@__DIR__, "..", "page", "taxi-data")
     global taxi_dir = FileTree(dir)
-    @test name(taxi_dir) == dir
-    @test path(taxi_dir["2019"]) == joinpath(dir, "2019")
+    @test string(name(taxi_dir)) == dir
+    @test string(path(taxi_dir["2019"])) == joinpath(dir, "2019")
 
-    @test path(taxi_dir["2019"]) == joinpath(dir, "2019")
+    @test string(path(taxi_dir["2019"])) == joinpath(dir, "2019")
     @test name(FileTrees.rename(taxi_dir, "taxi-data")) == "taxi-data"
 end
 

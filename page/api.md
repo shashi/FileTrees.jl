@@ -29,4 +29,6 @@
 
 ### Laziness and Parallelism
 
+{{doc compute(::FileTree; cache; kw...) compute method}}
+
 {{doc exec exec function}}

@@ -1,19 +1,22 @@
-# What is FileTrees?
-
 ~~~
+<h1>FileTrees.jl &mdash; overview</h1>
 <p style="font-size: 1.15em; color: #666; line-height:1.5em">
 FileTrees is a set of tools to lazy-load, process and write file trees. Built-in parallelism allows you to max out compute on any machine.
 </p>
 ~~~
 
-Lazy tree operations let you freely restructure file trees so as to be convenient to set up computations. Files in a file tree can have any value attached to them (not necessarily those loaded from the file itself), you can map and reduce over these values, or combine them by merging or collapsing trees or subtrees.
+Tree operations let you freely restructure file trees in memory so as to be convenient to set up computations. Files in a file tree can have any value attached to them (not necessarily those loaded from the file itself), you can map and reduce over these values, or combine them by merging or collapsing trees or subtrees.
 
 **On this website**
 
 ~~~
 <ul>
-<li><a href="api/">API documentation</a></li>
+<li><a href="create-trees/">Creating file trees</a></li>
+<li><a href="tree-manipulation/">Manipulating file trees</a></li>
 <li><a href="patterns/">Pattern matching on paths</a></li>
+<li><a href="values/">Working with values in file trees</a></li>
+<li><a href="lazy-parallel/">Lazy values and parallelism</a></li>
+<li><a href="api/">API documentation</a></li>
 </ul>
 ~~~
 
@@ -48,14 +51,43 @@ A summary of the value loaded into each file is shown in parentheses. The `file`
 
 `load` returns a new `FileTree` which has the same structure as before, but contains the loaded data in each `File` node.
 
-# Indexing
+Here `load` actually read the files eagerly. This may not be feasible if the files contain data that is too big to fit in memory.
 
-Let's look at one of these DataFrames by indexing into the tree. The syntax `file[]` on a file object returns the loaded data.
+In such a case, you can load the files lazily using `lazy=true`
+
+```julia:dir1
+lazy_dfs = FileTrees.load(taxi_dir; lazy=true) do file
+    DataFrame(CSV.File(path(file)))
+end
+```
+
+As you can see the nodes have the value of type `Dagger.Thunk` -- this represents a lazy task that can later be executed using the [`exec`](api/#exec) function. You can continue to use most of the functions in this package without worrying about whether the input tree has lazy values or not. You will get the corresponding lazy outputs wherever the input trees had lazy values. Lazy values also encode dependency between them, hence making it possible for `exec` to compute them in parallel.
+
+To know more details about the usage of laziness and parallelism, go to [this article](lazy-parallel/).
+
+# Looking files up
+
+Let's look at one of these DataFrames by indexing into the tree with the path to a file, namely `"2020/01/yellow.csv"`.
 
 ```julia:dir1
 yellow_jan_20 = dfs["2020/01/yellow.csv"]
+```
 
+`file[]` syntax fetches the value stored in a `File` or `FileTree` node:
+
+```julia:dir1
 yellow_jan_20[] # file[] gets the value
+```
+
+When a tree is lazy, the `[]` operation returns a `Thunk`, a delayed computation.
+
+You can call `exec` on the this value to compute and fetch the value.
+
+
+```julia:dir1
+val = lazy_dfs["2020/01/yellow.csv"][]
+@show typeof(val)
+@show exec(val);
 ```
 
 Yellow and Green taxi data have different set of columns. It may be convenient to separate them out into two trees. There are several ways to do this, they are all correct.
@@ -99,7 +131,9 @@ All the above methods should return the exact same yellow and green trees:
 Here is a cool command to restructure the `yellow` tree to have one less level. You can't do this in the shell without a loop, but here we can use regular expressions.
 
 
-# mv
+See the [pattern matching](patterns/) documentation to learn more about how to use pattern matching to manipulate trees.
+
+# Moving files with string search and replace
 
 ```julia:dir1
 # method 3
@@ -114,7 +148,7 @@ green′ = mv(dfs, r"(.*)/(.*)/green.csv", s"green/\1/\2.csv")["green"]
 `mv` does not affect the file system, it only restructures the tree in memory. But you can save the new structure into disk. Let's write the `yellow` tree to disk, further, let's only save the first 10 columns of the data into these files.
 
 
-# save
+# Saving to a directory
 
 ```julia:dir1
 FileTrees.save(setparent(yellow′, nothing)) do file
@@ -137,83 +171,14 @@ yellowdf = reducevalues(vcat, yellow)
 first(yellowdf, 15)
 ```
 
-# Parallelism and laziness
-
-If `load` is called with `lazy=true` flag, data is not immediately loaded in memory, but a task is created at each file node for loading the file.
-
-Lazy-loading allows you to save precious memory if you're not going to use most of the data. (e.g. If you just want to look at yellow taxi data but you end up loading the whole dataset, it's ok when in lazy mode).
-
-In contrast, in the previous section, `load` without `lazy=true` simply loaded the data one file at a time eagerly.
-
-When you lazy-load and chain operations on the lazy loaded data, you are also telling FileTrees about the dependency of tasks involved in the computation. `mapvalues` or `reducevalues` on lazy-loaded data will themselves return trees with lazy values or a lazy value respectively. To compute lazy values, you can call the `exec` function. This will do the computation in parallel.
+`reducevalues` also works on the lazy tree but returns a lazy final result. You can call `exec` on it to actually compute it. This causes the computation to occur in parallel!
 
 ```julia:dir1
-
-lazy_dfs = FileTrees.load(taxi_dir; lazy=true) do file
-    DataFrame(CSV.File(path(file)))
-end
-```
-
-```julia:dir1
-yellow′ = mv(lazy_dfs, r"(.*)/(.*)/yellow.csv", s"yellow/\1/\2.csv")["yellow"]
-```
-
-```julia:dir1
-yellowdf = exec(reducevalues(vcat, yellow′))
+yellowdf = exec(reducevalues(vcat, lazy_dfs[r"yellow.csv$"]))
 
 first(yellowdf, 15)
 ```
 
-Here calling `exec` computes all the values required to compute the result. This means the green taxi data is never loaded into memory in this particular case.
-
-To obtain parallelism you need to start julia in a parallel way:
-
-```sh
-export JULIA_NUM_THREADS=10   # 10 concurrent tasks per process (will use multi-threading)
-julia -p 8                    # 8 OS pocesses
-```
-
-In the REPL:
-
-```julia:cool
-using Distributed, .Threads
-@everywhere using FileTrees, CSV, DataFrames
-
-lazy_dfs = FileTrees.load(taxi_dir; lazy=true) do file
-    # println("Loading $(path(file)) on $(myid()) on thread $(threadid())")
-    DataFrame(CSV.File(path(file)))
-end
-
-first(exec(reducevalues(vcat, lazy_dfs[r"yellow.csv$"])), 15)
-```
-
-If running in an environment with 8 procs with 10 threads each, 80 tasks will work on them in parallel (they are ultimately scheduled by the OS). Once a task has finished, the data required to execute the task is freed from memory if no longer required by any other task. So in this example, the DataFrames loaded from disk are freed from memory right after they've been reduced with `vcat`.
-
-`reducevalues` performs an associative reduce to aide in the freeing of memory: the first two files are loaded, `vcat` is called on them, and the input dataframes are freed from memory. And then when the next two files have been similarly `vcat`ed, the two resulting values are then `vcat`ed and freed, and so on.
-
-If you wish to compute on more data than you have memory to hold, the following information should help you:
-
-As discussed in this example, there are 80 concurrent tasks at any given time executing a task in the graph. So at any given time, the peak memory usage will be the peak memory usage of 80 of the tasks in the task graph. Hence one can plan how many processes and threads should be started at the beginning of a computation so as to keep the memory usage manageable.
-
-It is also necessary to keep in mind what amount of memory a call to `exec` will produce, since that memory allocation cannot be avoided. This means `reducevalues` where the reduction computes a small value (such as sum or mean) works best.
-
-# Caching
-
-The `compute` function is different from the `exec` function in that, it will compute the results of the tasks in the tree and leave the data on remote processes rather than fetch it to the master process. Calling `compute` on a tree will also cause any subsequent requests to compute the same tasks to be served from a cache memory rather than recomputed.
-
-
-# Advanced tree manipulation: subtrees
-
-[`mapsubtrees`](api/#mapsubtrees) is a powerful function since it allows you to recursively apply tree operations on subtrees of a tree.
-
-This allows a lot of great functionality. Here is a brief list,
-
-- flatten a tree to be only 2 levels:
-    `mapsubtrees(flatten, glob"*/*")`
-- collapse the directories at level 3:
-    `mapsubtrees(x->clip(x, 1), glob"*/*")`
-- reduce 2nd level directories with hcat, but 1st level with `vcat`:
-    `reducevalues(vcat, mapsubtrees(x->reducevalues(hcat, x), glob"*"))`
-  Note that this will work on lazy trees by creating lazy nodes as well.
+Note that in the lazy case the green csv files are never loaded since they are not required to compute the final result!
 
 Happy Hacking!

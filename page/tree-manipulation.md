@@ -6,13 +6,13 @@ A lot of tree manipulation involves pattern matching, so we recommend you read [
 
 ## `mv` and `cp`
 
-`mv` and `cp` not only allow you to move and copy nodes within a `FileTree` but also merge many files by copying them to the same path!
+`mv` and `cp` not only allow you to move or copy nodes within a `FileTree` but also merge many files by copying them to the same path.
 
 The signature of `mv` is `mv(tree::FileTree, r::Regex, s::SubstitutionString; combine)`.
 
-For every file in `tree` whose path matches the regular expression `r`, rewrite its path as decided by `s`.
+For every file in `tree` whose path matches the regular expression `r`, rewrite its path as decided by `s`. All paths are to be matched with delimiter `/` on all platforms (including Windows).
 
-`combine` is a callback that is called with the values of two files when a file is moved to an already existing or already created path.
+`combine` is a callback that is called with the values of two files when a file is moved to an already existing or already created path. By default it is set to error on name clashes where either of the nodes has a non-null value.
 
 `s` can be a SubstitutionString, which is conveniently constructed using the [`s""` string macro](https://docs.julialang.org/en/v1/base/strings/#Base.@s_str).
 

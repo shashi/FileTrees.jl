@@ -4,9 +4,34 @@
       <h1 style="font-size:2em"><a href="/">FileTrees<span style="opacity:0.4">.jl</span></a></h1>
       <p class="lead">Easy parallel file loading</p>
     </div>
-    <nav class="sidebar-nav">
-      <a class="sidebar-nav-item {{ispage index.html}}active{{end}}" href="/">Home</a>
-      <a class="sidebar-nav-item {{ispage menu1/*}}active{{end}}" href="/api/">Full API</a>
+    <style>
+@media (min-width: 768px) {
+    .sidebar-nav {
+        margin-top: 3em;
+    }
+}
+    .sidebar-nav .sidebar-nav-item.active {
+        box-sizing: border-box;
+        border-bottom: 1px #f1f1f1 solid;
+        margin-right: -1em;
+        margin-left: -0.5em;
+        padding-left: 0.5em;
+        color: white;
+        font-weight: normal !important;
+    }
+    .sidebar-nav .sidebar-nav-item {
+        color: #cccccc;
+        margin: 0.5em 0;
+    }
+    </style>
+    <nav class="sidebar-nav" style="opacity: 0.9">
+      <a class="sidebar-nav-item {{ispage index.html}}active{{end}}" href="/">Home page</a>
+      <a class="sidebar-nav-item {{ispage create-trees/*}}active{{end}}" href="/create-trees/">Creating file trees</a>
+      <a class="sidebar-nav-item {{ispage values/*}}active{{end}}" href="/values/">File processing</a>
+      <a class="sidebar-nav-item {{ispage patterns/*}}active{{end}}" href="/patterns/">Pattern matching</a>
+      <a class="sidebar-nav-item {{ispage tree-manipulation/*}}active{{end}}" href="/tree-manipulation/">Manipulating file trees</a>
+      <a class="sidebar-nav-item {{ispage lazy-parallel/*}}active{{end}}" href="/lazy-parallel/">Laziness and parallelism</a>
+      <a class="sidebar-nav-item {{ispage api/*}}active{{end}}" href="/api/">API documentation</a>
     </nav>
 
   </div>

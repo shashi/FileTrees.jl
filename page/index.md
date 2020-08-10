@@ -12,22 +12,25 @@ Tree operations let you freely restructure file trees in memory so as to be conv
 ~~~
 <ul>
 <li><a href="create-trees/">Creating file trees</a></li>
-<li><a href="tree-manipulation/">Manipulating file trees</a></li>
+<li><a href="values/">Values in file trees: file loading etc.</a></li>
 <li><a href="patterns/">Pattern matching on paths</a></li>
-<li><a href="values/">Working with values in file trees</a></li>
+<li><a href="tree-manipulation/">Manipulating file trees</a></li>
 <li><a href="lazy-parallel/">Lazy values and parallelism</a></li>
 <li><a href="api/">API documentation</a></li>
 </ul>
 ~~~
 
 **In this article**
+
+We will look at a brief walk through of some of the most important functionality in this article using an example dataset.
+
 \toc
 
 # Loading directories
 
-The basic datastructure in FileTrees is the [`FileTree`](api/#FileTree) tree. The nodes of this tree can be themselves `FileTree` or `File` objects.
+The basic datastructure in FileTrees is the [`FileTree`](api/#FileTree).
 
-You can read in a directory structure from disk by simply calling `FileTree` with the directory name.
+Calling `FileTree` with a directory name will walk the directory on disk and construct a `FileTree`.
 
 ```julia:dir1
 using FileTrees
@@ -133,35 +136,7 @@ Here is a cool command to restructure the `yellow` tree to have one less level. 
 
 See the [pattern matching](patterns/) documentation to learn more about how to use pattern matching to manipulate trees.
 
-# Moving files with string search and replace
-
-```julia:dir1
-# method 3
-
-yellow′ = mv(dfs, r"(.*)/(.*)/yellow.csv", s"yellow/\1/\2.csv")["yellow"]
-green′ = mv(dfs, r"(.*)/(.*)/green.csv", s"green/\1/\2.csv")["green"]
-
-@show yellow′
-@show green′
-```
-
-`mv` does not affect the file system, it only restructures the tree in memory. But you can save the new structure into disk. Let's write the `yellow` tree to disk, further, let's only save the first 10 columns of the data into these files.
-
-
-# Saving to a directory
-
-```julia:dir1
-FileTrees.save(setparent(yellow′, nothing)) do file
-    CSV.write(path(file), file[])
-end
-```
-
-It's saved!
-```julia:dir1
-FileTree("yellow")
-```
-
-# Reduction
+# reducing values in trees
 
 Now that we have files with the same schema in different trees,  we can reduce either tree with `vcat` function on DataFrames to combine the dataframes into a single dataframe:
 
@@ -180,5 +155,35 @@ first(yellowdf, 15)
 ```
 
 Note that in the lazy case the green csv files are never loaded since they are not required to compute the final result!
+
+
+# Saving to a directory
+
+```julia:dir1
+df1 = dfs[r"yellow.csv$"]
+
+# this mv moves X/Y/yellow.csv to yellow/X/Y.csv
+# see the Tree manipulation section of the docs for more
+
+df2 = mv(df1, r"^([^/]*)/([^/]*)/yellow.csv$",
+              s"yellow/\1/\2.csv")["yellow"]
+
+@show df2
+
+FileTrees.save(setparent(df2, nothing)) do file
+    CSV.write(path(file), file[])
+end
+```
+
+It's saved!
+```julia:dir1
+# let's read back the new directory
+FileTree("yellow")
+```
+
+```julia:dir1
+rm("yellow", recursive=true) # hide
+```
+
 
 Happy Hacking!

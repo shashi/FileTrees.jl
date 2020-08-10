@@ -1,6 +1,6 @@
 # Thanks @tlienart
 
-using Franklin
+using Franklin, PkgPage
 
 using Markdown
 

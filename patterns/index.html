@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+  
+  <link rel="stylesheet" href="/FileTrees.jl/css/franklin.css">
+<link rel="stylesheet" href="/FileTrees.jl/css/poole_hyde.css">
+<link rel="stylesheet" href="/FileTrees.jl/css/custom.css">
+<!-- style adjustments -->
+<style>
+  html {font-size: 17px;}
+  .franklin-content {position: relative; padding-left: 8%; padding-right: 5%; line-height: 1.35em;}
+  @media (min-width: 940px) {
+    .franklin-content {width: 100%; margin-left: auto; margin-right: auto;}
+  }
+  @media (max-width: 768px) {
+    .franklin-content {padding-left: 6%; padding-right: 6%;}
+  }
+</style>
+<link rel="icon" href="/FileTrees.jl/assets/favicon.png">
+
+   <title>FileTrees.jl</title>  
+</head>
+<body>
+<div class="sidebar">
+  <div class="container sidebar-sticky">
+    <div class="sidebar-about">
+      <h1 style="font-size:2em"><a href="/FileTrees.jl/">FileTrees<span style="opacity:0.4">.jl</span></a></h1>
+      <p class="lead">Easy parallel file loading</p>
+    </div>
+    <nav class="sidebar-nav">
+      <a class="sidebar-nav-item " href="/FileTrees.jl/">Home</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/api/">Full API</a>
+    </nav>
+
+  </div>
+  <div style="font-size: 0.85em; bottom: 3em; position: fixed">
+      <img src="https://raw.githubusercontent.com/JuliaLang/julia-logo-graphics/master/images/julia-logo-dark.svg" height="32" style="display: inline-block; margin-bottom: -8px; opacity: 0.7">
+      powered.
+  </div>
+</div>
+<div class="content container">
+
+<!-- Content appended here -->
+<div class="franklin-content"><h2 id="pattern_matching_paths"><a href="#pattern_matching_paths">Pattern matching paths</a></h2>
+<p>Several functions take <code>String</code>, <code>GlobMatch</code> or <code>Regex</code> patterns as arguments.</p>
+<ul>
+<li><p><code>GlobMatch</code> is provided by the <a href="https://github.com/vtjnash/Glob.jl#readme">Glob.jl package</a>, and can be constructed using <code>glob&quot;&quot;</code> string macro for example <code>glob&quot;*/*.jl</code> means all <code>.jl</code> files immediately inside subdirectories.</p>
+</li>
+<li><p><code>Regex</code> is created using a the <code>r&quot;&quot;</code> string macro. The regular expression syntax is detailed in the <a href="https://docs.julialang.org/en/v1/manual/strings/#Regular-Expressions-1">Julia documentation</a></p>
+</li>
+</ul>
+<p>Each type of pattern, when used with a function, produces different but memorable behaviors. These are detailed in the following table with some annotations.</p>
+<p>In the table</p>
+<ul>
+<li><p><code>t</code> refers to the tree being operated on</p>
+</li>
+<li><p><code>p</code> refers to the pattern of type <code>T</code> which is the pattern type.</p>
+</li>
+<li><p>&quot;node&quot; means a File or a FileTree.</p>
+</li>
+<li><p>❌ means the pattern type cannot be used with the given function.</p>
+</li>
+</ul>
+<table><tr><th align="right">function/T</th><th align="right">String</th><th align="right">Glob</th><th align="right">Regex</th></tr><tr><td align="right"><code>t&#91;p&#93;</code></td><td align="right">gets node at path <sup id="fnref:1"><a href="#fndef:1" class="fnref">[1]</a></sup></td><td align="right">gets subtree of matches <sup id="fnref:2"><a href="#fndef:2" class="fnref">[2]</a></sup></td><td align="right">gets subtree of matches <sup id="fnref:2"><a href="#fndef:2" class="fnref">[2]</a></sup> <sup id="fnref:3"><a href="#fndef:3" class="fnref">[3]</a></sup></td></tr><tr><td align="right"><code>cp&#40;t, r::T, s&#41;</code> <br/> <code>mv&#40;t, r::T, s&#41;</code></td><td align="right">❌</td><td align="right">❌</td><td align="right">move each match to <code>replace&#40;path&#40;&lt;match&gt;&#41;, r &#61;&gt; s&#41;</code> <sup id="fnref:3"><a href="#fndef:3" class="fnref">[3]</a></sup> <sup id="fnref:4"><a href="#fndef:4" class="fnref">[4]</a></sup></td></tr><tr><td align="right"><code>mapmatches&#40;f,t,p::T&#41;</code></td><td align="right">applies <code>f</code> to <code>t&#91;p&#93;</code></td><td align="right">apply <code>f</code> to every match</td><td align="right">apply <code>f</code> to every match</td></tr><tr><td align="right"><code>mkpath&#40;t,p::T;value&#41;</code> <br/> <code>touch&#40;t,p::T;value&#41;</code></td><td align="right">Create a single node at p</td><td align="right">❌</td><td align="right">❌</td></tr></table>
+<p><table class="fndef" id="fndef:1">
+    <tr>
+        <td class="fndef-backref"><a href="#fnref:1">[1]</a></td>
+        <td class="fndef-content">the parent of this node is still set to its original parent in <code>t</code>. Hence <code>path&#40;t&#91;p&#93;&#41;</code> will give its full path. But you can do <code>setparent&#40;t&#91;p&#93;, nothing&#41;</code> to detach it from the original tree.</td>
+    </tr>
+</table>
+<table class="fndef" id="fndef:2">
+    <tr>
+        <td class="fndef-backref"><a href="#fnref:2">[2]</a></td>
+        <td class="fndef-content">the subtree always has the same root as <code>t</code></td>
+    </tr>
+</table>
+<table class="fndef" id="fndef:3">
+    <tr>
+        <td class="fndef-backref"><a href="#fnref:3">[3]</a></td>
+        <td class="fndef-content">regex matching string-matches an path string. Partial matches are allowed. surround the regex in <code>^...&#36;</code> to match the entire path.</td>
+    </tr>
+</table>
+<table class="fndef" id="fndef:4">
+    <tr>
+        <td class="fndef-backref"><a href="#fnref:4">[4]</a></td>
+        <td class="fndef-content"><code>s</code> here is a <code>SubstitutionString</code> and can be created using the <a href="https://docs.julialang.org/en/v1/base/strings/#Base.@s_str"><code>s&quot;&quot;</code></a> string macro &#40;from Base julia&#41;.</td>
+    </tr>
+</table>
+</p>
+<div class="page-foot">
+  <div class="copyright">
+    &copy; Shashi Gowda, Julian Samaroo. Last modified: August 10, 2020. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a>.
+  </div>
+</div>
+</div><!-- CONTENT ENDS HERE -->
+    </div>  <!-- div: content container -->
+    
+    
+  </body>
+</html>

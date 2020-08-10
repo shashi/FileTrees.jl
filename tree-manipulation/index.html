@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+   <link rel="stylesheet" href="/FileTrees.jl/libs/highlight/github.min.css">
+   
+  <link rel="stylesheet" href="/FileTrees.jl/css/franklin.css">
+<link rel="stylesheet" href="/FileTrees.jl/css/poole_hyde.css">
+<link rel="stylesheet" href="/FileTrees.jl/css/custom.css">
+<!-- style adjustments -->
+<style>
+  html {font-size: 17px;}
+  .franklin-content {position: relative; padding-left: 8%; padding-right: 5%; line-height: 1.35em;}
+  @media (min-width: 940px) {
+    .franklin-content {width: 100%; margin-left: auto; margin-right: auto;}
+  }
+  @media (max-width: 768px) {
+    .franklin-content {padding-left: 6%; padding-right: 6%;}
+  }
+</style>
+<link rel="icon" href="/FileTrees.jl/assets/favicon.png">
+
+   <title>FileTrees.jl</title>  
+</head>
+<body>
+<div class="sidebar">
+  <div class="container sidebar-sticky">
+    <div class="sidebar-about">
+      <h1 style="font-size:2em"><a href="/FileTrees.jl/">FileTrees<span style="opacity:0.4">.jl</span></a></h1>
+      <p class="lead">Easy parallel file loading</p>
+    </div>
+    <nav class="sidebar-nav">
+      <a class="sidebar-nav-item " href="/FileTrees.jl/">Home</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/api/">Full API</a>
+    </nav>
+
+  </div>
+  <div style="font-size: 0.85em; bottom: 3em; position: fixed">
+      <img src="https://raw.githubusercontent.com/JuliaLang/julia-logo-graphics/master/images/julia-logo-dark.svg" height="32" style="display: inline-block; margin-bottom: -8px; opacity: 0.7">
+      powered.
+  </div>
+</div>
+<div class="content container">
+
+<!-- Content appended here -->
+<div class="franklin-content"><h1 id="filetree_manipulation"><a href="#filetree_manipulation">FileTree manipulation</a></h1>
+<p>The tree manipulation functions are <code>mv</code>, <code>cp</code>, <code>mapsubtrees</code>, <code>merge</code>, <code>diff</code>, <code>clip</code>, <code>flatten</code>.</p>
+<p>A lot of tree manipulation involves pattern matching, so we recommend you read <a href="/FileTrees.jl/patterns">the section on pattern matching first</a>.</p>
+<h2 id="mv_and_cp"><a href="#mv_and_cp"><code>mv</code> and <code>cp</code></a></h2>
+<p><code>mv</code> and <code>cp</code> not only allow you to move and copy nodes within a <code>FileTree</code> but also merge many files by copying them to the same path&#33;</p>
+<p>The signature of <code>mv</code> is <code>mv&#40;tree::FileTree, r::Regex, s::SubstitutionString; combine&#41;</code>.</p>
+<p>For every file in <code>tree</code> whose path matches the regular expression <code>r</code>, rewrite its path as decided by <code>s</code>.</p>
+<p><code>combine</code> is a callback that is called with the values of two files when a file is moved to an already existing or already created path.</p>
+<p><code>s</code> can be a SubstitutionString, which is conveniently constructed using the <a href="https://docs.julialang.org/en/v1/base/strings/#Base.@s_str"><code>s&quot;&quot;</code> string macro</a>.</p>
+<blockquote>
+<p>Within the string, sequences of the form <code>\N</code> refer to the Nth capture group in the regex, and <code>\g&lt;groupname&gt;</code> refers to a named capture group with name <code>groupname</code>.</p>
+</blockquote>
+<p>Example:</p>
+<pre><code class="julia hljs"><span class="hljs-keyword">using</span> FileTrees
+
+tree = FileTree(<span class="hljs-string">&quot;taxi-data&quot;</span>)</code></pre><pre><code class="plaintext hljs">taxi-data/
+├─ 2019/
+│  ├─ 01/
+│  │  ├─ green.csv
+│  │  └─ yellow.csv
+│  └─ 02/
+│     ├─ green.csv
+│     └─ yellow.csv
+└─ 2020/
+   ├─ 01/
+   │  ├─ green.csv
+   │  └─ yellow.csv
+   └─ 02/
+      ├─ green.csv
+      └─ yellow.csv
+</code></pre>
+<pre><code class="julia hljs"><span class="hljs-comment"># first move */*/yellow.csv to yellow/*/*.csv</span>
+
+t2 = mv(tree, <span class="hljs-string">r&quot;^([^/]*)/([^/]*)/yellow.csv$&quot;</span>, <span class="hljs-string">s&quot;yellow/\1/\2.csv&quot;</span>)
+
+<span class="hljs-comment"># move */*/green.csv to green/*/*.csv</span>
+mv(t2, <span class="hljs-string">r&quot;^([^/]*)/([^/]*)/green.csv$&quot;</span>, <span class="hljs-string">s&quot;green/\1/\2.csv&quot;</span>)</code></pre><pre><code class="plaintext hljs">taxi-data/
+├─ green/
+│  ├─ 2019/
+│  │  ├─ 01.csv
+│  │  └─ 02.csv
+│  └─ 2020/
+│     ├─ 01.csv
+│     └─ 02.csv
+└─ yellow/
+   ├─ 2019/
+   │  ├─ 01.csv
+   │  └─ 02.csv
+   └─ 2020/
+      ├─ 01.csv
+      └─ 02.csv
+</code></pre>
+<p>It&#39;s also possible to just move all the yellow files into a single yellow.csv file.</p>
+<pre><code class="julia hljs">mv(tree, <span class="hljs-string">r&quot;^([^/]*)/([^/]*)/yellow.csv$&quot;</span>, <span class="hljs-string">s&quot;yellow.csv&quot;</span>)</code></pre><pre><code class="plaintext hljs">taxi-data/
+├─ 2019/
+│  ├─ 01/
+│  │  └─ green.csv
+│  └─ 02/
+│     └─ green.csv
+├─ 2020/
+│  ├─ 01/
+│  │  └─ green.csv
+│  └─ 02/
+│     └─ green.csv
+└─ yellow.csv
+</code></pre>
+<p>This just works when there is no value loaded into the tree. But let&#39;s see what happens when the yellow files have some values loaded in them:</p>
+<pre><code class="julia hljs"><span class="hljs-keyword">using</span> CSV, DataFrames
+dfs = FileTrees.load(tree) <span class="hljs-keyword">do</span> file
+    DataFrame(CSV.File(path(file)))
+<span class="hljs-keyword">end</span>;</code></pre>
+<pre><code class="julia hljs">mv(dfs, <span class="hljs-string">r&quot;.*yellow.csv$&quot;</span>, <span class="hljs-string">s&quot;yellow.csv&quot;</span>)</code></pre><pre><code class="plaintext hljs">yellow.csv clashed with an existing file name at path taxi-data/./yellow.csv.
+Pass `combine=f` to define how to combine them.
+</code></pre>
+<p>Oh oops&#33; It says pass in <code>combine&#61;f</code> where <code>f</code> can combine the values of the two clashing files. In our case we want to concatenate the DataFrames, so let&#39;s pass in <code>vcat</code>.</p>
+<pre><code class="julia hljs">mv(dfs, <span class="hljs-string">r&quot;.*yellow.csv$&quot;</span>, <span class="hljs-string">s&quot;yellow.csv&quot;</span>, combine=vcat)</code></pre><pre><code class="plaintext hljs">taxi-data/
+├─ 2019/
+│  ├─ 01/
+│  │  └─ green.csv (9×20 DataFrame)
+│  └─ 02/
+│     └─ green.csv (9×20 DataFrame)
+├─ 2020/
+│  ├─ 01/
+│  │  └─ green.csv (9×20 DataFrame)
+│  └─ 02/
+│     └─ green.csv (9×20 DataFrame)
+└─ yellow.csv (36×18 DataFrame)
+</code></pre>
+<p>As you can see, the final yellow.csv file has a value that is a combination of all the yellow.csv values.</p>
+<p>We can do the same with the green files:</p>
+<pre><code class="julia hljs">df1 = mv(dfs, <span class="hljs-string">r&quot;.*yellow.csv$&quot;</span>, <span class="hljs-string">s&quot;yellow.csv&quot;</span>, combine=vcat)
+df2 = mv(df1, <span class="hljs-string">r&quot;.*green.csv$&quot;</span>, <span class="hljs-string">s&quot;green.csv&quot;</span>, combine=vcat)</code></pre><pre><code class="plaintext hljs">taxi-data/
+├─ green.csv (36×20 DataFrame)
+└─ yellow.csv (36×18 DataFrame)
+</code></pre>
+<div class="page-foot">
+  <div class="copyright">
+    &copy; Shashi Gowda, Julian Samaroo. Last modified: August 10, 2020. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a>.
+  </div>
+</div>
+</div><!-- CONTENT ENDS HERE -->
+    </div>  <!-- div: content container -->
+    
+    
+        
+
+
+    
+  </body>
+</html>

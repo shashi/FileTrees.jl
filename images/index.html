@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+   <link rel="stylesheet" href="/FileTrees.jl/libs/highlight/github.min.css">
+   
+  <link rel="stylesheet" href="/FileTrees.jl/css/franklin.css">
+<link rel="stylesheet" href="/FileTrees.jl/css/poole_hyde.css">
+<link rel="stylesheet" href="/FileTrees.jl/css/custom.css">
+<!-- style adjustments -->
+<style>
+  html {font-size: 17px;}
+  .franklin-content {position: relative; padding-left: 8%; padding-right: 5%; line-height: 1.35em;}
+  @media (min-width: 940px) {
+    .franklin-content {width: 100%; margin-left: auto; margin-right: auto;}
+  }
+  @media (max-width: 768px) {
+    .franklin-content {padding-left: 6%; padding-right: 6%;}
+  }
+</style>
+<link rel="icon" href="/FileTrees.jl/assets/favicon.png">
+
+   <title>FileTrees.jl</title>  
+</head>
+<body>
+<div class="sidebar">
+  <div class="container sidebar-sticky">
+    <div class="sidebar-about">
+      <h1 style="font-size:2em"><a href="/FileTrees.jl/">FileTrees<span style="opacity:0.4">.jl</span></a></h1>
+      <p class="lead">Easy parallel file loading</p>
+    </div>
+    <nav class="sidebar-nav">
+      <a class="sidebar-nav-item " href="/FileTrees.jl/">Home</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/api/">Full API</a>
+    </nav>
+
+  </div>
+  <div style="font-size: 0.85em; bottom: 3em; position: fixed">
+      <img src="https://raw.githubusercontent.com/JuliaLang/julia-logo-graphics/master/images/julia-logo-dark.svg" height="32" style="display: inline-block; margin-bottom: -8px; opacity: 0.7">
+      powered.
+  </div>
+</div>
+<div class="content container">
+
+<!-- Content appended here -->
+<div class="franklin-content"><h1 id="creating_and_loading_images"><a href="#creating_and_loading_images">Creating and loading images</a></h1>
+<p>Here we will use FileTrees to work with some image data.</p>
+<p>First let&#39;s create some image data. Here we&#39;re creating 1000 images of size 1000x1000 each with random pixels. We first create a tree by using <code>touch</code> to create the path for each file,</p>
+<p>There are other ways of creating trees as well.</p>
+<pre><code class="julia hljs"><span class="hljs-meta">@everywhere</span> <span class="hljs-keyword">using</span> Images, FileTrees, FileIO
+
+t = maketree(<span class="hljs-string">&quot;imgs&quot;</span> =&gt; [])
+<span class="hljs-meta">@time</span> <span class="hljs-keyword">for</span> i = <span class="hljs-number">1</span>:<span class="hljs-number">8</span>
+    <span class="hljs-keyword">for</span> j = <span class="hljs-number">1</span>:<span class="hljs-number">100</span>
+        <span class="hljs-keyword">global</span> t = touch(t, <span class="hljs-string">&quot;<span class="hljs-variable">$i</span>/<span class="hljs-variable">$j</span>.png&quot;</span>)
+    <span class="hljs-keyword">end</span>
+<span class="hljs-keyword">end</span>
+
+
+<span class="hljs-meta">@time</span> t1 = FileTrees.load(t; lazy=<span class="hljs-literal">true</span>) <span class="hljs-keyword">do</span> file
+    rand(RGB, <span class="hljs-number">1000</span>, <span class="hljs-number">1000</span>)
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-meta">@time</span> FileTrees.save(t1) <span class="hljs-keyword">do</span> file
+    FileIO.save(path(file), file.value)
+<span class="hljs-keyword">end</span> |&gt; exec</code></pre>
+<p>Then let&#39;s load it and, say, compute the mean of the <code>red</code> channel.</p>
+<pre><code class="julia hljs"><span class="hljs-keyword">using</span> Distributed
+<span class="hljs-meta">@everywhere</span> <span class="hljs-keyword">using</span> FileTrees, FileIO, Images, .Threads, Statistics, Distributed
+
+<span class="hljs-keyword">function</span> mean_red()
+    t = FileTree(<span class="hljs-string">&quot;imgs&quot;</span>)
+    t1 = FileTrees.load(t; lazy=<span class="hljs-literal">true</span>) <span class="hljs-keyword">do</span> f
+        img = FileIO.load(path(f))
+        println(<span class="hljs-string">&quot;pid, &quot;</span>, myid(), <span class="hljs-string">&quot;threadid &quot;</span>, threadid(), <span class="hljs-string">&quot;: &quot;</span>, path(f))
+        sum(red.(img))
+    <span class="hljs-keyword">end</span>
+
+    npixels = <span class="hljs-number">10</span>*<span class="hljs-number">100</span>*(<span class="hljs-number">1000</span>*<span class="hljs-number">1000</span>)
+    (reducevalues(sum, t1) |&gt; exec) / npixels
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-meta">@time</span> mean_red()</code></pre>
+<p>Here, to compute the mean we used the sum of the pixel values and then a known total number of pixels, i.e. 10<em>100</em>&#40;1000x1000&#41; to average it.</p>
+<p>But let&#39;s suppose the images you are reading are all of different sizes, this can be done by:</p>
+<p>using <code>reducevalues</code> to compute both the sum and the total number of pixels.</p>
+<p>But there&#39;s a cooler way to do this with <code>OnlineStats</code>:</p>
+<pre><code class="julia hljs"><span class="hljs-keyword">function</span> mean_red()
+    t = FileTree(<span class="hljs-string">&quot;imgs&quot;</span>)
+    t1 = FileTrees.load(t; lazy=<span class="hljs-literal">true</span>) <span class="hljs-keyword">do</span> f
+        o = Series(Mean(), Variance())
+        img = FileIO.load(path(f))
+        println(<span class="hljs-string">&quot;pid, &quot;</span>, myid(), <span class="hljs-string">&quot;threadid &quot;</span>, threadid(), <span class="hljs-string">&quot;: &quot;</span>, path(f))
+        fit!(o, red.(img))
+    <span class="hljs-keyword">end</span>
+
+    (reducevalues(merge, t1) |&gt; exec)
+<span class="hljs-keyword">end</span>
+
+<span class="hljs-meta">@time</span> mean_red()</code></pre>
+<p>It should output something like:</p>
+<pre><code class="julia hljs"><span class="hljs-number">33.764245</span> seconds (<span class="hljs-number">19.48</span> M allocations: <span class="hljs-number">1.531</span> GiB, <span class="hljs-number">2.05</span>% gc time)
+Series
+├─ Mean: n=<span class="hljs-number">1000000000</span> | value=<span class="hljs-number">0.500006</span>
+└─ Variance: n=<span class="hljs-number">1000000000</span> | value=<span class="hljs-number">0.0833369</span></code></pre>
+<div class="page-foot">
+  <div class="copyright">
+    &copy; Shashi Gowda, Julian Samaroo. Last modified: August 10, 2020. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a>.
+  </div>
+</div>
+</div><!-- CONTENT ENDS HERE -->
+    </div>  <!-- div: content container -->
+    
+    
+        
+
+
+    
+  </body>
+</html>

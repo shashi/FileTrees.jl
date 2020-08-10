@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+  
+  <link rel="stylesheet" href="/FileTrees.jl/css/franklin.css">
+<link rel="stylesheet" href="/FileTrees.jl/css/poole_hyde.css">
+<link rel="stylesheet" href="/FileTrees.jl/css/custom.css">
+<!-- style adjustments -->
+<style>
+  html {font-size: 17px;}
+  .franklin-content {position: relative; padding-left: 8%; padding-right: 5%; line-height: 1.35em;}
+  @media (min-width: 940px) {
+    .franklin-content {width: 100%; margin-left: auto; margin-right: auto;}
+  }
+  @media (max-width: 768px) {
+    .franklin-content {padding-left: 6%; padding-right: 6%;}
+  }
+</style>
+<link rel="icon" href="/FileTrees.jl/assets/favicon.png">
+
+   <title>FileTrees.jl</title>  
+</head>
+<body>
+<div class="sidebar">
+  <div class="container sidebar-sticky">
+    <div class="sidebar-about">
+      <h1 style="font-size:2em"><a href="/FileTrees.jl/">FileTrees<span style="opacity:0.4">.jl</span></a></h1>
+      <p class="lead">Easy parallel file loading</p>
+    </div>
+    <nav class="sidebar-nav">
+      <a class="sidebar-nav-item " href="/FileTrees.jl/">Home</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/api/">Full API</a>
+    </nav>
+
+  </div>
+  <div style="font-size: 0.85em; bottom: 3em; position: fixed">
+      <img src="https://raw.githubusercontent.com/JuliaLang/julia-logo-graphics/master/images/julia-logo-dark.svg" height="32" style="display: inline-block; margin-bottom: -8px; opacity: 0.7">
+      powered.
+  </div>
+</div>
+<div class="content container">
+
+<!-- Content appended here -->
+<div class="franklin-content"><h2 id="file_path_matching"><a href="#file_path_matching">File path matching</a></h2>
+<p>Paths in FileTrees can be matched with patterns. Patterns can be:</p>
+<ul>
+<li><p>A String. A string always matches a specific file</p>
+</li>
+<li><p>A Glob: always refers to the subtree</p>
+</li>
+<li><p>A Regex: always refers to the subtree</p>
+</li>
+</ul>
+<p>&quot;node&quot; refers to a File or a FileTree.</p>
+<p><hr /> function/T              | String                | Glob                     | Regex                     | –––––––––––––––––––––––––––––––––––––––––––––––––––- getindex                | gets node at path     | gets subtree of matches  | gets subtree of matches   | &#40;cp|mv&#41;&#40;t, r::T, s&#41;     | subtree of matches    | ❌                       | move each match to <code>replace&#40;path&#40;&lt;match&gt;&#41;, r &#61;&gt; s&#41;</code>                       | mapmatches&#40;f, t, p::T&#41;  | applies <code>f</code> to <code>t&#91;p&#93;</code> | apply <code>f</code> to every match | apply <code>f</code> to every match  | &#40;touch|mkpath&#41;&#40;t, p::T&#41; | Create a single node at p | ❌                       | ❌                    |</p>
+<div class="page-foot">
+  <div class="copyright">
+    &copy; Shashi Gowda, Julian Samaroo. Last modified: August 10, 2020. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a>.
+  </div>
+</div>
+</div><!-- CONTENT ENDS HERE -->
+    </div>  <!-- div: content container -->
+    
+    
+  </body>
+</html>

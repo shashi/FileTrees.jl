@@ -28,8 +28,8 @@
 <div class="sidebar">
   <div class="container sidebar-sticky">
     <div class="sidebar-about">
-      <h1 style="font-size:2.25em"><a href="/FileTrees.jl/">FileTrees<span style="opacity:0.4">.jl</span></a></h1>
-      <p class="lead">Get your hands DirTy</p>
+      <h1 style="font-size:2em"><a href="/FileTrees.jl/">FileTrees<span style="opacity:0.4">.jl</span></a></h1>
+      <p class="lead">Easy parallel file loading</p>
     </div>
     <nav class="sidebar-nav">
       <a class="sidebar-nav-item " href="/FileTrees.jl/">Home</a>
@@ -225,15 +225,20 @@ dir/
 
 <h3 id="laziness_and_parallelism"><a href="#laziness_and_parallelism">Laziness and Parallelism</a></h3>
   <div class="docstring">
+      <h2 class="doc-header" id="compute(::FileTree; cache; kw...)">
+        <a href="#compute(::FileTree; cache; kw...)">compute</a>
+        <div class="doc-type">method</div></h2>
+      <div class="doc-content"><pre><code class="julia hljs">compute(tree::FileTree; cache=<span class="hljs-literal">true</span>)</code></pre>
+<p>Compute any lazy values &#40;Thunks&#41; in <code>tree</code> and return a new tree where the values refer to the computed values &#40;maybe on remote processes&#41;. The tree still behaves as a Lazy tree. <code>exec</code> on it will fetch the values from remote processes.</p>
+</div>
+  </div>
+
+  <div class="docstring">
       <h2 class="doc-header" id="exec">
         <a href="#exec">exec</a>
         <div class="doc-type">function</div></h2>
-      <div class="doc-content"><p>No documentation found.</p>
-<p><code>FileTrees.exec</code> is a <code>Function</code>.</p>
-<pre><code class="julia hljs"><span class="hljs-comment"># 3 methods for generic function &quot;exec&quot;:</span>
-[<span class="hljs-number">1</span>] exec(d::FileTrees.FileTree) <span class="hljs-keyword">in</span> FileTrees at /home/runner/.julia/packages/FileTrees/X2SOZ/src/parallelism.jl:<span class="hljs-number">28</span>
-[<span class="hljs-number">2</span>] exec(d::<span class="hljs-built_in">Union</span>{Dagger.Thunk, Dagger.Chunk}) <span class="hljs-keyword">in</span> FileTrees at /home/runner/.julia/packages/FileTrees/X2SOZ/src/parallelism.jl:<span class="hljs-number">29</span>
-[<span class="hljs-number">3</span>] exec(x) <span class="hljs-keyword">in</span> FileTrees at /home/runner/.julia/packages/FileTrees/X2SOZ/src/parallelism.jl:<span class="hljs-number">30</span></code></pre>
+      <div class="doc-content"><pre><code class="julia hljs">exec(x)</code></pre>
+<p>If <code>x</code> is a FileTree, computes any uncomputed <code>Thunk</code>s stored as values in it. Returns a new tree with the computed values. If <code>x</code> is a <code>Thunk</code> &#40;such as the result of a <code>reducevalues</code>&#41;, then exec will compute the result. If <code>x</code> is anything else, <code>exec</code> just returns the same value.</p>
 </div>
   </div>
 

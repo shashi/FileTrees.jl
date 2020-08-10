@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+   <link rel="stylesheet" href="/FileTrees.jl/libs/highlight/github.min.css">
+   
+  <link rel="stylesheet" href="/FileTrees.jl/css/franklin.css">
+<link rel="stylesheet" href="/FileTrees.jl/css/poole_hyde.css">
+<link rel="stylesheet" href="/FileTrees.jl/css/custom.css">
+<!-- style adjustments -->
+<style>
+  html {font-size: 17px;}
+  .franklin-content {position: relative; padding-left: 8%; padding-right: 5%; line-height: 1.35em;}
+  @media (min-width: 940px) {
+    .franklin-content {width: 100%; margin-left: auto; margin-right: auto;}
+  }
+  @media (max-width: 768px) {
+    .franklin-content {padding-left: 6%; padding-right: 6%;}
+  }
+</style>
+<link rel="icon" href="/FileTrees.jl/assets/favicon.png">
+
+   <title>FileTrees.jl</title>  
+</head>
+<body>
+<div class="sidebar">
+  <div class="container sidebar-sticky">
+    <div class="sidebar-about">
+      <h1 style="font-size:2em"><a href="/FileTrees.jl/">FileTrees<span style="opacity:0.4">.jl</span></a></h1>
+      <p class="lead">Easy parallel file loading</p>
+    </div>
+    <nav class="sidebar-nav">
+      <a class="sidebar-nav-item " href="/FileTrees.jl/">Home</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/api/">Full API</a>
+    </nav>
+
+  </div>
+  <div style="font-size: 0.85em; bottom: 3em; position: fixed">
+      <img src="https://raw.githubusercontent.com/JuliaLang/julia-logo-graphics/master/images/julia-logo-dark.svg" height="32" style="display: inline-block; margin-bottom: -8px; opacity: 0.7">
+      powered.
+  </div>
+</div>
+<div class="content container">
+
+<!-- Content appended here -->
+<div class="franklin-content"><h1 id="laziness_and_parallelism"><a href="#laziness_and_parallelism">Laziness and parallelism</a></h1>
+<p>If <code>load</code> is called with <code>lazy&#61;true</code> flag, data is not immediately loaded in memory, but a task is created at each file node for loading the file.</p>
+<p>In contrast, <code>load</code> without <code>lazy&#61;true</code> simply loads the data one file at a time eagerly.</p>
+<p>Lazy-loading allows you to save precious memory if you&#39;re not going to use most of the data. &#40;e.g. If you just want to look at yellow taxi data but you end up loading the whole dataset, it&#39;s ok when in lazy mode&#41;.</p>
+<p>When you lazy-load and chain operations on the lazy loaded data, you are also telling FileTrees about the dependency of tasks involved in the computation. <code>mapvalues</code> or <code>reducevalues</code> on lazy-loaded data will themselves return trees with lazy values or a lazy value respectively. To compute lazy values, you can call the <code>exec</code> function. This will do the computation in parallel.</p>
+<pre><code class="julia hljs">taxi_dir = FileTree(<span class="hljs-string">&quot;taxi-data&quot;</span>)
+
+lazy_dfs = FileTrees.load(taxi_dir; lazy=<span class="hljs-literal">true</span>) <span class="hljs-keyword">do</span> file
+    DataFrame(CSV.File(path(file)))
+<span class="hljs-keyword">end</span></code></pre><pre><code class="plaintext hljs">UndefVarError: FileTree not defined
+</code></pre>
+<pre><code class="julia hljs">yellow′ = mv(lazy_dfs, <span class="hljs-string">r&quot;(.*)/(.*)/yellow.csv&quot;</span>, <span class="hljs-string">s&quot;yellow/\1/\2.csv&quot;</span>)[<span class="hljs-string">&quot;yellow&quot;</span>]</code></pre><pre><code class="plaintext hljs">UndefVarError: lazy_dfs not defined
+</code></pre>
+<pre><code class="julia hljs">yellowdf = exec(reducevalues(vcat, yellow′))
+
+first(yellowdf, <span class="hljs-number">15</span>)</code></pre><pre><code class="plaintext hljs">UndefVarError: reducevalues not defined
+</code></pre>
+<p>Here calling <code>exec</code> computes all the values required to compute the result. This means the green taxi data is never loaded into memory in this particular case.</p>
+<h1 id="parallel_invocation"><a href="#parallel_invocation">Parallel invocation</a></h1>
+<p>To obtain parallelism you need to start julia in a parallel way:</p>
+<pre><code class="sh hljs"><span class="hljs-built_in">export</span> JULIA_NUM_THREADS=10   <span class="hljs-comment"># 10 concurrent tasks per process (will use multi-threading)</span>
+julia -p 8                    <span class="hljs-comment"># 8 OS pocesses</span></code></pre>
+<p>In the REPL:</p>
+<pre><code class="julia hljs"><span class="hljs-keyword">using</span> Distributed, .Threads
+<span class="hljs-meta">@everywhere</span> <span class="hljs-keyword">using</span> FileTrees, CSV, DataFrames
+
+lazy_dfs = FileTrees.load(taxi_dir; lazy=<span class="hljs-literal">true</span>) <span class="hljs-keyword">do</span> file
+    <span class="hljs-comment"># println(&quot;Loading $(path(file)) on $(myid()) on thread $(threadid())&quot;)</span>
+    DataFrame(CSV.File(path(file)))
+<span class="hljs-keyword">end</span>
+
+first(exec(reducevalues(vcat, lazy_dfs[<span class="hljs-string">r&quot;yellow.csv$&quot;</span>])), <span class="hljs-number">15</span>)</code></pre><pre><code class="plaintext hljs">UndefVarError: taxi_dir not defined
+</code></pre>
+<p>If running in an environment with 8 procs with 10 threads each, 80 tasks will work on them in parallel &#40;they are ultimately scheduled by the OS&#41;. Once a task has finished, the data required to execute the task is freed from memory if no longer required by any other task. So in this example, the DataFrames loaded from disk are freed from memory right after they&#39;ve been reduced with <code>vcat</code>.</p>
+<p><code>reducevalues</code> performs an associative reduce to aide in the freeing of memory: the first two files are loaded, <code>vcat</code> is called on them, and the input dataframes are freed from memory. And then when the next two files have been similarly <code>vcat</code>ed, the two resulting values are then <code>vcat</code>ed and freed, and so on.</p>
+<p>If you wish to compute on more data than you have memory to hold, the following information should help you:</p>
+<p>As discussed in this example, there are 80 concurrent tasks at any given time executing a task in the graph. So at any given time, the peak memory usage will be the peak memory usage of 80 of the tasks in the task graph. Hence one can plan how many processes and threads should be started at the beginning of a computation so as to keep the memory usage manageable.</p>
+<p>It is also necessary to keep in mind what amount of memory a call to <code>exec</code> will produce, since that memory allocation cannot be avoided. This means <code>reducevalues</code> where the reduction computes a small value &#40;such as sum or mean&#41; works best.</p>
+<h1 id="caching"><a href="#caching">Caching</a></h1>
+<p>The <code>compute</code> function is different from the <code>exec</code> function in that, it will compute the results of the tasks in the tree and leave the data on remote processes rather than fetch it to the master process. Calling <code>compute</code> on a tree will also cause any subsequent requests to compute the same tasks to be served from a cache memory rather than recomputed.</p>
+<h1 id="advanced_tree_manipulation_subtrees"><a href="#advanced_tree_manipulation_subtrees">Advanced tree manipulation: subtrees</a></h1>
+<p><a href="api/#mapsubtrees"><code>mapsubtrees</code></a> is a powerful function since it allows you to recursively apply tree operations on subtrees of a tree.</p>
+<p>This allows a lot of great functionality. Here is a brief list,</p>
+<ul>
+<li><p>flatten a tree to be only 2 levels: <code>mapsubtrees&#40;flatten, glob&quot;*/*&quot;&#41;</code></p>
+</li>
+<li><p>collapse the directories at level 3: <code>mapsubtrees&#40;x-&gt;clip&#40;x, 1&#41;, glob&quot;*/*&quot;&#41;</code></p>
+</li>
+<li><p>reduce 2nd level directories with hcat, but 1st level with <code>vcat</code>: <code>reducevalues&#40;vcat, mapsubtrees&#40;x-&gt;reducevalues&#40;hcat, x&#41;, glob&quot;*&quot;&#41;&#41;</code> Note that this will work on lazy trees by creating lazy nodes as well.</p>
+</li>
+</ul>
+<div class="page-foot">
+  <div class="copyright">
+    &copy; Shashi Gowda, Julian Samaroo. Last modified: August 10, 2020. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a>.
+  </div>
+</div>
+</div><!-- CONTENT ENDS HERE -->
+    </div>  <!-- div: content container -->
+    
+    
+        
+
+
+    
+  </body>
+</html>

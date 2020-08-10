@@ -1,8 +1,8 @@
 # This file was generated, do not modify it. # hide
 using Distributed, .Threads
-@everywhere using DirTools, CSV, DataFrames
+@everywhere using FileTrees, CSV, DataFrames
 
-lazy_dfs = DirTools.load(taxi_dir; lazy=true) do file
+lazy_dfs = FileTrees.load(taxi_dir; lazy=true) do file
     # println("Loading $(path(file)) on $(myid()) on thread $(threadid())")
     DataFrame(CSV.File(path(file)))
 end

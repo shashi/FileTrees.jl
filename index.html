@@ -4,11 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   
-   <link rel="stylesheet" href="/DirTools.jl/libs/highlight/github.min.css">
+   <link rel="stylesheet" href="/FileTrees.jl/libs/highlight/github.min.css">
    
-  <link rel="stylesheet" href="/DirTools.jl/css/franklin.css">
-<link rel="stylesheet" href="/DirTools.jl/css/poole_hyde.css">
-<link rel="stylesheet" href="/DirTools.jl/css/custom.css">
+  <link rel="stylesheet" href="/FileTrees.jl/css/franklin.css">
+<link rel="stylesheet" href="/FileTrees.jl/css/poole_hyde.css">
+<link rel="stylesheet" href="/FileTrees.jl/css/custom.css">
 <!-- style adjustments -->
 <style>
   html {font-size: 17px;}
@@ -20,20 +20,20 @@
     .franklin-content {padding-left: 6%; padding-right: 6%;}
   }
 </style>
-<link rel="icon" href="/DirTools.jl/assets/favicon.png">
+<link rel="icon" href="/FileTrees.jl/assets/favicon.png">
 
-   <title>DirTools.jl</title>  
+   <title>FileTrees.jl</title>  
 </head>
 <body>
 <div class="sidebar">
   <div class="container sidebar-sticky">
     <div class="sidebar-about">
-      <h1 style="font-size:2.25em"><a href="/DirTools.jl/">DirTools<span style="opacity:0.4">.jl</span></a></h1>
+      <h1 style="font-size:2.25em"><a href="/FileTrees.jl/">FileTrees<span style="opacity:0.4">.jl</span></a></h1>
       <p class="lead">Get your hands DirTy</p>
     </div>
     <nav class="sidebar-nav">
-      <a class="sidebar-nav-item active" href="/DirTools.jl/">Home</a>
-      <a class="sidebar-nav-item " href="/DirTools.jl/api/">Full API</a>
+      <a class="sidebar-nav-item active" href="/FileTrees.jl/">Home</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/api/">Full API</a>
     </nav>
 
   </div>
@@ -45,20 +45,27 @@
 <div class="content container">
 
 <!-- Content appended here -->
-<div class="franklin-content"><h1 id="what_is_dirtools"><a href="#what_is_dirtools">What is DirTools?</a></h1>
+<div class="franklin-content"><h1 id="what_is_filetrees"><a href="#what_is_filetrees">What is FileTrees?</a></h1>
 
 <p style="font-size: 1.15em; color: #666; line-height:1.5em">
-DirTools is a set of tools to lazy-load, process and write file trees. Built-in parallelism allows you to max out compute on any machine.
+FileTrees is a set of tools to lazy-load, process and write file trees. Built-in parallelism allows you to max out compute on any machine.
 </p>
 
 <p>Lazy tree operations let you freely restructure file trees so as to be convenient to set up computations. Files in a file tree can have any value attached to them &#40;not necessarily those loaded from the file itself&#41;, you can map and reduce over these values, or combine them by merging or collapsing trees or subtrees.</p>
-<div class="franklin-toc"><ol><li><a href="#what_is_dirtools">What is DirTools?</a></li><li><a href="#loading_directories">Loading directories</a></li><li><a href="#indexing">Indexing</a></li><li><a href="#mv">mv</a></li><li><a href="#save">save</a></li><li><a href="#reduction">Reduction</a></li><li><a href="#parallelism_and_laziness">Parallelism and laziness</a></li><li><a href="#caching">Caching</a></li><li><a href="#advanced_tree_manipulation_subtrees">Advanced tree manipulation: subtrees</a></li></ol></div>
-<h1 id="loading_directories"><a href="#loading_directories">Loading directories</a></h1>
-<p>The basic datastructure in DirTools is the <a href="api/#Dir"><code>Dir</code></a> tree. The nodes of this tree can be themselves <code>Dir</code> or <code>File</code> objects.</p>
-<p>You can read in a directory structure from disk by simply calling <code>Dir</code> with the directory name.</p>
-<pre><code class="julia hljs"><span class="hljs-keyword">using</span> DirTools
+<p><strong>On this website</strong></p>
 
-taxi_dir = Dir(<span class="hljs-string">&quot;taxi-data&quot;</span>)</code></pre><pre><code class="plaintext hljs">taxi-data/
+<ul>
+<li><a href="api/">API documentation</a></li>
+<li><a href="patterns/">Pattern matching on paths</a></li>
+</ul>
+
+<p><strong>In this article</strong> <div class="franklin-toc"><ol><li><a href="#what_is_filetrees">What is FileTrees?</a></li><li><a href="#loading_directories">Loading directories</a></li><li><a href="#indexing">Indexing</a></li><li><a href="#mv">mv</a></li><li><a href="#save">save</a></li><li><a href="#reduction">Reduction</a></li><li><a href="#parallelism_and_laziness">Parallelism and laziness</a></li><li><a href="#caching">Caching</a></li><li><a href="#advanced_tree_manipulation_subtrees">Advanced tree manipulation: subtrees</a></li></ol></div></p>
+<h1 id="loading_directories"><a href="#loading_directories">Loading directories</a></h1>
+<p>The basic datastructure in FileTrees is the <a href="api/#FileTree"><code>FileTree</code></a> tree. The nodes of this tree can be themselves <code>FileTree</code> or <code>File</code> objects.</p>
+<p>You can read in a directory structure from disk by simply calling <code>FileTree</code> with the directory name.</p>
+<pre><code class="julia hljs"><span class="hljs-keyword">using</span> FileTrees
+
+taxi_dir = FileTree(<span class="hljs-string">&quot;taxi-data&quot;</span>)</code></pre><pre><code class="plaintext hljs">taxi-data/
 ├─ 2019/
 │  ├─ 01/
 │  │  ├─ green.csv
@@ -77,7 +84,7 @@ taxi_dir = Dir(<span class="hljs-string">&quot;taxi-data&quot;</span>)</code></p
 <p>The files in the directory can be loaded using the <a href="api/#load"><code>load</code></a> function. Here we will use CSV and DataFrames to load the csv files.</p>
 <pre><code class="julia hljs"><span class="hljs-keyword">using</span> DataFrames, CSV
 
-dfs = DirTools.load(taxi_dir) <span class="hljs-keyword">do</span> file
+dfs = FileTrees.load(taxi_dir) <span class="hljs-keyword">do</span> file
     DataFrame(CSV.File(path(file)))
 <span class="hljs-keyword">end</span></code></pre><pre><code class="plaintext hljs">taxi-data/
 ├─ 2019/
@@ -96,7 +103,7 @@ dfs = DirTools.load(taxi_dir) <span class="hljs-keyword">do</span> file
       └─ yellow.csv (9×18 DataFrame)
 </code></pre>
 <p>A summary of the value loaded into each file is shown in parentheses. The <code>file</code> argument passed to the load callback is a <code>File</code> object. It supports the <a href="api/#name"><code>name</code></a>, <a href="api/#path"><code>path</code></a> and <a href="api/#parent"><code>parent</code></a> functions.</p>
-<p><code>load</code> returns a new <code>Dir</code> which has the same structure as before, but contains the loaded data in each <code>File</code> node.</p>
+<p><code>load</code> returns a new <code>FileTree</code> which has the same structure as before, but contains the loaded data in each <code>File</code> node.</p>
 <h1 id="indexing"><a href="#indexing">Indexing</a></h1>
 <p>Let&#39;s look at one of these DataFrames by indexing into the tree. The syntax <code>file&#91;&#93;</code> on a file object returns the loaded data.</p>
 <pre><code class="julia hljs">yellow_jan_20 = dfs[<span class="hljs-string">&quot;2020/01/yellow.csv&quot;</span>]
@@ -119,7 +126,7 @@ yellow_jan_20[] <span class="hljs-comment"># file[] gets the value</span></code>
 
 yellow = dfs[<span class="hljs-string">glob&quot;*/*/yellow.csv&quot;</span>]
 green = dfs[<span class="hljs-string">glob&quot;*/*/green.csv&quot;</span>];</code></pre>
-<p>Here we used a <a href="https://linux.die.net/man/3/glob">glob</a> expression constructed with the <code>glob&quot;&quot;</code> string macro. This macro is provided by <a href="https://github.com/vtjnash/Glob.jl">Glob.jl</a> and is re-exported by DirTools.</p>
+<p>Here we used a <a href="https://linux.die.net/man/3/glob">glob</a> expression constructed with the <code>glob&quot;&quot;</code> string macro. This macro is provided by <a href="https://github.com/vtjnash/Glob.jl">Glob.jl</a> and is re-exported by FileTrees.</p>
 <pre><code class="julia hljs"><span class="hljs-comment"># method 2</span>
 
 yellow = dfs[<span class="hljs-string">glob&quot;*/*/yellow.csv&quot;</span>]
@@ -185,11 +192,11 @@ green′ = green/
 </code></pre>
 <p><code>mv</code> does not affect the file system, it only restructures the tree in memory. But you can save the new structure into disk. Let&#39;s write the <code>yellow</code> tree to disk, further, let&#39;s only save the first 10 columns of the data into these files.</p>
 <h1 id="save"><a href="#save">save</a></h1>
-<pre><code class="julia hljs">DirTools.save(setparent(yellow′, <span class="hljs-literal">nothing</span>)) <span class="hljs-keyword">do</span> file
+<pre><code class="julia hljs">FileTrees.save(setparent(yellow′, <span class="hljs-literal">nothing</span>)) <span class="hljs-keyword">do</span> file
     CSV.write(path(file), file[])
 <span class="hljs-keyword">end</span></code></pre>
 <p>It&#39;s saved&#33;</p>
-<pre><code class="julia hljs">Dir(<span class="hljs-string">&quot;yellow&quot;</span>)</code></pre><pre><code class="plaintext hljs">yellow/
+<pre><code class="julia hljs">FileTree(<span class="hljs-string">&quot;yellow&quot;</span>)</code></pre><pre><code class="plaintext hljs">yellow/
 ├─ 2019/
 │  ├─ 01.csv
 │  └─ 02.csv
@@ -224,8 +231,8 @@ first(yellowdf, <span class="hljs-number">15</span>)</code></pre><pre><code clas
 <p>If <code>load</code> is called with <code>lazy&#61;true</code> flag, data is not immediately loaded in memory, but a task is created at each file node for loading the file.</p>
 <p>Lazy-loading allows you to save precious memory if you&#39;re not going to use most of the data. &#40;e.g. If you just want to look at yellow taxi data but you end up loading the whole dataset, it&#39;s ok when in lazy mode&#41;.</p>
 <p>In contrast, in the previous section, <code>load</code> without <code>lazy&#61;true</code> simply loaded the data one file at a time eagerly.</p>
-<p>When you lazy-load and chain operations on the lazy loaded data, you are also telling DirTools about the dependency of tasks involved in the computation. <code>mapvalues</code> or <code>reducevalues</code> on lazy-loaded data will themselves return trees with lazy values or a lazy value respectively. To compute lazy values, you can call the <code>exec</code> function. This will do the computation in parallel.</p>
-<pre><code class="julia hljs">lazy_dfs = DirTools.load(taxi_dir; lazy=<span class="hljs-literal">true</span>) <span class="hljs-keyword">do</span> file
+<p>When you lazy-load and chain operations on the lazy loaded data, you are also telling FileTrees about the dependency of tasks involved in the computation. <code>mapvalues</code> or <code>reducevalues</code> on lazy-loaded data will themselves return trees with lazy values or a lazy value respectively. To compute lazy values, you can call the <code>exec</code> function. This will do the computation in parallel.</p>
+<pre><code class="julia hljs">lazy_dfs = FileTrees.load(taxi_dir; lazy=<span class="hljs-literal">true</span>) <span class="hljs-keyword">do</span> file
     DataFrame(CSV.File(path(file)))
 <span class="hljs-keyword">end</span></code></pre><pre><code class="plaintext hljs">taxi-data/
 ├─ 2019/
@@ -278,9 +285,9 @@ first(yellowdf, <span class="hljs-number">15</span>)</code></pre><pre><code clas
 julia -p 8                    <span class="hljs-comment"># 8 OS pocesses</span></code></pre>
 <p>In the REPL:</p>
 <pre><code class="julia hljs"><span class="hljs-keyword">using</span> Distributed, .Threads
-<span class="hljs-meta">@everywhere</span> <span class="hljs-keyword">using</span> DirTools, CSV, DataFrames
+<span class="hljs-meta">@everywhere</span> <span class="hljs-keyword">using</span> FileTrees, CSV, DataFrames
 
-lazy_dfs = DirTools.load(taxi_dir; lazy=<span class="hljs-literal">true</span>) <span class="hljs-keyword">do</span> file
+lazy_dfs = FileTrees.load(taxi_dir; lazy=<span class="hljs-literal">true</span>) <span class="hljs-keyword">do</span> file
     <span class="hljs-comment"># println(&quot;Loading $(path(file)) on $(myid()) on thread $(threadid())&quot;)</span>
     DataFrame(CSV.File(path(file)))
 <span class="hljs-keyword">end</span>
@@ -325,7 +332,7 @@ first(exec(reducevalues(vcat, lazy_dfs[<span class="hljs-string">r&quot;yellow.c
 <p>Happy Hacking&#33;</p>
 <div class="page-foot">
   <div class="copyright">
-    &copy; Shashi Gowda, Julian Samaroo. Last modified: August 09, 2020. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a>.
+    &copy; Shashi Gowda, Julian Samaroo. Last modified: August 10, 2020. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a>.
   </div>
 </div>
 </div><!-- CONTENT ENDS HERE -->

@@ -140,13 +140,6 @@ end
         end
     end
 
-    # dirs got created
-    @test !isdir("test_dir_lazy")
-    # files not yet created
-    @test !isfile("test_dir_lazy/a/b/a")
-
-    exec(s)
-
     @test isdir("test_dir_lazy")
     @test isfile("test_dir_lazy/a/b/a")
 

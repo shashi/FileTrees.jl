@@ -124,7 +124,7 @@ has a value associated with it.
 
 (see `load` and `mapvalues` for associating values with files.)
 """
-function save(f, t::Node; lazy=nothing)
+function save(f, t::Node; lazy=nothing, exec=true)
     t′ = mapvalued(t) do x
         isempty(x) && return NoValue()
 
@@ -140,6 +140,7 @@ function save(f, t::Node; lazy=nothing)
 
         setvalue(x, lazify(lazy, saver)(x, x[]))
     end
+
     # placeholder task that waits and returns nothing
-    reducevalues((x,y)->nothing, t′)
+    (exec ? FileTrees.exec : identity)(reducevalues((x,y)->nothing, t′))
 end

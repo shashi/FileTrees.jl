@@ -63,8 +63,10 @@
 
   </div>
   <div style="font-size: 0.85em; bottom: 3em; position: fixed">
-      <img src="https://raw.githubusercontent.com/JuliaLang/julia-logo-graphics/master/images/julia-logo-dark.svg" height="32" style="display: inline-block; margin-bottom: -8px; opacity: 0.7">
-      powered.
+      <a href="https://github.com/shashi/FileTrees.jl">Go to GitHub repository &rarr;</a> <br>  <br>
+
+      <a href="https://julialang.org/"><img src="https://raw.githubusercontent.com/JuliaLang/julia-logo-graphics/master/images/julia-logo-dark.svg" height="32" style="display: inline-block; margin-bottom: -8px; opacity: 0.7">
+          powered.</a>
   </div>
 </div>
 <div class="content container">
@@ -202,13 +204,15 @@ green = dfs[<span class="hljs-string">glob&quot;*/*/green.csv&quot;</span>];</co
 <pre><code class="julia hljs"><span class="hljs-comment"># method 2</span>
 
 yellow = dfs[<span class="hljs-string">glob&quot;*/*/yellow.csv&quot;</span>]
-green = diff(dfs, yellow);</code></pre>
+green = diff(dfs, yellow);</code></pre><pre><code class="plaintext hljs">MethodError: no method matching diff(::FileTrees.FileTree, ::FileTrees.FileTree)
+</code></pre>
 <p><a href="api/#diff"><code>diff</code></a> allows you to &quot;subtract&quot; a tree structure from another. Here we have only yellow and green taxi files, so diff only leaves the green files behind.</p>
 <p>Let&#39;s see how they look:</p>
 <pre><code class="julia hljs"><span class="hljs-comment"># method 3</span>
 
 yellow = dfs[<span class="hljs-string">r&quot;yellow.csv$&quot;</span>]
-green = diff(dfs, yellow);</code></pre>
+green = diff(dfs, yellow);</code></pre><pre><code class="plaintext hljs">MethodError: no method matching diff(::FileTrees.FileTree, ::FileTrees.FileTree)
+</code></pre>
 <p>Here we are indexing the tree with a regular expression. The regular expression in this case matches any path ending with the string &quot;yellow.csv&quot;.</p>
 <p>All the above methods should return the exact same yellow and green trees:</p>
 <pre><code class="julia hljs"><span class="hljs-meta">@show</span> yellow
@@ -321,7 +325,7 @@ FileTree(<span class="hljs-string">&quot;yellow&quot;</span>)</code></pre><pre><
 <p>Happy Hacking&#33;</p>
 <div class="page-foot">
   <div class="copyright">
-    &copy; Shashi Gowda, Julian Samaroo. Last modified: August 10, 2020. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a>.
+    &copy; Shashi Gowda, Julian Samaroo. Last modified: August 11, 2020. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a>.
   </div>
 </div>
 </div><!-- CONTENT ENDS HERE -->

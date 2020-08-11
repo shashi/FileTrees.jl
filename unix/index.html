@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+   <link rel="stylesheet" href="/FileTrees.jl/libs/highlight/github.min.css">
+   
+  <link rel="stylesheet" href="/FileTrees.jl/css/franklin.css">
+<link rel="stylesheet" href="/FileTrees.jl/css/poole_hyde.css">
+<link rel="stylesheet" href="/FileTrees.jl/css/custom.css">
+<!-- style adjustments -->
+<style>
+  html {font-size: 17px;}
+  .franklin-content {position: relative; padding-left: 8%; padding-right: 5%; line-height: 1.35em;}
+  @media (min-width: 940px) {
+    .franklin-content {width: 100%; margin-left: auto; margin-right: auto;}
+  }
+  @media (max-width: 768px) {
+    .franklin-content {padding-left: 6%; padding-right: 6%;}
+  }
+</style>
+<link rel="icon" href="/FileTrees.jl/assets/favicon.png">
+
+   <title>FileTrees.jl</title>  
+</head>
+<body>
+<div class="sidebar">
+  <div class="container sidebar-sticky">
+    <div class="sidebar-about">
+      <h1 style="font-size:2em"><a href="/FileTrees.jl/">FileTrees<span style="opacity:0.4">.jl</span></a></h1>
+      <p class="lead">Easy parallel file loading</p>
+    </div>
+    <style>
+@media (min-width: 768px) {
+    .sidebar-nav {
+        margin-top: 3em;
+    }
+}
+    .sidebar-nav .sidebar-nav-item.active {
+        box-sizing: border-box;
+        border-bottom: 1px #f1f1f1 solid;
+        margin-right: -1em;
+        margin-left: -0.5em;
+        padding-left: 0.5em;
+        color: white;
+        font-weight: normal !important;
+    }
+    .sidebar-nav .sidebar-nav-item {
+        color: #cccccc;
+        margin: 0.5em 0;
+    }
+    </style>
+    <nav class="sidebar-nav" style="opacity: 0.9">
+      <a class="sidebar-nav-item " href="/FileTrees.jl/">Home page</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/create-trees/">Creating file trees</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/values/">File processing</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/patterns/">Pattern matching</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/tree-manipulation/">Manipulating file trees</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/lazy-parallel/">Laziness and parallelism</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/api/">API documentation</a>
+    </nav>
+
+  </div>
+  <div style="font-size: 0.85em; bottom: 3em; position: fixed">
+      <a href="https://github.com/shashi/FileTrees.jl">Go to GitHub repository &rarr;</a> <br>  <br>
+
+      <a href="https://julialang.org/"><img src="https://raw.githubusercontent.com/JuliaLang/julia-logo-graphics/master/images/julia-logo-dark.svg" height="32" style="display: inline-block; margin-bottom: -8px; opacity: 0.7">
+          powered.</a>
+  </div>
+</div>
+<div class="content container">
+
+<!-- Content appended here -->
+<div class="franklin-content"><h1 id="filetrees_as_a_parallel_shell"><a href="#filetrees_as_a_parallel_shell">FileTrees as a parallel shell</a></h1>
+<p>Think of FileTrees as a Unix shell with <code>mv</code>, <code>cp</code>, <code>rm</code>, <code>find</code>, and a bit of <code>awk</code>, but you can also use Julia code in between&#33; Trees can be lazy and materialized in parallel using threads and distributed processes. Tree operations are pure functions, so you can reuse tree states as you wish.</p>
+<p>Lazy file loading delays loading them until an operation such as <code>save</code> and <code>exec</code> require the data in the tree. The chain of operations is performed to materialize the result, if valid, in parallel&#33;</p>
+<p>You can also make intermediate lazy results be cached in distributed memory.</p>
+<p>Any operation that may overwrite an existing or write to the same destination multiple file will fail by default but can be provided with a <code>combine&#61;f</code> callback which will be called to combine the values in those files. &#40;maybe you want to append the data instead of overwriting&#33;&#41;. This overwrite callback is also applied lazily if any of the inputs are lazy. And eventually computed using the parallelism.</p>
+<p>Here is a simple example of using <code>mv</code> to take a tree of dataset like this:</p>
+<pre><code class="julia hljs"><span class="hljs-keyword">using</span> FileTrees
+
+taxi_dir = FileTree(<span class="hljs-string">&quot;taxi-data&quot;</span>)</code></pre><pre><code class="plaintext hljs">taxi-data/
+├─ 2019/
+│  ├─ 01/
+│  │  ├─ green.csv
+│  │  └─ yellow.csv
+│  └─ 02/
+│     ├─ green.csv
+│     └─ yellow.csv
+└─ 2020/
+   ├─ 01/
+   │  ├─ green.csv
+   │  └─ yellow.csv
+   └─ 02/
+      ├─ green.csv
+      └─ yellow.csv
+</code></pre>
+<p>And turn it into:</p>
+<pre><code class="julia hljs">collated/
+├─ green.csv
+└─ yellow.csv</code></pre>
+<p>Where the final <code>green.csv</code> contains the result of some computation on all <code>green.csv</code> files. And correspondingly <code>yellow.csv</code> of all <code>yellow.csv</code>s.</p>
+<p>First load the files in the tree as DataFrames:</p>
+<pre><code class="julia hljs"><span class="hljs-keyword">using</span> CSV, DataFrames
+
+t = FileTrees.load(taxi_dir) <span class="hljs-keyword">do</span> file
+    DataFrame(CSV.File(path(file)))
+<span class="hljs-keyword">end</span></code></pre><pre><code class="plaintext hljs">taxi-data/
+├─ 2019/
+│  ├─ 01/
+│  │  ├─ green.csv (9×20 DataFrame)
+│  │  └─ yellow.csv (9×18 DataFrame)
+│  └─ 02/
+│     ├─ green.csv (9×20 DataFrame)
+│     └─ yellow.csv (9×18 DataFrame)
+└─ 2020/
+   ├─ 01/
+   │  ├─ green.csv (9×20 DataFrame)
+   │  └─ yellow.csv (9×18 DataFrame)
+   └─ 02/
+      ├─ green.csv (9×20 DataFrame)
+      └─ yellow.csv (9×18 DataFrame)
+</code></pre>
+<p>Do a groupby on each DataFrame:</p>
+<pre><code class="julia hljs"><span class="hljs-keyword">using</span> Statistics
+
+t = mapvalues(t) <span class="hljs-keyword">do</span> df
+    combine(groupby(df, :payment_type), :total_amount =&gt; mean)
+<span class="hljs-keyword">end</span></code></pre><pre><code class="plaintext hljs">taxi-data/
+├─ 2019/
+│  ├─ 01/
+│  │  ├─ green.csv (2×2 DataFrame)
+│  │  └─ yellow.csv (2×2 DataFrame)
+│  └─ 02/
+│     ├─ green.csv (2×2 DataFrame)
+│     └─ yellow.csv (2×2 DataFrame)
+└─ 2020/
+   ├─ 01/
+   │  ├─ green.csv (2×2 DataFrame)
+   │  └─ yellow.csv (2×2 DataFrame)
+   └─ 02/
+      ├─ green.csv (2×2 DataFrame)
+      └─ yellow.csv (2×2 DataFrame)
+</code></pre>
+<p>Move every <code>green.csv</code> file to a file called <code>green.csv</code> at the root of the tree. Use <code>vcat</code> on the DataFrames to merge files that are moved to the same destination:</p>
+<pre><code class="julia hljs">t = mv(t, <span class="hljs-string">r&quot;.*/.*/green.csv&quot;</span>, <span class="hljs-string">s&quot;green.csv&quot;</span>; combine=vcat)</code></pre><pre><code class="plaintext hljs">taxi-data/
+├─ 2019/
+│  ├─ 01/
+│  │  └─ yellow.csv (2×2 DataFrame)
+│  └─ 02/
+│     └─ yellow.csv (2×2 DataFrame)
+├─ 2020/
+│  ├─ 01/
+│  │  └─ yellow.csv (2×2 DataFrame)
+│  └─ 02/
+│     └─ yellow.csv (2×2 DataFrame)
+└─ green.csv (8×2 DataFrame)
+</code></pre>
+<p>Do the same with <code>yellow.csv</code>s:</p>
+<pre><code class="julia hljs">t = mv(t, <span class="hljs-string">r&quot;.*/.*/yellow.csv&quot;</span>, <span class="hljs-string">s&quot;yellow.csv&quot;</span>; combine=vcat)</code></pre><pre><code class="plaintext hljs">taxi-data/
+├─ green.csv (8×2 DataFrame)
+└─ yellow.csv (8×2 DataFrame)
+</code></pre>
+<p>Look at the result:</p>
+<pre><code class="julia hljs">t[<span class="hljs-string">&quot;green.csv&quot;</span>][]</code></pre><pre><code class="plaintext hljs">8×2 DataFrame
+│ Row │ payment_type │ total_amount_mean │
+│     │ Int64        │ Float64           │
+├─────┼──────────────┼───────────────────┤
+│ 1   │ 2            │ 9.05              │
+│ 2   │ 1            │ 7.26              │
+│ 3   │ 1            │ 14.122            │
+│ 4   │ 2            │ 16.4875           │
+│ 5   │ 1            │ 13.432            │
+│ 6   │ 2            │ 17.3              │
+│ 7   │ 2            │ 10.3              │
+│ 8   │ 1            │ 15.3683           │</code></pre>
+<pre><code class="julia hljs">t[<span class="hljs-string">&quot;yellow.csv&quot;</span>][]</code></pre><pre><code class="plaintext hljs">8×2 DataFrame
+│ Row │ payment_type │ total_amount_mean │
+│     │ Int64        │ Float64           │
+├─────┼──────────────┼───────────────────┤
+│ 1   │ 1            │ 18.9157           │
+│ 2   │ 2            │ 12.55             │
+│ 3   │ 1            │ 7.92143           │
+│ 4   │ 2            │ 4.3               │
+│ 5   │ 1            │ 12.3              │
+│ 6   │ 2            │ 11.175            │
+│ 7   │ 1            │ 11.92             │
+│ 8   │ 2            │ 32.99             │</code></pre>
+<p>Save this new directory:</p>
+<pre><code class="julia hljs">FileTrees.save(FileTrees.rename(t, <span class="hljs-string">&quot;collated&quot;</span>)) <span class="hljs-keyword">do</span> file
+    CSV.write(path(file), file[])
+<span class="hljs-keyword">end</span></code></pre>
+<p>Verify:</p>
+<pre><code class="julia hljs">FileTree(<span class="hljs-string">&quot;collated&quot;</span>)</code></pre><pre><code class="plaintext hljs">collated/
+├─ green.csv
+└─ yellow.csv
+</code></pre>
+<h2 id="now_for_lazytrue"><a href="#now_for_lazytrue">now for lazy&#61;true</a></h2>
+<p>Simply passing <code>lazy&#61;true</code> to <code>FileTrees.load</code> and leaving the rest of the code the same will cause the whole computation to occur in parallel:</p>
+<pre><code class="julia hljs"><span class="hljs-keyword">using</span> Distributed
+
+<span class="hljs-meta">@everywhere</span> FileTrees <span class="hljs-comment"># @everywhere loads the package on all processors</span>
+<span class="hljs-meta">@everywhere</span> <span class="hljs-keyword">using</span> CSV, DataFrames
+
+t = FileTrees.load(taxi_dir; lazy=<span class="hljs-literal">true</span>) <span class="hljs-keyword">do</span> file
+    DataFrame(CSV.File(path(file)))
+<span class="hljs-keyword">end</span></code></pre><pre><code class="plaintext hljs">taxi-data/
+├─ 2019/
+│  ├─ 01/
+│  │  ├─ green.csv (Dagger.Thunk)
+│  │  └─ yellow.csv (Dagger.Thunk)
+│  └─ 02/
+│     ├─ green.csv (Dagger.Thunk)
+│     └─ yellow.csv (Dagger.Thunk)
+└─ 2020/
+   ├─ 01/
+   │  ├─ green.csv (Dagger.Thunk)
+   │  └─ yellow.csv (Dagger.Thunk)
+   └─ 02/
+      ├─ green.csv (Dagger.Thunk)
+      └─ yellow.csv (Dagger.Thunk)
+</code></pre>
+<pre><code class="julia hljs"><span class="hljs-keyword">using</span> Statistics
+
+t = mapvalues(t) <span class="hljs-keyword">do</span> df
+    combine(groupby(df, :payment_type), :total_amount =&gt; mean)
+<span class="hljs-keyword">end</span></code></pre><pre><code class="plaintext hljs">taxi-data/
+├─ 2019/
+│  ├─ 01/
+│  │  ├─ green.csv (Dagger.Thunk)
+│  │  └─ yellow.csv (Dagger.Thunk)
+│  └─ 02/
+│     ├─ green.csv (Dagger.Thunk)
+│     └─ yellow.csv (Dagger.Thunk)
+└─ 2020/
+   ├─ 01/
+   │  ├─ green.csv (Dagger.Thunk)
+   │  └─ yellow.csv (Dagger.Thunk)
+   └─ 02/
+      ├─ green.csv (Dagger.Thunk)
+      └─ yellow.csv (Dagger.Thunk)
+</code></pre>
+<p>Notice that this time the nodes are <code>Thunk</code>s&#33; these are lazy values, not yet computed.</p>
+<pre><code class="julia hljs">t = mv(t, <span class="hljs-string">r&quot;.*/.*/green.csv&quot;</span>, <span class="hljs-string">s&quot;green.csv&quot;</span>; combine=vcat)
+t = mv(t, <span class="hljs-string">r&quot;.*/.*/yellow.csv&quot;</span>, <span class="hljs-string">s&quot;yellow.csv&quot;</span>; combine=vcat)</code></pre><pre><code class="plaintext hljs">taxi-data/
+├─ green.csv (Dagger.Thunk)
+└─ yellow.csv (Dagger.Thunk)
+</code></pre>
+<pre><code class="julia hljs">FileTrees.save(FileTrees.rename(t, <span class="hljs-string">&quot;lazily_collated&quot;</span>)) <span class="hljs-keyword">do</span> file
+    CSV.write(path(file), file[])
+<span class="hljs-keyword">end</span></code></pre>
+<p>Verify:</p>
+<pre><code class="julia hljs">result = FileTrees.load(DataFrame∘CSV.File∘path, FileTree(<span class="hljs-string">&quot;lazily_collated&quot;</span>))</code></pre><pre><code class="plaintext hljs">lazily_collated/
+├─ green.csv (8×2 DataFrame)
+└─ yellow.csv (8×2 DataFrame)
+</code></pre>
+<pre><code class="julia hljs"><span class="hljs-meta">@show</span> result[<span class="hljs-string">&quot;yellow.csv&quot;</span>][]
+<span class="hljs-meta">@show</span> result[<span class="hljs-string">&quot;green.csv&quot;</span>][]</code></pre><pre><code class="plaintext hljs">(result[&quot;yellow.csv&quot;])[] = 8×2 DataFrame
+│ Row │ payment_type │ total_amount_mean │
+│     │ Int64        │ Float64           │
+├─────┼──────────────┼───────────────────┤
+│ 1   │ 1            │ 18.9157           │
+│ 2   │ 2            │ 12.55             │
+│ 3   │ 1            │ 7.92143           │
+│ 4   │ 2            │ 4.3               │
+│ 5   │ 1            │ 12.3              │
+│ 6   │ 2            │ 11.175            │
+│ 7   │ 1            │ 11.92             │
+│ 8   │ 2            │ 32.99             │
+(result[&quot;green.csv&quot;])[] = 8×2 DataFrame
+│ Row │ payment_type │ total_amount_mean │
+│     │ Int64        │ Float64           │
+├─────┼──────────────┼───────────────────┤
+│ 1   │ 2            │ 9.05              │
+│ 2   │ 1            │ 7.26              │
+│ 3   │ 1            │ 14.122            │
+│ 4   │ 2            │ 16.4875           │
+│ 5   │ 1            │ 13.432            │
+│ 6   │ 2            │ 17.3              │
+│ 7   │ 2            │ 10.3              │
+│ 8   │ 1            │ 15.3683           │
+</code></pre>
+<div class="page-foot">
+  <div class="copyright">
+    &copy; Shashi Gowda, Julian Samaroo. Last modified: August 11, 2020. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a>.
+  </div>
+</div>
+</div><!-- CONTENT ENDS HERE -->
+    </div>  <!-- div: content container -->
+    
+    
+        
+
+
+    
+  </body>
+</html>

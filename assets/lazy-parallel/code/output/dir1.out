@@ -1,1 +1,17 @@
-UndefVarError: reducevalues not defined
+TaskFailedException:
+UndefVarError: CSV not defined
+Stacktrace:
+ [1] (::Main.FD_SANDBOX_1003884096211714240.var"#1#2")(::FileTrees.File) at ./none:3
+ [2] (::Dagger.var"#47#48"{Main.FD_SANDBOX_1003884096211714240.var"#1#2",Tuple{FileTrees.File}})() at ./threadingconstructs.jl:126
+wait at ./task.jl:267 [inlined]
+fetch at ./task.jl:282 [inlined]
+execute!(::Dagger.ThreadProc, ::Function, ::FileTrees.File) at /home/runner/.julia/packages/Dagger/78JDD/src/processor.jl:222
+do_task(::Dagger.Context, ::Dagger.OSProc, ::Int64, ::Function, ::Tuple{FileTrees.File}, ::Bool, ::Bool, ::Bool, ::Dagger.Sch.ThunkOptions) at /home/runner/.julia/packages/Dagger/78JDD/src/scheduler.jl:340
+#135 at /buildworker/worker/package_linux64/build/usr/share/julia/stdlib/v1.4/Distributed/src/remotecall.jl:350 [inlined]
+run_work_thunk(::Distributed.var"#135#136"{typeof(Dagger.Sch.do_task),Tuple{Dagger.Context,Dagger.OSProc,Int64,Main.FD_SANDBOX_1003884096211714240.var"#1#2",Tuple{FileTrees.File},Bool,Bool,Bool,Dagger.Sch.ThunkOptions},Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}}}, ::Bool) at /buildworker/worker/package_linux64/build/usr/share/julia/stdlib/v1.4/Distributed/src/process_messages.jl:79
+remotecall_fetch(::Function, ::Distributed.LocalProcess, ::Dagger.Context, ::Vararg{Any,N} where N; kwargs::Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}}) at /buildworker/worker/package_linux64/build/usr/share/julia/stdlib/v1.4/Distributed/src/remotecall.jl:375
+remotecall_fetch(::Function, ::Distributed.LocalProcess, ::Dagger.Context, ::Vararg{Any,N} where N) at /buildworker/worker/package_linux64/build/usr/share/julia/stdlib/v1.4/Distributed/src/remotecall.jl:375
+remotecall_fetch(::Function, ::Int64, ::Dagger.Context, ::Vararg{Any,N} where N; kwargs::Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}}) at /buildworker/worker/package_linux64/build/usr/share/julia/stdlib/v1.4/Distributed/src/remotecall.jl:417
+remotecall_fetch at /buildworker/worker/package_linux64/build/usr/share/julia/stdlib/v1.4/Distributed/src/remotecall.jl:417 [inlined]
+macro expansion at /home/runner/.julia/packages/Dagger/78JDD/src/scheduler.jl:353 [inlined]
+(::Dagger.Sch.var"#26#27"{Dagger.Context,Dagger.OSProc,Int64,Main.FD_SANDBOX_1003884096211714240.var"#1#2",Tuple{FileTrees.File},Channel{Any},Bool,Bool,Bool,Dagger.Sch.ThunkOptions})() at ./task.jl:358

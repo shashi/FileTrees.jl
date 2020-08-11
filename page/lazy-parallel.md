@@ -9,7 +9,9 @@ Lazy-loading allows you to save precious memory if you're not going to use most 
 When you lazy-load and chain operations on the lazy loaded data, you are also telling FileTrees about the dependency of tasks involved in the computation. `mapvalues` or `reducevalues` on lazy-loaded data will themselves return trees with lazy values or a lazy value respectively. To compute lazy values, you can call the `exec` function. This will do the computation in parallel.
 
 ```julia:dir1
-using FileTrees
+using Distributed # for @everywhere
+@everywhere using FileTrees
+@everywhere using DataFrames, CSV
 
 taxi_dir = FileTree("taxi-data")
 

@@ -109,10 +109,10 @@ Here we used a [glob](https://linux.die.net/man/3/glob) expression constructed w
 # method 2
 
 yellow = dfs[glob"*/*/yellow.csv"]
-green = diff(dfs, yellow);
+green = rm(dfs, yellow);
 ```
 
-[`diff`](api/#diff) allows you to "subtract" a tree structure from another. Here we have only yellow and green taxi files, so diff only leaves the green files behind.
+[`rm`](api/#rm) allows you to "subtract" a tree structure from another. Here we have only yellow and green taxi files, so rm only leaves the green files behind.
 
 Let's see how they look:
 
@@ -120,7 +120,7 @@ Let's see how they look:
 # method 3
 
 yellow = dfs[r"yellow.csv$"]
-green = diff(dfs, yellow);
+green = rm(dfs, yellow);
 ```
 
 Here we are indexing the tree with a regular expression. The regular expression in this case matches any path ending with the string "yellow.csv".

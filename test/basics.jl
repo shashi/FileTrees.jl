@@ -83,6 +83,12 @@ import FileTrees: attach
 
     @test data1 == data2
 
+    t7 = mapsubtrees(t1, glob"*") do subtree
+        reducevalues(vcat, subtree)
+    end
+
+    @test reducevalues(hcat, t7) == [(j, i) for i=1:6, j=1:9]
+
     t6 = cp(t1, r"^(.*)/(.*)/data.csv$", s"\1/\2.csv")
 
     @test isequal(t6, cp(t1, t5))

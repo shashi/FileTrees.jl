@@ -60,6 +60,7 @@ function reducevalues(f, t::FileTree; associative=true, lazy=nothing)
     itr = getindex.(collect(Iterators.filter(hasvalue, Leaves(t))))
     associative ? assocreduce(f′, itr) : reduce(f′, itr)
 end
+reducevalues(f, t::File; associative=true, lazy=nothing) = t[]
 
 """
 Associative reduce
@@ -69,50 +70,6 @@ function assocreduce(f, xs)
     l = length(xs)
     m = div(l, 2)
     f(assocreduce(f, xs[1:m]), assocreduce(f, xs[m+1:end]))
-end
-
-"""
-    mapsubtrees(f, t::FileTree, pattern::Union{GlobMatch, Regex})
-
-For every node that matches the pattern provided, apply the function `f`.
-
-If `f` returns either a `File` or `FileTree`, this new node will replace the matched node.
-
-If `f` returns `nothing`, the matched node will be deleted
-
-If `f` returns any other value, the value will be used as the value of the node
-and the node itself will be emptied of children.
-
-This will allow use of mapsubtrees for complex use cases.
-
-Suppose you would like to combine the values of a subdirectory with the
-function `hcat` and in turn those values using `vcat`, you can use
-`mapsubtrees` to accomplish this:
-
-```julia
-reducevalues(vcat, mapsubtrees(x->reducevalues(hcat, x), t, glob"*/*"))
-```
-"""
-function mapsubtrees(f, t::FileTree, g::GlobMatch)
-    _glob_map(identity, t, g.pattern...) do match
-        x = f(match)
-        if !(x isa Union{FileTree, File})
-            setvalue(empty(match), x)
-        else
-            match
-        end
-    end |> setparent
-end
-
-function mapsubtrees(f, t::FileTree, r::Regex)
-    _regex_map(identity, t, r) do match
-        x = f(match)
-        if !(x isa Union{FileTree, File})
-            setvalue(empty(match), x)
-        else
-            match
-        end
-    end |> setparent
 end
 
 """

@@ -44,8 +44,6 @@ function FileTree(t::FileTree;
     FileTree(parent, name, children, value)
 end
 
-(f::FileTree)(; kw...) = FileTree(f; kw...)
-
 FileTree(dir) = FileTree(nothing, dir)
 
 function FileTree(parent, dir)
@@ -117,8 +115,6 @@ end
 
 File(parent, name::String) = File(parent, name, NoValue())
 
-(f::File)(; kw...) = File(f; kw...)
-
 function Base.isequal(f1::File, f2::File)
     f1.name == f2.name && isequal(f1.value, f2.value)
 end
@@ -136,10 +132,6 @@ Base.empty(d::File) = d
 setvalue(x::File, val) = File(x, value=val)
 
 setparent(x::File, parent=parent(x)) = File(x, parent=parent)
-
-files(tree::FileTree) = FileTree(tree; children=filter(x->x isa File, tree.children))
-
-subdirs(tree::FileTree) = FileTree(tree; children=filter(x->x isa FileTree, tree.children))
 
 Base.getindex(tree::FileTree, i::Int) = tree.children[i]
 

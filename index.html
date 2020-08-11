@@ -204,15 +204,13 @@ green = dfs[<span class="hljs-string">glob&quot;*/*/green.csv&quot;</span>];</co
 <pre><code class="julia hljs"><span class="hljs-comment"># method 2</span>
 
 yellow = dfs[<span class="hljs-string">glob&quot;*/*/yellow.csv&quot;</span>]
-green = diff(dfs, yellow);</code></pre><pre><code class="plaintext hljs">MethodError: no method matching diff(::FileTrees.FileTree, ::FileTrees.FileTree)
-</code></pre>
-<p><a href="api/#diff"><code>diff</code></a> allows you to &quot;subtract&quot; a tree structure from another. Here we have only yellow and green taxi files, so diff only leaves the green files behind.</p>
+green = rm(dfs, yellow);</code></pre>
+<p><a href="api/#rm"><code>rm</code></a> allows you to &quot;subtract&quot; a tree structure from another. Here we have only yellow and green taxi files, so rm only leaves the green files behind.</p>
 <p>Let&#39;s see how they look:</p>
 <pre><code class="julia hljs"><span class="hljs-comment"># method 3</span>
 
 yellow = dfs[<span class="hljs-string">r&quot;yellow.csv$&quot;</span>]
-green = diff(dfs, yellow);</code></pre><pre><code class="plaintext hljs">MethodError: no method matching diff(::FileTrees.FileTree, ::FileTrees.FileTree)
-</code></pre>
+green = rm(dfs, yellow);</code></pre>
 <p>Here we are indexing the tree with a regular expression. The regular expression in this case matches any path ending with the string &quot;yellow.csv&quot;.</p>
 <p>All the above methods should return the exact same yellow and green trees:</p>
 <pre><code class="julia hljs"><span class="hljs-meta">@show</span> yellow

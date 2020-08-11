@@ -77,7 +77,9 @@
 <p>In contrast, <code>load</code> without <code>lazy&#61;true</code> simply loads the data one file at a time eagerly.</p>
 <p>Lazy-loading allows you to save precious memory if you&#39;re not going to use most of the data. &#40;e.g. If you just want to look at yellow taxi data but you end up loading the whole dataset, it&#39;s ok when in lazy mode&#41;.</p>
 <p>When you lazy-load and chain operations on the lazy loaded data, you are also telling FileTrees about the dependency of tasks involved in the computation. <code>mapvalues</code> or <code>reducevalues</code> on lazy-loaded data will themselves return trees with lazy values or a lazy value respectively. To compute lazy values, you can call the <code>exec</code> function. This will do the computation in parallel.</p>
-<pre><code class="julia hljs"><span class="hljs-keyword">using</span> FileTrees
+<pre><code class="julia hljs"><span class="hljs-keyword">using</span> Distributed <span class="hljs-comment"># for @everywhere</span>
+<span class="hljs-meta">@everywhere</span> <span class="hljs-keyword">using</span> FileTrees
+<span class="hljs-meta">@everywhere</span> <span class="hljs-keyword">using</span> DataFrames, CSV
 
 taxi_dir = FileTree(<span class="hljs-string">&quot;taxi-data&quot;</span>)
 
@@ -109,24 +111,25 @@ lazy_dfs = FileTrees.load(taxi_dir; lazy=<span class="hljs-literal">true</span>)
 </code></pre>
 <pre><code class="julia hljs">yellowdf = exec(reducevalues(vcat, yellow′))
 
-first(yellowdf, <span class="hljs-number">15</span>)</code></pre><pre><code class="plaintext hljs">TaskFailedException:
-UndefVarError: CSV not defined
-Stacktrace:
- [1] (::Main.FD_SANDBOX_1003884096211714240.var&quot;#1#2&quot;)(::FileTrees.File) at ./none:3
- [2] (::Dagger.var&quot;#47#48&quot;{Main.FD_SANDBOX_1003884096211714240.var&quot;#1#2&quot;,Tuple{FileTrees.File}})() at ./threadingconstructs.jl:126
-wait at ./task.jl:267 [inlined]
-fetch at ./task.jl:282 [inlined]
-execute!(::Dagger.ThreadProc, ::Function, ::FileTrees.File) at /home/runner/.julia/packages/Dagger/78JDD/src/processor.jl:222
-do_task(::Dagger.Context, ::Dagger.OSProc, ::Int64, ::Function, ::Tuple{FileTrees.File}, ::Bool, ::Bool, ::Bool, ::Dagger.Sch.ThunkOptions) at /home/runner/.julia/packages/Dagger/78JDD/src/scheduler.jl:340
-#135 at /buildworker/worker/package_linux64/build/usr/share/julia/stdlib/v1.4/Distributed/src/remotecall.jl:350 [inlined]
-run_work_thunk(::Distributed.var&quot;#135#136&quot;{typeof(Dagger.Sch.do_task),Tuple{Dagger.Context,Dagger.OSProc,Int64,Main.FD_SANDBOX_1003884096211714240.var&quot;#1#2&quot;,Tuple{FileTrees.File},Bool,Bool,Bool,Dagger.Sch.ThunkOptions},Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}}}, ::Bool) at /buildworker/worker/package_linux64/build/usr/share/julia/stdlib/v1.4/Distributed/src/process_messages.jl:79
-remotecall_fetch(::Function, ::Distributed.LocalProcess, ::Dagger.Context, ::Vararg{Any,N} where N; kwargs::Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}}) at /buildworker/worker/package_linux64/build/usr/share/julia/stdlib/v1.4/Distributed/src/remotecall.jl:375
-remotecall_fetch(::Function, ::Distributed.LocalProcess, ::Dagger.Context, ::Vararg{Any,N} where N) at /buildworker/worker/package_linux64/build/usr/share/julia/stdlib/v1.4/Distributed/src/remotecall.jl:375
-remotecall_fetch(::Function, ::Int64, ::Dagger.Context, ::Vararg{Any,N} where N; kwargs::Base.Iterators.Pairs{Union{},Union{},Tuple{},NamedTuple{(),Tuple{}}}) at /buildworker/worker/package_linux64/build/usr/share/julia/stdlib/v1.4/Distributed/src/remotecall.jl:417
-remotecall_fetch at /buildworker/worker/package_linux64/build/usr/share/julia/stdlib/v1.4/Distributed/src/remotecall.jl:417 [inlined]
-macro expansion at /home/runner/.julia/packages/Dagger/78JDD/src/scheduler.jl:353 [inlined]
-(::Dagger.Sch.var&quot;#26#27&quot;{Dagger.Context,Dagger.OSProc,Int64,Main.FD_SANDBOX_1003884096211714240.var&quot;#1#2&quot;,Tuple{FileTrees.File},Channel{Any},Bool,Bool,Bool,Dagger.Sch.ThunkOptions})() at ./task.jl:358
-</code></pre>
+first(yellowdf, <span class="hljs-number">15</span>)</code></pre><pre><code class="plaintext hljs">15×18 DataFrame
+│ Row │ VendorID │ tpep_pickup_datetime │ tpep_dropoff_datetime │ passenger_count │ trip_distance │ RatecodeID │ store_and_fwd_flag │ PULocationID │ DOLocationID │ payment_type │ fare_amount │ extra   │ mta_tax │ tip_amount │ tolls_amount │ improvement_surcharge │ total_amount │ congestion_surcharge │
+│     │ Int64    │ String               │ String                │ Int64           │ Float64       │ Int64      │ String             │ Int64        │ Int64        │ Int64        │ Float64     │ Float64 │ Float64 │ Float64    │ Float64      │ Float64               │ Float64      │ Float64?             │
+├─────┼──────────┼──────────────────────┼───────────────────────┼─────────────────┼───────────────┼────────────┼────────────────────┼──────────────┼──────────────┼──────────────┼─────────────┼─────────┼─────────┼────────────┼──────────────┼───────────────────────┼──────────────┼──────────────────────┤
+│ 1   │ 1        │ 2019-01-01 00:46:40  │ 2019-01-01 00:53:20   │ 1               │ 1.5           │ 1          │ N                  │ 151          │ 239          │ 1            │ 7.0         │ 0.5     │ 0.5     │ 1.65       │ 0.0          │ 0.3                   │ 9.95         │ missing              │
+│ 2   │ 1        │ 2019-01-01 00:59:47  │ 2019-01-01 01:18:59   │ 1               │ 2.6           │ 1          │ N                  │ 239          │ 246          │ 1            │ 14.0        │ 0.5     │ 0.5     │ 1.0        │ 0.0          │ 0.3                   │ 16.3         │ missing              │
+│ 3   │ 2        │ 2018-12-21 13:48:30  │ 2018-12-21 13:52:40   │ 3               │ 0.0           │ 1          │ N                  │ 236          │ 236          │ 1            │ 4.5         │ 0.5     │ 0.5     │ 0.0        │ 0.0          │ 0.3                   │ 5.8          │ missing              │
+│ 4   │ 2        │ 2018-11-28 15:52:25  │ 2018-11-28 15:55:45   │ 5               │ 0.0           │ 1          │ N                  │ 193          │ 193          │ 2            │ 3.5         │ 0.5     │ 0.5     │ 0.0        │ 0.0          │ 0.3                   │ 7.55         │ missing              │
+│ 5   │ 2        │ 2018-11-28 15:56:57  │ 2018-11-28 15:58:33   │ 5               │ 0.0           │ 2          │ N                  │ 193          │ 193          │ 2            │ 52.0        │ 0.0     │ 0.5     │ 0.0        │ 0.0          │ 0.3                   │ 55.55        │ missing              │
+│ 6   │ 2        │ 2018-11-28 16:25:49  │ 2018-11-28 16:28:26   │ 5               │ 0.0           │ 1          │ N                  │ 193          │ 193          │ 2            │ 3.5         │ 0.5     │ 0.5     │ 0.0        │ 5.76         │ 0.3                   │ 13.31        │ missing              │
+│ 7   │ 2        │ 2018-11-28 16:29:37  │ 2018-11-28 16:33:43   │ 5               │ 0.0           │ 2          │ N                  │ 193          │ 193          │ 2            │ 52.0        │ 0.0     │ 0.5     │ 0.0        │ 0.0          │ 0.3                   │ 55.55        │ missing              │
+│ 8   │ 1        │ 2019-01-01 00:21:28  │ 2019-01-01 00:28:37   │ 1               │ 1.3           │ 1          │ N                  │ 163          │ 229          │ 1            │ 6.5         │ 0.5     │ 0.5     │ 1.25       │ 0.0          │ 0.3                   │ 9.05         │ missing              │
+│ 9   │ 1        │ 2019-01-01 00:32:01  │ 2019-01-01 00:45:39   │ 1               │ 3.7           │ 1          │ N                  │ 229          │ 7            │ 1            │ 13.5        │ 0.5     │ 0.5     │ 3.7        │ 0.0          │ 0.3                   │ 18.5         │ missing              │
+│ 10  │ 1        │ 2019-02-01 00:59:04  │ 2019-02-01 01:07:27   │ 1               │ 2.1           │ 1          │ N                  │ 48           │ 234          │ 1            │ 9.0         │ 0.5     │ 0.5     │ 2.0        │ 0.0          │ 0.3                   │ 12.3         │ 0.0                  │
+│ 11  │ 1        │ 2019-02-01 00:33:09  │ 2019-02-01 01:03:58   │ 1               │ 9.8           │ 1          │ N                  │ 230          │ 93           │ 2            │ 32.0        │ 0.5     │ 0.5     │ 0.0        │ 0.0          │ 0.3                   │ 33.3         │ 0.0                  │
+│ 12  │ 1        │ 2019-02-01 00:09:03  │ 2019-02-01 00:09:16   │ 1               │ 0.0           │ 1          │ N                  │ 145          │ 145          │ 2            │ 2.5         │ 0.5     │ 0.5     │ 0.0        │ 0.0          │ 0.3                   │ 3.8          │ 0.0                  │
+│ 13  │ 1        │ 2019-02-01 00:45:38  │ 2019-02-01 00:51:10   │ 1               │ 0.8           │ 1          │ N                  │ 95           │ 95           │ 2            │ 5.5         │ 0.5     │ 0.5     │ 0.0        │ 0.0          │ 0.3                   │ 6.8          │ 0.0                  │
+│ 14  │ 1        │ 2019-02-01 00:25:30  │ 2019-02-01 00:28:14   │ 1               │ 0.8           │ 1          │ N                  │ 140          │ 263          │ 2            │ 5.0         │ 0.5     │ 0.5     │ 0.0        │ 0.0          │ 0.3                   │ 6.3          │ 0.0                  │
+│ 15  │ 1        │ 2019-02-01 00:38:02  │ 2019-02-01 00:40:57   │ 1               │ 0.8           │ 1          │ N                  │ 229          │ 141          │ 2            │ 4.5         │ 0.5     │ 0.5     │ 0.0        │ 0.0          │ 0.3                   │ 5.8          │ 0.0                  │</code></pre>
 <p>Here calling <code>exec</code> computes all the values required to compute the result. This means the green taxi data is never loaded into memory in this particular case.</p>
 <h1 id="parallel_invocation"><a href="#parallel_invocation">Parallel invocation</a></h1>
 <p>To obtain parallelism you need to start julia in a parallel way:</p>

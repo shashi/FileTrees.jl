@@ -15,7 +15,7 @@ include("datastructure.jl")
 
 import Base: cp, mv, rm, touch, mkpath
 
-include("fs.jl")
+include("tree-ops.jl")
 
 
 import Glob: GlobMatch, @glob_str

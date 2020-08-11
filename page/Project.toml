@@ -1,6 +1,7 @@
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 FileTrees = "72696420-646e-6120-6e77-6f6420746567"
 Franklin = "713c75ef-9fc9-4b05-94a9-213340da978e"
 PkgPage = "e7214860-93a8-4f22-b43d-bd447d1a2094"

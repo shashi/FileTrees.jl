@@ -1,6 +1,6 @@
 # FileTree manipulation
 
-The tree manipulation functions are `mv`, `cp`, `mapsubtrees`, `merge`, `diff`, `clip`, `flatten`.
+The tree manipulation functions are `mv`, `cp`, `rm`, `clip`, `flatten`, and `mapsubtrees` in combination with other functions.
 
 A lot of tree manipulation involves pattern matching, so we recommend you read [the section on pattern matching first](/patterns).
 

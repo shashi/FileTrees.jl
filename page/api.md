@@ -4,15 +4,15 @@
 
 {{doc FileTree FileTree type}}
 
-{{doc mv(::FileTree, ::Regex, ::SubstitutionString; combine) mv method}}
-
 {{doc cp(::FileTree, ::Regex, ::SubstitutionString; combine) cp method}}
+
+{{doc cp(::FileTree, ::FileTree; combine) rm method}}
 
 {{doc rm(::FileTree, path) rm method}}
 
-{{doc merge(::FileTree, ::FileTree; combine) merge method}}
+{{doc rm(::FileTree, ::FileTree) rm method}}
 
-{{doc diff(::FileTree, ::FileTree) diff method}}
+{{doc mv(::FileTree, ::Regex, ::SubstitutionString; combine) mv method}}
 
 {{doc mapsubtrees mapsubtrees method}}
 

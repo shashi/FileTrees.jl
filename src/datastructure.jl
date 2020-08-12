@@ -271,7 +271,7 @@ walk can be either `FileTrees.postwalk` or `FileTrees.postwalk`.
 
 remove every node `x` from `tree` where `f(x)` is `true`. `f(x)` must return a boolean value.
 """
-function Base.filter(f, tree::FileTree; walk=postwalk, dirs=true)
+function Base.filter(f, tree::FileTree; walk=prewalk, dirs=true)
     walk(tree, collect_children=cs->filter(!isnothing, cs)) do n
         (dirs || x isa File) ? (f(n) ? n : nothing) : n
     end

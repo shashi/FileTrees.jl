@@ -103,7 +103,8 @@ function `hcat` and in turn those values using `vcat`, you can use
 Here is a demo:
 
 ```julia
-t = maketree("dir"=>([string(j)=>[(name=string(i), value=(i,j)] for i=1:2] for j=1:3]
+t = maketree("dir"=>([string(j)=>[(name=string(i), value=(i,j)]
+                        for i=1:2] for j=1:3]
 
 t1 = mapsubtrees("*") do subtree
     reducevalues(vcat, subtree)

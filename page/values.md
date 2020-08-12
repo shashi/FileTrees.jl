@@ -70,7 +70,7 @@ first(exec(reducevalues(vcat, small_dfs_lazy[r"yellow.csv$"])), 12)
 
 ## mapsubtrees + value operations
 
-[`mapsubtrees`](api/#mapsubtrees) is a powerful function since it allows you to recursively apply tree operations on subtrees of a tree.
+[`mapsubtrees`](/api/#mapsubtrees) is a powerful function since it allows you to recursively apply tree operations on subtrees of a tree.
 
 This allows a lot of great functionality. Here is a brief list,
 

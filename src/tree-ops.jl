@@ -133,7 +133,9 @@ rm(t::FileTree, path) = diff(t, _getsubtree(t, path))
 ################################ cp ################################
 
 """
-    cp(t::FileTree, from_path::Regex, to_path::SubstitutionString; combine)
+    cp(t::FileTree,
+       from_path::Regex,
+       to_path::SubstitutionString; combine)
 
 copy nodes in the file tree whose path matches the `from_tree` regular expression pattern
 by renaming it to `to_path` pattern. Any sub-pattern in `from_path` which is surrounded by
@@ -224,7 +226,9 @@ end
 ################################ mv ################################
 
 """
-    mv(t::FileTree, from_path::Regex, to_path::SubstitutionString; combine)
+    mv(t::FileTree,
+       from_path::Regex,
+       to_path::SubstitutionString; combine)
 
 move nodes in the file tree whose path matches the `from_tree` regular expression pattern
 by renaming it to `to_path` pattern. Any sub-pattern in `from_path` which is surrounded by
@@ -237,7 +241,9 @@ them together. By default `combine` will error.
 ## Example:
 
 ```julia
-julia> t = maketree("dir" => [string(j) => [string(i)=>["data.csv"] for i = 1:2] for j=1:2])
+julia> t = maketree("dir" => [string(j) =>
+                                [string(i)=>["data.csv"]
+                                    for i = 1:2] for j=1:2])
 dir/
 ├─ 1/
 │  ├─ 1/

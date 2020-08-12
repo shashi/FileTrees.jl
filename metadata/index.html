@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   
-  
+   <link rel="stylesheet" href="/FileTrees.jl/libs/highlight/github.min.css">
+   
   <link rel="stylesheet" href="/FileTrees.jl/css/franklin.css">
 <link rel="stylesheet" href="/FileTrees.jl/css/poole_hyde.css">
 <link rel="stylesheet" href="/FileTrees.jl/css/custom.css">
@@ -57,7 +58,7 @@
       <a class="sidebar-nav-item " href="/FileTrees.jl/lazy-parallel/">Laziness and parallelism</a>
       <a class="sidebar-nav-item " href="/FileTrees.jl/api/">API documentation</a>
       <small>EXTRAS</small>
-      <a class="sidebar-nav-item " href="/FileTrees.jl/metadata/">Working with metadata</a>
+      <a class="sidebar-nav-item active" href="/FileTrees.jl/metadata/">Working with metadata</a>
       <a class="sidebar-nav-item " href="/FileTrees.jl/patterns/">Pattern matching</a>
       <a class="sidebar-nav-item " href="/FileTrees.jl/create-trees/">Creating file trees from scratch</a>
       <a class="sidebar-nav-item " href="/FileTrees.jl/images/">Example: Images</a>
@@ -74,18 +75,62 @@
 <div class="content container">
 
 <!-- Content appended here -->
-<div class="franklin-content"><h2 id="file_path_matching"><a href="#file_path_matching">File path matching</a></h2>
-<p>Paths in FileTrees can be matched with patterns. Patterns can be:</p>
-<ul>
-<li><p>A String. A string always matches a specific file</p>
-</li>
-<li><p>A Glob: always refers to the subtree</p>
-</li>
-<li><p>A Regex: always refers to the subtree</p>
-</li>
-</ul>
-<p>&quot;node&quot; refers to a File or a FileTree.</p>
-<p><hr /> function/T              | String                | Glob                     | Regex                     | –––––––––––––––––––––––––––––––––––––––––––––––––––- getindex                | gets node at path     | gets subtree of matches  | gets subtree of matches   | &#40;cp|mv&#41;&#40;t, r::T, s&#41;     | subtree of matches    | ❌                       | move each match to <code>replace&#40;path&#40;&lt;match&gt;&#41;, r &#61;&gt; s&#41;</code>                       | mapmatches&#40;f, t, p::T&#41;  | applies <code>f</code> to <code>t&#91;p&#93;</code> | apply <code>f</code> to every match | apply <code>f</code> to every match  | &#40;touch|mkpath&#41;&#40;t, p::T&#41; | Create a single node at p | ❌                       | ❌                    |</p>
+<div class="franklin-content"><h1 id="working_with_metadata"><a href="#working_with_metadata">Working with metadata</a></h1>
+<p style="font-size: 1.15em; color: #333; line-height:1.5em"> Metadata of trees are other trees with the same structure</p>
+<p>FileTrees only allow you to store one value per node, but sometimes you also want to have metadata that is small and has information about the contents of the files.</p>
+<p>In FileTrees, you can create a new tree which contains the metadata&#33; This tree can mirror the structure of the tree with the actual data. You can operate on the metadata tree, for example, to filter out nodes based on the metadata, and then <em>index into the tree with the actual data with the metadata tree</em> to apply the same filtering.</p>
+<p>In the taxi dataset we may want to have metadata about what are the RatecodeId present in each file:</p>
+<pre><code class="julia hljs"><span class="hljs-keyword">using</span> FileTrees, DataFrames, CSV
+
+taxi_dir = FileTree(<span class="hljs-string">&quot;taxi-data&quot;</span>)
+
+<span class="hljs-comment"># Lazy-load the data</span>
+data = FileTrees.load(taxi_dir;lazy=<span class="hljs-literal">true</span>) <span class="hljs-keyword">do</span> file
+    DataFrame(CSV.File(path(file)))
+<span class="hljs-keyword">end</span>
+
+
+<span class="hljs-comment"># Get the metadata</span>
+metadata = mapvalues(data) <span class="hljs-keyword">do</span> df
+    (unique(df.RatecodeID)...,)
+<span class="hljs-keyword">end</span> |&gt; exec</code></pre><pre><code class="plaintext hljs">taxi-data/
+├─ 2019/
+│  ├─ 01/
+│  │  ├─ green.csv ((1,))
+│  │  └─ yellow.csv ((1, 2))
+│  └─ 02/
+│     ├─ green.csv ((1,))
+│     └─ yellow.csv ((1,))
+└─ 2020/
+   ├─ 01/
+   │  ├─ green.csv ((1, 5))
+   │  └─ yellow.csv ((1, 5))
+   └─ 02/
+      ├─ green.csv ((1,))
+      └─ yellow.csv ((1,))
+</code></pre>
+<p>Once this metadata is created, you can store the tree in a JLD2 file, and read it back often. Or you can also store it in a new file in the same directory.</p>
+<p>Now let&#39;s say you want to load only the data for files which contain the RetecodeID 5.</p>
+<p>First we work on the metadata tree to filter it thus:</p>
+<pre><code class="julia hljs">only_5 = filter(x-&gt;FileTrees.hasvalue(x) &amp;&amp; (<span class="hljs-number">5</span> <span class="hljs-keyword">in</span> x[]), metadata, dirs=<span class="hljs-literal">false</span>)</code></pre><pre><code class="plaintext hljs">taxi-data/
+├─ 2019/
+│  ├─ 01/
+│  └─ 02/
+└─ 2020/
+   ├─ 01/
+   │  ├─ green.csv ((1, 5))
+   │  └─ yellow.csv ((1, 5))
+   └─ 02/
+</code></pre>
+<p>You can now &quot;index&quot; into the data to get only files with this structure.</p>
+<pre><code class="julia hljs">data[only_5]</code></pre><pre><code class="plaintext hljs">taxi-data/
+└─ 2020/
+   └─ 01/
+      ├─ green.csv (Thunk(#1, (File(taxi-data/2020/01/green.csv),)))
+      └─ yellow.csv (Thunk(#1, (File(taxi-data/2020/01/yellow.csv),)))
+</code></pre>
+<h1 id="conclusion"><a href="#conclusion">Conclusion</a></h1>
+<p>So the way to deal with metadata is: to create a tree with the metadata, filter that tree based on the metadata, then index into the data tree with the filtered tree&#33;</p>
 <div class="page-foot">
   <div class="copyright">
     &copy; Shashi Gowda, Julian Samaroo. Last modified: August 12, 2020. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a>.
@@ -104,6 +149,10 @@
             }
         }
     </script>
+    
+        
+
+
     
   </body>
 </html>

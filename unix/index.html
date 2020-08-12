@@ -34,7 +34,7 @@
     <style>
 @media (min-width: 768px) {
     .sidebar-nav {
-        margin-top: 3em;
+        margin-top: 1.5em;
     }
 }
     .sidebar-nav .sidebar-nav-item.active {
@@ -48,7 +48,7 @@
     }
     .sidebar-nav .sidebar-nav-item {
         color: #cccccc;
-        margin: 0.5em 0;
+        margin: 0.25em 0;
     }
     </style>
     <nav class="sidebar-nav" style="opacity: 0.9">
@@ -58,6 +58,7 @@
       <a class="sidebar-nav-item " href="/FileTrees.jl/lazy-parallel/">Laziness and parallelism</a>
       <a class="sidebar-nav-item " href="/FileTrees.jl/api/">API documentation</a>
       <small>EXTRAS</small>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/metadata/">Working with metadata</a>
       <a class="sidebar-nav-item " href="/FileTrees.jl/patterns/">Pattern matching</a>
       <a class="sidebar-nav-item " href="/FileTrees.jl/create-trees/">Creating file trees from scratch</a>
       <a class="sidebar-nav-item " href="/FileTrees.jl/images/">Example: Images</a>
@@ -207,47 +208,24 @@ t = mapvalues(t) <span class="hljs-keyword">do</span> df
 
 t = FileTrees.load(taxi_dir; lazy=<span class="hljs-literal">true</span>) <span class="hljs-keyword">do</span> file
     DataFrame(CSV.File(path(file)))
-<span class="hljs-keyword">end</span></code></pre><pre><code class="plaintext hljs">taxi-data/
-├─ 2019/
-│  ├─ 01/
-│  │  ├─ green.csv (Thunk(#7, (File(taxi-data/2019/01/green.csv),)))
-│  │  └─ yellow.csv (Thunk(#7, (File(taxi-data/2019/01/yellow.csv),)))
-│  └─ 02/
-│     ├─ green.csv (Thunk(#7, (File(taxi-data/2019/02/green.csv),)))
-│     └─ yellow.csv (Thunk(#7, (File(taxi-data/2019/02/yellow.csv),)))
-└─ 2020/
-   ├─ 01/
-   │  ├─ green.csv (Thunk(#7, (File(taxi-data/2020/01/green.csv),)))
-   │  └─ yellow.csv (Thunk(#7, (File(taxi-data/2020/01/yellow.csv),)))
-   └─ 02/
-      ├─ green.csv (Thunk(#7, (File(taxi-data/2020/02/green.csv),)))
-      └─ yellow.csv (Thunk(#7, (File(taxi-data/2020/02/yellow.csv),)))
+<span class="hljs-keyword">end</span></code></pre><pre><code class="plaintext hljs">TaskFailedException:
+UndefVarError: FileTrees not defined
+Stacktrace:
+ [1] top-level scope
+ [2] eval at ./boot.jl:331 [inlined]
+ [3] (::Distributed.var&quot;#153#154&quot;{Module,Symbol})() at ./task.jl:358
 </code></pre>
 <pre><code class="julia hljs"><span class="hljs-keyword">using</span> Statistics
 
 t = mapvalues(t) <span class="hljs-keyword">do</span> df
     combine(groupby(df, :payment_type), :total_amount =&gt; mean)
-<span class="hljs-keyword">end</span></code></pre><pre><code class="plaintext hljs">taxi-data/
-├─ 2019/
-│  ├─ 01/
-│  │  ├─ green.csv (Thunk(#9, (Thunk(#7, ...),)))
-│  │  └─ yellow.csv (Thunk(#9, (Thunk(#7, ...),)))
-│  └─ 02/
-│     ├─ green.csv (Thunk(#9, (Thunk(#7, ...),)))
-│     └─ yellow.csv (Thunk(#9, (Thunk(#7, ...),)))
-└─ 2020/
-   ├─ 01/
-   │  ├─ green.csv (Thunk(#9, (Thunk(#7, ...),)))
-   │  └─ yellow.csv (Thunk(#9, (Thunk(#7, ...),)))
-   └─ 02/
-      ├─ green.csv (Thunk(#9, (Thunk(#7, ...),)))
-      └─ yellow.csv (Thunk(#9, (Thunk(#7, ...),)))
+<span class="hljs-keyword">end</span></code></pre><pre><code class="plaintext hljs">ArgumentError: column name :total_amount not found in the data frame
 </code></pre>
 <p>Notice that this time the nodes are <code>Thunk</code>s&#33; these are lazy values, not yet computed.</p>
 <pre><code class="julia hljs">t = mv(t, <span class="hljs-string">r&quot;.*/.*/green.csv&quot;</span>, <span class="hljs-string">s&quot;green.csv&quot;</span>; combine=vcat)
 t = mv(t, <span class="hljs-string">r&quot;.*/.*/yellow.csv&quot;</span>, <span class="hljs-string">s&quot;yellow.csv&quot;</span>; combine=vcat)</code></pre><pre><code class="plaintext hljs">taxi-data/
-├─ green.csv (Thunk(vcat, (Thunk(#9, ...), Thunk(vcat, ...))))
-└─ yellow.csv (Thunk(vcat, (Thunk(#9, ...), Thunk(vcat, ...))))
+├─ green.csv (8×2 DataFrame)
+└─ yellow.csv (8×2 DataFrame)
 </code></pre>
 <pre><code class="julia hljs">FileTrees.save(FileTrees.rename(t, <span class="hljs-string">&quot;lazily_collated&quot;</span>)) <span class="hljs-keyword">do</span> file
     CSV.write(path(file), file[])

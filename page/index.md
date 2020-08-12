@@ -3,16 +3,16 @@
 ~~~
 
 \blurb{
-FileTrees is a set of tools to lazy-load, process and write file trees.
-Built-in parallelism allows you to max out compute on any machine.}
+FileTrees is a set of tools to lazy-load, process and save file trees.
+Built-in parallelism allows you to max out all threads and processes that Julia is running with.}
 
-Files and subtrees in a file tree can have any [value attached to them](/values/), you can map and reduce over these values, or combine them by merging or collapsing trees or subtrees. If used with laziness these values are held in distributed memory and operated on in parallel.
+Files and subtrees in a file tree can have any [value attached to them](/values/), you can map and reduce over these values, or combine them by merging or collapsing trees or subtrees. When computing [lazy](/lazy-parallel/) trees, these values are held in distributed memory and operated on in parallel.
 
-Tree operations such as [`map`, `filter`](/api/#map/filter), [`mv`](/api/#mv), [`merge`](/api/#merge), [`diff`](/api/#merge) return new trees. They are fast and return immutable trees. Nothing is written to disk until [`save`](/api/#save) is called to save a tree.
+Tree operations such as [`map`, `filter`](/api/#map/filter), [`mv`](/api/#mv), [`merge`](/api/#merge), [`diff`](/api/#merge) are immutable. Nothing is written to disk until [`save`](/api/#save) is called to save a tree, hence tree restructuring is cheap and fast.
 
 **Getting started**
 
-In this article we will see how to load a directory of CSV files and combine them into a single file. This should help you get started!
+In this article we will see how to load a directory of files, do something to them, and then combine the results. This should help you get started!
 
 You can navigate to `page/` folder under the FileTrees package directory to try this out for yourself with the sample data there. Or you can try it with your own directory of data files!
 
@@ -82,54 +82,25 @@ You can call `exec` on the this value to compute and fetch the value.
 
 ```julia:dir1
 val = lazy_dfs["2020/01/yellow.csv"][]
+
 @show typeof(val)
 @show exec(val);
 ```
 
-Yellow and Green taxi data have different set of columns. It may be convenient to separate them out into two trees. There are several ways to do this, they are all correct.
+Yellow and Green taxi data have different set of columns. It may be convenient to separate them out into two trees:
 
 ```julia:dir1
-# method 1
-
 yellow = dfs[glob"*/*/yellow.csv"]
 green = dfs[glob"*/*/green.csv"];
+
+[yellow green]
 ```
 
 Here we used a [glob](https://linux.die.net/man/3/glob) expression constructed with the `glob""` string macro. This macro is provided by [Glob.jl](https://github.com/vtjnash/Glob.jl) and is re-exported by FileTrees.
 
-```julia:dir1
-# method 2
-
-yellow = dfs[glob"*/*/yellow.csv"]
-green = diff(dfs, yellow);
-```
-
-[`rm`](api/#rm) allows you to "subtract" a tree structure from another. Here we have only yellow and green taxi files, so rm only leaves the green files behind.
-
-Let's see how they look:
-
-```julia:dir1
-# method 3
-
-yellow = dfs[r"yellow.csv$"]
-green = diff(dfs, yellow);
-```
-
-Here we are indexing the tree with a regular expression. The regular expression in this case matches any path ending with the string "yellow.csv".
-
-All the above methods should return the exact same yellow and green trees:
-
-```julia:dir1
-@show yellow
-@show green
-```
-
-Here is a cool command to restructure the `yellow` tree to have one less level. You can't do this in the shell without a loop, but here we can use regular expressions.
-
-
 See the [pattern matching](patterns/) documentation to learn more about how to use pattern matching to manipulate trees.
 
-# reducing values in trees
+# Combining loaded data
 
 Now that we have files with the same schema in different trees,  we can reduce either tree with `vcat` function on DataFrames to combine the dataframes into a single dataframe:
 
@@ -142,7 +113,7 @@ first(yellowdf, 15)
 `reducevalues` also works on the lazy tree but returns a lazy final result. You can call `exec` on it to actually compute it. This causes the computation to occur in parallel!
 
 ```julia:dir1
-yellowdf = exec(reducevalues(vcat, lazy_dfs[r"yellow.csv$"]))
+yellowdf = exec(reducevalues(vcat, lazy_dfs[glob"*/*/yellow.csv"]))
 
 first(yellowdf, 15)
 ```
@@ -153,7 +124,7 @@ Note that in the lazy case the green csv files are never loaded since they are n
 # Saving to a directory
 
 ```julia:dir1
-df1 = dfs[r"yellow.csv$"]
+df1 = dfs[glob"*/*/yellow.csv"]
 
 # this mv moves X/Y/yellow.csv to yellow/X/Y.csv
 # see the Tree manipulation section of the docs for more

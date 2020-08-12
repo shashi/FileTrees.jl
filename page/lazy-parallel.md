@@ -21,7 +21,9 @@ end
 ```
 
 ```julia:dir1
-yellow′ = mv(lazy_dfs, r"(.*)/(.*)/yellow.csv", s"yellow/\1/\2.csv")["yellow"]
+yellow′ = mv(lazy_dfs,
+             r"(.*)/(.*)/yellow.csv",
+             s"yellow/\1/\2.csv")["yellow"]
 ```
 
 ```julia:dir1

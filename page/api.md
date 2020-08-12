@@ -4,6 +4,20 @@
 
 {{doc FileTree FileTree type}}
 
+{{doc File File type}}
+
+{{doc name name function}}
+
+{{doc parent(::FileTree) parent function}}
+
+{{doc getindex(::Union{FileTree,File}) node[] method}}
+
+{{doc rename rename function}}
+
+{{doc setparent setparent function}}
+
+{{doc setvalue setvalue function}}
+
 ### Tree manipulation
 
 See the article on [tree manipulation](/tree-manipulation/).

@@ -9,11 +9,20 @@ struct NoValue end
 """
     FileTree(parent, name, children, value)
 
-    FileTree(d::FileTree; parent, name, children, value)
+#### Fields:
+
+- `parent::Union{FileTree, Nothing}` -- The parent node. `nothing` if it's the root node.
+- `name::String` -- Name of the root.
+- `children::Vector` -- children
+- `value::Any` -- the value at the node, if no value is present, a `NoValue()` sentinal value.
+
+    FileTree(tree::FileTree; parent, name, children, value)
+
+Copy over all fields from `tree`, but use any fields provided as keyword arguments.
 
     FileTree(dirname::String)
 
-    FileTree(g::Glob)
+Construct a `FileTree` to reflect directory from disk in the current working directory.
 """
 struct FileTree
     parent::Union{FileTree, Nothing}
@@ -65,22 +74,53 @@ function FileTree(parent, dir)
     parent′
 end
 
+"""
+    children(node::Union{FileTree, File})
+
+Get the immediate children of a `FileTree` node.
+If node is `File` then returns `()`.
+"""
 children(d::FileTree) = d.children
 
+"""
+    parent(node::Union{FileTree, File})
+
+Get the parent node. Returns `nothing` if there are no parents.
+"""
 parent(f::FileTree) = f.parent
 
+"""
+    name(node::Union{FileTree, File})
+
+Get the file or directory name.
+"""
 name(f::FileTree) = f.name
 
 Base.isempty(d::FileTree) = isempty(d.children)
 
 Base.empty(d::FileTree) = FileTree(d; children=[])
 
+"""
+    rename(node::Union{FileTree, File}, newname)
+
+Return a copy of node with `name` set to `newname`.
+"""
 function rename(x::FileTree, newname)
     setparent(FileTree(x, name=string(newname)))
 end
 
+"""
+    setvalue(node::Union{FileTree, File}, val)
+
+Return a copy of node with `val` set as the value.
+"""
 setvalue(x::FileTree, val) = FileTree(x; value=val)
 
+"""
+    setparent(node::Union{FileTree, File}, parent)
+
+Return a copy of node with `parent` set as the parent.
+"""
 function setparent(x::FileTree, parent=parent(x))
     p = FileTree(x, parent=parent, children=copy(x.children))
     copy!(p.children, setparent.(x.children, (p,)))
@@ -89,6 +129,15 @@ end
 
 Base.show(io::IO, d::FileTree) = AbstractTrees.print_tree(io, d)
 
+"""
+    File(parent, name, value=NoValue())
+
+#### Fields:
+
+- `parent::Union{FileTree, Nothing}` -- The parent node. `nothing` if it's the root node.
+- `name::String` -- Name of the root.
+- `value::Any` -- the value at the node, if no value is present, a `NoValue()` sentinal value.
+"""
 struct File
     parent::Union{Nothing, FileTree}
     name::String
@@ -222,6 +271,12 @@ end
 
 Base.dirname(d::Node) = dirname(path(d))
 
+"""
+    `node[]`
+
+Get the value stored in the node. `NoValue()` is
+returned if there is no value stored.
+"""
 Base.getindex(d::Node) = d.value
 
 hasvalue(x::Node) = !(x[] isa NoValue)

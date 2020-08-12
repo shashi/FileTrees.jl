@@ -4,6 +4,24 @@ The tree manipulation functions are `map`, `filter`, `mv`, `cp`, `rm`, `merge`, 
 
 A lot of tree manipulation involves pattern matching, so we recommend you read [the section on pattern matching first](/patterns).
 
+## `map` and `filter`
+
+[`map`](/api/#map/filter) can be used to apply a function to every node in a file tree, to create a new file tree. This function should return a `File` or `FileTree` object.
+
+[`filter`](/api/#map/filter) can be used to filter only nodes that satisfy a given predicate function.
+
+Both `map` and `filter` take a `walk` keyword argument which can be either `FileTrees.prewalk` or `FileTrees.postwalk`, they do pre-order traversal and post-order traversal of the tree respectively. By default both operate on both `FileTree` (subtree) nodes and `File` nodes. You can pass in `dirs=false` to work only on the file nodes.
+
+## `merge`
+
+{{doc merge(::FileTree, ::FileTree; combine) merge method}}
+
+## `diff` and `rm`
+
+{{doc diff(::FileTree, ::FileTree) diff method}}
+
+{{doc rm(::FileTree, ::Any) rm method}}
+
 ## `mv` and `cp`
 
 The signature of `mv` is `mv(tree::FileTree, r::Regex, s::SubstitutionString; combine)`.
@@ -67,4 +85,51 @@ We can do the same with the green files:
 ```julia:dir1
 df1 = mv(dfs, r".*yellow.csv$", s"yellow.csv", combine=vcat)
 df2 = mv(df1, r".*green.csv$", s"green.csv", combine=vcat)
+```
+
+
+## `mapsubtrees`
+
+[`mapsubtrees(f, pattern)`](/api/#mapsubtrees) lets you apply a function to every node whose path matches `pattern` which is either a Glob or Regex (see also [pattern matching](/patterns)).
+
+`f` gets the subtree itself and may return a subtree which is to replace the one it matched. It can return `nothing` to delete the node in the output tree, returning any other value will cause it to empty the subtree and set the value of the node to the returned value.
+
+This last behavior makes it equivalent to Julia's `mapslices` but on trees.
+
+Suppose you have a nested tree of values, and you would like to join the data in the second level of the tree using `vcat` but the first level of the tree using `hcat`. This can be done in two stages: first use `mapsubtrees` to collapse the second level tree into a single value which is the `vcat` of all the values in each subtree. Then combine those results with an `hcat`.
+
+To demonstrate this let's create a nested tree with a nice structure:
+
+```julia:dir1
+tree = maketree("dir"=>
+                [string(i)=>[(name=string(j), value=(i,j)) for j in 1:5] for i=1:5])
+```
+
+Step 1: reduce level 2 onwards:
+```julia:dir1
+vcated = mapsubtrees(tree, glob"*") do subtree
+    reducevalues(vcat, subtree)
+end
+```
+
+Step 2: reduce intermediate results
+
+```julia:dir1
+reducevalues(hcat, vcated)
+```
+
+This can also be done lazily!
+
+```julia:dir1
+vcated = mapsubtrees(tree, glob"*") do subtree
+    reducevalues(vcat, subtree, lazy=true)
+end
+```
+
+```julia:dir1
+final = reducevalues(hcat, vcated)
+```
+
+```julia:dir1
+exec(final)
 ```

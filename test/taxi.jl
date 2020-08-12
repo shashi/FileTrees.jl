@@ -53,3 +53,29 @@ end
     @test Set(DataFrames.Tables.rowtable(reducevalues(vcat, dfs[glob"*/*/yellow.csv"]))) ==
            Set(DataFrames.Tables.rowtable(yellow[]))
 end
+
+@testset "metadata" begin
+    using FileTrees, DataFrames, CSV
+
+    taxi_dir = FileTree("taxi-data")
+
+    # Lazy-load the data
+    data = FileTrees.load(taxi_dir;lazy=true) do file
+        DataFrame(CSV.File(path(file)))
+    end
+
+    metadata = mapvalues(data) do df
+        (unique(df.RatecodeID)...,)
+    end |> exec
+
+    only_5 = filter(x->FileTrees.hasvalue(x) && (5 in x[]), metadata, dirs=false)
+
+    df_only_5 = data[only_5]
+
+    reference = data[glob"2020/01/*.csv"]
+
+    @test isempty(diff(df_only_5, reference))
+
+    @test isequal(exec(reducevalues(tuple, reference)),
+                  exec(reducevalues(tuple, df_only_5)))
+end

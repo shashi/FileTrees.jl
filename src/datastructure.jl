@@ -217,7 +217,7 @@ function Base.getindex(tree::FileTree, subtree::FileTree; toplevel=true)
     else
         namesof_subtree = name.(children(subtree))
         cs = []
-        for c in tree
+        for c in children(tree)
             idx = findfirst(==(name(c)), namesof_subtree)
             if !isnothing(idx)
                 rest = c[subtree[idx]]
@@ -229,10 +229,23 @@ function Base.getindex(tree::FileTree, subtree::FileTree; toplevel=true)
         if isempty(cs)
             return nothing
         else
-            FileTree(tree; children=cs)
+            return FileTree(tree; children=cs)
         end
     end
 end
+
+function Base.getindex(f::File, g::File; toplevel=true)
+    if name(f) != name(g)
+        if toplevel
+            error("File not found")
+        else
+            return nothing
+        end
+    else
+        return f
+    end
+end
+
 
 rename(x::File, newname) = File(x, name=string(newname))
 
@@ -328,6 +341,6 @@ remove every node `x` from `tree` where `f(x)` is `true`. `f(x)` must return a b
 """
 function Base.filter(f, tree::FileTree; walk=prewalk, dirs=true)
     walk(tree, collect_children=cs->filter(!isnothing, cs)) do n
-        (dirs || x isa File) ? (f(n) ? n : nothing) : n
+        (dirs || n isa File) ? (f(n) ? n : nothing) : n
     end
 end

@@ -73,13 +73,12 @@
 
 <!-- Content appended here -->
 <div class="franklin-content"><h1 id="filetree_manipulation"><a href="#filetree_manipulation">FileTree manipulation</a></h1>
-<p>The tree manipulation functions are <code>mv</code>, <code>cp</code>, <code>rm</code>, <code>clip</code>, <code>flatten</code>, and <code>mapsubtrees</code> in combination with other functions.</p>
+<p>The tree manipulation functions are <code>map</code>, <code>filter</code>, <code>mv</code>, <code>cp</code>, <code>rm</code>, <code>merge</code>, <code>diff</code>, <code>clip</code>, and <code>mapsubtrees</code> in combination with other functions.</p>
 <p>A lot of tree manipulation involves pattern matching, so we recommend you read <a href="/FileTrees.jl/patterns">the section on pattern matching first</a>.</p>
 <h2 id="mv_and_cp"><a href="#mv_and_cp"><code>mv</code> and <code>cp</code></a></h2>
-<p><code>mv</code> and <code>cp</code> not only allow you to move or copy nodes within a <code>FileTree</code> but also merge many files by copying them to the same path.</p>
 <p>The signature of <code>mv</code> is <code>mv&#40;tree::FileTree, r::Regex, s::SubstitutionString; combine&#41;</code>.</p>
 <p>For every file in <code>tree</code> whose path matches the regular expression <code>r</code>, rewrite its path as decided by <code>s</code>. All paths are to be matched with delimiter <code>/</code> on all platforms &#40;including Windows&#41;.</p>
-<p><code>combine</code> is a callback that is called with the values of two files when a file is moved to an already existing or already created path. By default it is set to error on name clashes where either of the nodes has a non-null value.</p>
+<p><code>mv</code> and <code>cp</code> not only allow you to move or copy nodes within a <code>FileTree</code> but also merge many files by copying them to the same path. <code>combine</code> is a callback that is called with the values of two files when a file is moved to an already existing or already created path. By default it is set to error on name clashes where either of the nodes has a non-null value.</p>
 <p><code>s</code> can be a SubstitutionString, which is conveniently constructed using the <a href="https://docs.julialang.org/en/v1/base/strings/#Base.@s_str"><code>s&quot;&quot;</code> string macro</a>.</p>
 <blockquote>
 <p>Within the string, sequences of the form <code>\N</code> refer to the Nth capture group in the regex, and <code>\g&lt;groupname&gt;</code> refers to a named capture group with name <code>groupname</code>.</p>
@@ -138,7 +137,7 @@ mv(t2, <span class="hljs-string">r&quot;^([^/]*)/([^/]*)/green.csv$&quot;</span>
 │     └─ green.csv
 └─ yellow.csv
 </code></pre>
-<p>This just works when there is no value loaded into the tree. But let&#39;s see what happens when the yellow files have some values loaded in them:</p>
+<p>This works when there is no value loaded into the tree, but it probably shouldn&#39;t. Let&#39;s see what happens when the yellow files have some values loaded in them:</p>
 <pre><code class="julia hljs"><span class="hljs-keyword">using</span> CSV, DataFrames
 dfs = FileTrees.load(tree) <span class="hljs-keyword">do</span> file
     DataFrame(CSV.File(path(file)))
@@ -169,7 +168,7 @@ df2 = mv(df1, <span class="hljs-string">r&quot;.*green.csv$&quot;</span>, <span 
 </code></pre>
 <div class="page-foot">
   <div class="copyright">
-    &copy; Shashi Gowda, Julian Samaroo. Last modified: August 11, 2020. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a>.
+    &copy; Shashi Gowda, Julian Samaroo. Last modified: August 12, 2020. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a>.
   </div>
 </div>
 </div><!-- CONTENT ENDS HERE -->

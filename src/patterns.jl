@@ -100,28 +100,30 @@ Suppose you would like to combine the values of a subdirectory with the
 function `hcat` and in turn those values using `vcat`, you can use
 `mapsubtrees` to accomplish this:
 
+Here is a demo:
+
 ```julia
-reducevalues(vcat, mapsubtrees(x->reducevalues(hcat, x), t, glob"*/*"))
+t = maketree("dir"=>([string(j)=>[(name=string(i), value=(i,j)] for i=1:2] for j=1:3]
+
+t1 = mapsubtrees("*") do subtree
+    reducevalues(vcat, subtree)
+end
+```
+
+```julia
+reducevalues(hcat, t1)
 ```
 """
 function mapsubtrees(f, t::FileTree, g::GlobMatch)
-    _glob_map(identity, t, name(t), g.pattern...) do match
-        x = f(match)
-        if !(x isa Union{FileTree, File})
-            setvalue(empty(match), x)
-        else
-            match
-        end
-    end |> setparent
+    _glob_map(m->apply_to_match(f, m), identity, t, name(t), g.pattern...) |> setparent
 end
 
 function mapsubtrees(f, t::FileTree, r::Regex)
-    _regex_map(identity, t, r) do match
-        x = f(match)
-        if !(x isa Union{FileTree, File})
-            setvalue(empty(match), x)
-        else
-            match
-        end
-    end |> setparent
+    _regex_map(m->apply_to_match(f, m), identity, t, r) |> setparent
+end
+
+function apply_to_match(f, match)
+    x = f(match)
+    !(x isa Union{FileTree, File}) ?
+        setvalue(empty(match), x) : x
 end

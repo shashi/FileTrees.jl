@@ -57,8 +57,6 @@ end
 @testset "metadata" begin
     using FileTrees, DataFrames, CSV
 
-    taxi_dir = FileTree("taxi-data")
-
     # Lazy-load the data
     data = FileTrees.load(taxi_dir;lazy=true) do file
         DataFrame(CSV.File(path(file)))

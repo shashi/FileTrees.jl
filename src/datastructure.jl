@@ -185,9 +185,6 @@ function Base.getindex(tree::FileTree, subtree::FileTree; toplevel=true)
     end
 end
 
-Base.filter(f, x::FileTree; walk=postwalk) =
-    walk(n->f(n) ? n : nothing, x; collect_children=cs->filter(!isnothing, cs))
-
 rename(x::File, newname) = File(x, name=string(newname))
 
 ### Stuff agnostic to FileTree or File nature of "Node"s
@@ -249,3 +246,33 @@ function postwalk(f, t::FileTree; collect_children=identity)
 end
 
 postwalk(f, t::File; collect_children=identity) = f(t)
+
+"""
+    map(f, tree::FileTree; walk=FileTrees.postwalk, dirs=true)
+
+apply `f` to every node in the tree. To only visit File nodes, pass `dirs=false`.
+
+walk can be either `FileTrees.postwalk` or `FileTrees.postwalk`.
+"""
+function Base.map(f, tree::FileTree; walk=postwalk, dirs=true)
+    walk(tree, collect_children=identity) do n
+        (dirs || x isa File) ? f(n) : n
+    end
+end
+
+"""
+    map(f, tree::FileTree; walk=FileTrees.postwalk, dirs=true)
+
+apply `f` to every node in the tree. To only visit File nodes, pass `dirs=false`.
+
+walk can be either `FileTrees.postwalk` or `FileTrees.postwalk`.
+
+    filter(f, tree::FileTree; walk=FileTrees.postwalk, dirs=true)
+
+remove every node `x` from `tree` where `f(x)` is `true`. `f(x)` must return a boolean value.
+"""
+function Base.filter(f, tree::FileTree; walk=postwalk, dirs=true)
+    walk(tree, collect_children=cs->filter(!isnothing, cs)) do n
+        (dirs || x isa File) ? (f(n) ? n : nothing) : n
+    end
+end

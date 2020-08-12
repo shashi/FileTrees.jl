@@ -20,7 +20,7 @@ h1, h2 {
     padding: 1.5em;
     border-radius: 0;
 }
-.code-output pre {
+pre.code-output {
     background: #6B8E2340;
     padding-left: 0.5em;
 }

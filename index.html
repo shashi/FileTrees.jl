@@ -135,18 +135,18 @@ dfs = FileTrees.load(taxi_dir) <span class="hljs-keyword">do</span> file
 <span class="hljs-keyword">end</span></code></pre><pre><code class="plaintext hljs">taxi-data/
 ├─ 2019/
 │  ├─ 01/
-│  │  ├─ green.csv (Dagger.Thunk)
-│  │  └─ yellow.csv (Dagger.Thunk)
+│  │  ├─ green.csv (Thunk(#3, (File(taxi-data/2019/01/green.csv),)))
+│  │  └─ yellow.csv (Thunk(#3, (File(taxi-data/2019/01/yellow.csv),)))
 │  └─ 02/
-│     ├─ green.csv (Dagger.Thunk)
-│     └─ yellow.csv (Dagger.Thunk)
+│     ├─ green.csv (Thunk(#3, (File(taxi-data/2019/02/green.csv),)))
+│     └─ yellow.csv (Thunk(#3, (File(taxi-data/2019/02/yellow.csv),)))
 └─ 2020/
    ├─ 01/
-   │  ├─ green.csv (Dagger.Thunk)
-   │  └─ yellow.csv (Dagger.Thunk)
+   │  ├─ green.csv (Thunk(#3, (File(taxi-data/2020/01/green.csv),)))
+   │  └─ yellow.csv (Thunk(#3, (File(taxi-data/2020/01/yellow.csv),)))
    └─ 02/
-      ├─ green.csv (Dagger.Thunk)
-      └─ yellow.csv (Dagger.Thunk)
+      ├─ green.csv (Thunk(#3, (File(taxi-data/2020/02/green.csv),)))
+      └─ yellow.csv (Thunk(#3, (File(taxi-data/2020/02/yellow.csv),)))
 </code></pre>
 <p>As you can see the nodes have the value of type <code>Dagger.Thunk</code> – this represents a lazy task that can later be executed using the <a href="api/#exec"><code>exec</code></a> function. You can continue to use most of the functions in this package without worrying about whether the input tree has lazy values or not. You will get the corresponding lazy outputs wherever the input trees had lazy values. Lazy values also encode dependency between them, hence making it possible for <code>exec</code> to compute them in parallel.</p>
 <p>See <a href="/FileTrees.jl/values/">this article</a> to learn more about how to work with values. To know more details about the usage of laziness and parallelism, go to <a href="lazy-parallel/">this article</a>.</p>
@@ -321,6 +321,16 @@ FileTree(<span class="hljs-string">&quot;yellow&quot;</span>)</code></pre><pre><
 </div><!-- CONTENT ENDS HERE -->
     </div>  <!-- div: content container -->
     
+    <script>
+        var els =  document.querySelectorAll(".language-julia")
+        for (var i=0, l = els.length; i < l; i++) {
+            var el = els[i]
+            var out = el.parentNode.nextSibling
+            if (out.tagName === "PRE") {
+                out.className = out.className + " code-output"
+            }
+        }
+    </script>
     
         
 

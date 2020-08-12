@@ -90,26 +90,26 @@ lazy_dfs = FileTrees.load(taxi_dir; lazy=<span class="hljs-literal">true</span>)
 <span class="hljs-keyword">end</span></code></pre><pre><code class="plaintext hljs">taxi-data/
 ├─ 2019/
 │  ├─ 01/
-│  │  ├─ green.csv (Dagger.Thunk)
-│  │  └─ yellow.csv (Dagger.Thunk)
+│  │  ├─ green.csv (Thunk(#1, (File(taxi-data/2019/01/green.csv),)))
+│  │  └─ yellow.csv (Thunk(#1, (File(taxi-data/2019/01/yellow.csv),)))
 │  └─ 02/
-│     ├─ green.csv (Dagger.Thunk)
-│     └─ yellow.csv (Dagger.Thunk)
+│     ├─ green.csv (Thunk(#1, (File(taxi-data/2019/02/green.csv),)))
+│     └─ yellow.csv (Thunk(#1, (File(taxi-data/2019/02/yellow.csv),)))
 └─ 2020/
    ├─ 01/
-   │  ├─ green.csv (Dagger.Thunk)
-   │  └─ yellow.csv (Dagger.Thunk)
+   │  ├─ green.csv (Thunk(#1, (File(taxi-data/2020/01/green.csv),)))
+   │  └─ yellow.csv (Thunk(#1, (File(taxi-data/2020/01/yellow.csv),)))
    └─ 02/
-      ├─ green.csv (Dagger.Thunk)
-      └─ yellow.csv (Dagger.Thunk)
+      ├─ green.csv (Thunk(#1, (File(taxi-data/2020/02/green.csv),)))
+      └─ yellow.csv (Thunk(#1, (File(taxi-data/2020/02/yellow.csv),)))
 </code></pre>
 <pre><code class="julia hljs">yellow′ = mv(lazy_dfs, <span class="hljs-string">r&quot;(.*)/(.*)/yellow.csv&quot;</span>, <span class="hljs-string">s&quot;yellow/\1/\2.csv&quot;</span>)[<span class="hljs-string">&quot;yellow&quot;</span>]</code></pre><pre><code class="plaintext hljs">yellow/
 ├─ 2019/
-│  ├─ 01.csv (Dagger.Thunk)
-│  └─ 02.csv (Dagger.Thunk)
+│  ├─ 01.csv (Thunk(#1, (File(taxi-data/2019/01/yellow.csv),)))
+│  └─ 02.csv (Thunk(#1, (File(taxi-data/2019/02/yellow.csv),)))
 └─ 2020/
-   ├─ 01.csv (Dagger.Thunk)
-   └─ 02.csv (Dagger.Thunk)
+   ├─ 01.csv (Thunk(#1, (File(taxi-data/2020/01/yellow.csv),)))
+   └─ 02.csv (Thunk(#1, (File(taxi-data/2020/02/yellow.csv),)))
 </code></pre>
 <pre><code class="julia hljs">yellowdf = exec(reducevalues(vcat, yellow′))
 
@@ -180,6 +180,16 @@ first(exec(reducevalues(vcat, lazy_dfs[<span class="hljs-string">r&quot;yellow.c
 </div><!-- CONTENT ENDS HERE -->
     </div>  <!-- div: content container -->
     
+    <script>
+        var els =  document.querySelectorAll(".language-julia")
+        for (var i=0, l = els.length; i < l; i++) {
+            var el = els[i]
+            var out = el.parentNode.nextSibling
+            if (out.tagName === "PRE") {
+                out.className = out.className + " code-output"
+            }
+        }
+    </script>
     
         
 

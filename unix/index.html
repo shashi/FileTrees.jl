@@ -210,18 +210,18 @@ t = FileTrees.load(taxi_dir; lazy=<span class="hljs-literal">true</span>) <span 
 <span class="hljs-keyword">end</span></code></pre><pre><code class="plaintext hljs">taxi-data/
 ├─ 2019/
 │  ├─ 01/
-│  │  ├─ green.csv (Dagger.Thunk)
-│  │  └─ yellow.csv (Dagger.Thunk)
+│  │  ├─ green.csv (Thunk(#7, (File(taxi-data/2019/01/green.csv),)))
+│  │  └─ yellow.csv (Thunk(#7, (File(taxi-data/2019/01/yellow.csv),)))
 │  └─ 02/
-│     ├─ green.csv (Dagger.Thunk)
-│     └─ yellow.csv (Dagger.Thunk)
+│     ├─ green.csv (Thunk(#7, (File(taxi-data/2019/02/green.csv),)))
+│     └─ yellow.csv (Thunk(#7, (File(taxi-data/2019/02/yellow.csv),)))
 └─ 2020/
    ├─ 01/
-   │  ├─ green.csv (Dagger.Thunk)
-   │  └─ yellow.csv (Dagger.Thunk)
+   │  ├─ green.csv (Thunk(#7, (File(taxi-data/2020/01/green.csv),)))
+   │  └─ yellow.csv (Thunk(#7, (File(taxi-data/2020/01/yellow.csv),)))
    └─ 02/
-      ├─ green.csv (Dagger.Thunk)
-      └─ yellow.csv (Dagger.Thunk)
+      ├─ green.csv (Thunk(#7, (File(taxi-data/2020/02/green.csv),)))
+      └─ yellow.csv (Thunk(#7, (File(taxi-data/2020/02/yellow.csv),)))
 </code></pre>
 <pre><code class="julia hljs"><span class="hljs-keyword">using</span> Statistics
 
@@ -230,24 +230,24 @@ t = mapvalues(t) <span class="hljs-keyword">do</span> df
 <span class="hljs-keyword">end</span></code></pre><pre><code class="plaintext hljs">taxi-data/
 ├─ 2019/
 │  ├─ 01/
-│  │  ├─ green.csv (Dagger.Thunk)
-│  │  └─ yellow.csv (Dagger.Thunk)
+│  │  ├─ green.csv (Thunk(#9, (Thunk(#7, ...),)))
+│  │  └─ yellow.csv (Thunk(#9, (Thunk(#7, ...),)))
 │  └─ 02/
-│     ├─ green.csv (Dagger.Thunk)
-│     └─ yellow.csv (Dagger.Thunk)
+│     ├─ green.csv (Thunk(#9, (Thunk(#7, ...),)))
+│     └─ yellow.csv (Thunk(#9, (Thunk(#7, ...),)))
 └─ 2020/
    ├─ 01/
-   │  ├─ green.csv (Dagger.Thunk)
-   │  └─ yellow.csv (Dagger.Thunk)
+   │  ├─ green.csv (Thunk(#9, (Thunk(#7, ...),)))
+   │  └─ yellow.csv (Thunk(#9, (Thunk(#7, ...),)))
    └─ 02/
-      ├─ green.csv (Dagger.Thunk)
-      └─ yellow.csv (Dagger.Thunk)
+      ├─ green.csv (Thunk(#9, (Thunk(#7, ...),)))
+      └─ yellow.csv (Thunk(#9, (Thunk(#7, ...),)))
 </code></pre>
 <p>Notice that this time the nodes are <code>Thunk</code>s&#33; these are lazy values, not yet computed.</p>
 <pre><code class="julia hljs">t = mv(t, <span class="hljs-string">r&quot;.*/.*/green.csv&quot;</span>, <span class="hljs-string">s&quot;green.csv&quot;</span>; combine=vcat)
 t = mv(t, <span class="hljs-string">r&quot;.*/.*/yellow.csv&quot;</span>, <span class="hljs-string">s&quot;yellow.csv&quot;</span>; combine=vcat)</code></pre><pre><code class="plaintext hljs">taxi-data/
-├─ green.csv (Dagger.Thunk)
-└─ yellow.csv (Dagger.Thunk)
+├─ green.csv (Thunk(vcat, (Thunk(#9, ...), Thunk(vcat, ...))))
+└─ yellow.csv (Thunk(vcat, (Thunk(#9, ...), Thunk(vcat, ...))))
 </code></pre>
 <pre><code class="julia hljs">FileTrees.save(FileTrees.rename(t, <span class="hljs-string">&quot;lazily_collated&quot;</span>)) <span class="hljs-keyword">do</span> file
     CSV.write(path(file), file[])
@@ -291,6 +291,16 @@ t = mv(t, <span class="hljs-string">r&quot;.*/.*/yellow.csv&quot;</span>, <span 
 </div><!-- CONTENT ENDS HERE -->
     </div>  <!-- div: content container -->
     
+    <script>
+        var els =  document.querySelectorAll(".language-julia")
+        for (var i=0, l = els.length; i < l; i++) {
+            var el = els[i]
+            var out = el.parentNode.nextSibling
+            if (out.tagName === "PRE") {
+                out.className = out.className + " code-output"
+            }
+        }
+    </script>
     
         
 

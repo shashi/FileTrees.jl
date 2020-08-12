@@ -109,18 +109,18 @@ dfs = FileTrees.load(taxi_dir) <span class="hljs-keyword">do</span> file
 <span class="hljs-keyword">end</span></code></pre><pre><code class="plaintext hljs">taxi-data/
 ├─ 2019/
 │  ├─ 01/
-│  │  ├─ green.csv (Dagger.Thunk)
-│  │  └─ yellow.csv (Dagger.Thunk)
+│  │  ├─ green.csv (Thunk(#3, (File(taxi-data/2019/01/green.csv),)))
+│  │  └─ yellow.csv (Thunk(#3, (File(taxi-data/2019/01/yellow.csv),)))
 │  └─ 02/
-│     ├─ green.csv (Dagger.Thunk)
-│     └─ yellow.csv (Dagger.Thunk)
+│     ├─ green.csv (Thunk(#3, (File(taxi-data/2019/02/green.csv),)))
+│     └─ yellow.csv (Thunk(#3, (File(taxi-data/2019/02/yellow.csv),)))
 └─ 2020/
    ├─ 01/
-   │  ├─ green.csv (Dagger.Thunk)
-   │  └─ yellow.csv (Dagger.Thunk)
+   │  ├─ green.csv (Thunk(#3, (File(taxi-data/2020/01/green.csv),)))
+   │  └─ yellow.csv (Thunk(#3, (File(taxi-data/2020/01/yellow.csv),)))
    └─ 02/
-      ├─ green.csv (Dagger.Thunk)
-      └─ yellow.csv (Dagger.Thunk)
+      ├─ green.csv (Thunk(#3, (File(taxi-data/2020/02/green.csv),)))
+      └─ yellow.csv (Thunk(#3, (File(taxi-data/2020/02/yellow.csv),)))
 </code></pre>
 <p>Below we will see the effect of each value-manipulating function when called with both lazy and non-lazy trees.</p>
 <h2 id="mapvalues"><a href="#mapvalues">mapvalues</a></h2>
@@ -146,18 +146,18 @@ dfs = FileTrees.load(taxi_dir) <span class="hljs-keyword">do</span> file
 <pre><code class="julia hljs">small_dfs_lazy = mapvalues(df-&gt;df[:, <span class="hljs-number">1</span>:<span class="hljs-number">5</span>], lazy_dfs)</code></pre><pre><code class="plaintext hljs">taxi-data/
 ├─ 2019/
 │  ├─ 01/
-│  │  ├─ green.csv (Dagger.Thunk)
-│  │  └─ yellow.csv (Dagger.Thunk)
+│  │  ├─ green.csv (Thunk(#7, (Thunk(#3, ...),)))
+│  │  └─ yellow.csv (Thunk(#7, (Thunk(#3, ...),)))
 │  └─ 02/
-│     ├─ green.csv (Dagger.Thunk)
-│     └─ yellow.csv (Dagger.Thunk)
+│     ├─ green.csv (Thunk(#7, (Thunk(#3, ...),)))
+│     └─ yellow.csv (Thunk(#7, (Thunk(#3, ...),)))
 └─ 2020/
    ├─ 01/
-   │  ├─ green.csv (Dagger.Thunk)
-   │  └─ yellow.csv (Dagger.Thunk)
+   │  ├─ green.csv (Thunk(#7, (Thunk(#3, ...),)))
+   │  └─ yellow.csv (Thunk(#7, (Thunk(#3, ...),)))
    └─ 02/
-      ├─ green.csv (Dagger.Thunk)
-      └─ yellow.csv (Dagger.Thunk)
+      ├─ green.csv (Thunk(#7, (Thunk(#3, ...),)))
+      └─ yellow.csv (Thunk(#7, (Thunk(#3, ...),)))
 </code></pre>
 <p>This map function should be instantaneous since it does not actually carry out the computation, instead returns a tree with lazy tasks that need to be carried out.</p>
 <p><code>exec</code> will materialize these values:</p>
@@ -195,7 +195,7 @@ dfs = FileTrees.load(taxi_dir) <span class="hljs-keyword">do</span> file
 │ 10  │ 1        │ 2019-02-01 00:59:04  │ 2019-02-01 01:07:27   │ 1               │ 2.1           │
 │ 11  │ 1        │ 2019-02-01 00:33:09  │ 2019-02-01 01:03:58   │ 1               │ 9.8           │
 │ 12  │ 1        │ 2019-02-01 00:09:03  │ 2019-02-01 00:09:16   │ 1               │ 0.0           │</code></pre>
-<pre><code class="julia hljs">reducevalues(vcat, small_dfs_lazy[<span class="hljs-string">r&quot;yellow.csv$&quot;</span>])</code></pre><pre><code class="plaintext hljs">*20*</code></pre>
+<pre><code class="julia hljs">reducevalues(vcat, small_dfs_lazy[<span class="hljs-string">r&quot;yellow.csv$&quot;</span>])</code></pre><pre><code class="plaintext hljs">Thunk(vcat, (Thunk(vcat, ...), Thunk(vcat, ...)))</code></pre>
 <p>This returned a delayed task that to compute the result. <code>exec</code> will compute it:</p>
 <pre><code class="julia hljs">first(exec(reducevalues(vcat, small_dfs_lazy[<span class="hljs-string">r&quot;yellow.csv$&quot;</span>])), <span class="hljs-number">12</span>)</code></pre><pre><code class="plaintext hljs">12×5 DataFrame
 │ Row │ VendorID │ tpep_pickup_datetime │ tpep_dropoff_datetime │ passenger_count │ trip_distance │
@@ -232,6 +232,16 @@ dfs = FileTrees.load(taxi_dir) <span class="hljs-keyword">do</span> file
 </div><!-- CONTENT ENDS HERE -->
     </div>  <!-- div: content container -->
     
+    <script>
+        var els =  document.querySelectorAll(".language-julia")
+        for (var i=0, l = els.length; i < l; i++) {
+            var el = els[i]
+            var out = el.parentNode.nextSibling
+            if (out.tagName === "PRE") {
+                out.className = out.className + " code-output"
+            }
+        }
+    </script>
     
         
 

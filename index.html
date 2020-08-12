@@ -29,7 +29,7 @@
   <div class="container sidebar-sticky">
     <div class="sidebar-about">
       <h1 style="font-size:2em"><a href="/FileTrees.jl/">FileTrees<span style="opacity:0.4">.jl</span></a></h1>
-      <p class="lead">Easy parallel file loading</p>
+      <p class="lead">Easy everyday parallelism with a file tree abstraction</p>
     </div>
     <style>
 @media (min-width: 768px) {
@@ -52,13 +52,15 @@
     }
     </style>
     <nav class="sidebar-nav" style="opacity: 0.9">
-      <a class="sidebar-nav-item active" href="/FileTrees.jl/">Home page</a>
-      <a class="sidebar-nav-item " href="/FileTrees.jl/create-trees/">Creating file trees</a>
-      <a class="sidebar-nav-item " href="/FileTrees.jl/values/">File processing</a>
-      <a class="sidebar-nav-item " href="/FileTrees.jl/patterns/">Pattern matching</a>
+      <a class="sidebar-nav-item active" href="/FileTrees.jl/">Getting started</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/values/">Values in file trees</a>
       <a class="sidebar-nav-item " href="/FileTrees.jl/tree-manipulation/">Manipulating file trees</a>
       <a class="sidebar-nav-item " href="/FileTrees.jl/lazy-parallel/">Laziness and parallelism</a>
       <a class="sidebar-nav-item " href="/FileTrees.jl/api/">API documentation</a>
+      <small>EXTRAS</small>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/patterns/">Pattern matching</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/create-trees/">Creating file trees from scratch</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/images/">Example: Images</a>
     </nav>
 
   </div>
@@ -74,28 +76,17 @@
 <!-- Content appended here -->
 <div class="franklin-content">
 <h1>FileTrees.jl &mdash; overview</h1>
-<p style="font-size: 1.15em; color: #666; line-height:1.5em">
-FileTrees is a set of tools to lazy-load, process and write file trees. Built-in parallelism allows you to max out compute on any machine.
-</p>
 
-<p>Tree operations let you freely restructure file trees in memory so as to be convenient to set up computations. Files in a file tree can have any value attached to them &#40;not necessarily those loaded from the file itself&#41;, you can map and reduce over these values, or combine them by merging or collapsing trees or subtrees.</p>
-<p><strong>On this website</strong></p>
-
-<ul>
-<li><a href="create-trees/">Creating file trees</a></li>
-<li><a href="values/">Values in file trees: file loading etc.</a></li>
-<li><a href="patterns/">Pattern matching on paths</a></li>
-<li><a href="tree-manipulation/">Manipulating file trees</a></li>
-<li><a href="lazy-parallel/">Lazy values and parallelism</a></li>
-<li><a href="api/">API documentation</a></li>
-</ul>
-
-<p><strong>In this article</strong></p>
-<p>We will look at a brief walk through of some of the most important functionality in this article using an example dataset.</p>
+<p style="font-size: 1.15em; color: #333; line-height:1.5em"> FileTrees is a set of tools to lazy-load, process and write file trees. Built-in parallelism allows you to max out compute on any machine.</p>
+<p>Files and subtrees in a file tree can have any <a href="/FileTrees.jl/values/">value attached to them</a>, you can map and reduce over these values, or combine them by merging or collapsing trees or subtrees. If used with laziness these values are held in distributed memory and operated on in parallel.</p>
+<p>Tree operations such as <a href="/FileTrees.jl/api/#map/filter"><code>map</code>, <code>filter</code></a>, <a href="/FileTrees.jl/api/#mv"><code>mv</code></a>, <a href="/FileTrees.jl/api/#merge"><code>merge</code></a>, <a href="/FileTrees.jl/api/#merge"><code>diff</code></a> return new trees. They are fast and return immutable trees. Nothing is written to disk until <a href="/FileTrees.jl/api/#save"><code>save</code></a> is called to save a tree.</p>
+<p><strong>Getting started</strong></p>
+<p>In this article we will see how to load a directory of CSV files and combine them into a single file. This should help you get started&#33;</p>
+<p>You can navigate to <code>page/</code> folder under the FileTrees package directory to try this out for yourself with the sample data there. Or you can try it with your own directory of data files&#33;</p>
 <div class="franklin-toc"><ol><li><a href="#loading_directories">Loading directories</a></li><li><a href="#looking_files_up">Looking files up</a></li><li><a href="#reducing_values_in_trees">reducing values in trees</a></li><li><a href="#saving_to_a_directory">Saving to a directory</a></li></ol></div>
 <h1 id="loading_directories"><a href="#loading_directories">Loading directories</a></h1>
 <p>The basic datastructure in FileTrees is the <a href="api/#FileTree"><code>FileTree</code></a>.</p>
-<p>Calling <code>FileTree</code> with a directory name will walk the directory on disk and construct a <code>FileTree</code>.</p>
+<p>Calling <code>FileTree</code> with a directory name will walk the directory on disk and construct a <code>FileTree</code>. Here we have a tiny sampling of data from the <a href="https://www1.nyc.gov/site/tlc/about/tlc-trip-record-data.page">NYC Taxi dataset</a>, for January and February of 2019 and 2020. Let&#39;s read the FileTree from this directory:</p>
 <pre><code class="julia hljs"><span class="hljs-keyword">using</span> FileTrees
 
 taxi_dir = FileTree(<span class="hljs-string">&quot;taxi-data&quot;</span>)</code></pre><pre><code class="plaintext hljs">taxi-data/
@@ -135,7 +126,7 @@ dfs = FileTrees.load(taxi_dir) <span class="hljs-keyword">do</span> file
       ├─ green.csv (9×20 DataFrame)
       └─ yellow.csv (9×18 DataFrame)
 </code></pre>
-<p>A summary of the value loaded into each file is shown in parentheses. The <code>file</code> argument passed to the load callback is a <code>File</code> object. It supports the <a href="api/#name"><code>name</code></a>, <a href="api/#path"><code>path</code></a> and <a href="api/#parent"><code>parent</code></a> functions.</p>
+<p>A summary of the value loaded into each file is shown in parentheses. The <code>file</code> argument passed to the load callback is a <code>File</code> object. It supports the <a href="api/#name"><code>name</code></a>, <a href="api/#path"><code>path</code></a> function among others <code>path</code> returns an <a href="https://rofinn.github.io/FilePathsBase.jl/stable/api/#FilePathsBase.AbstractPath"><code>AbstractPath</code></a>.</p>
 <p><code>load</code> returns a new <code>FileTree</code> which has the same structure as before, but contains the loaded data in each <code>File</code> node.</p>
 <p>Here <code>load</code> actually read the files eagerly. This may not be feasible if the files contain data that is too big to fit in memory.</p>
 <p>In such a case, you can load the files lazily using <code>lazy&#61;true</code></p>
@@ -158,7 +149,7 @@ dfs = FileTrees.load(taxi_dir) <span class="hljs-keyword">do</span> file
       └─ yellow.csv (Dagger.Thunk)
 </code></pre>
 <p>As you can see the nodes have the value of type <code>Dagger.Thunk</code> – this represents a lazy task that can later be executed using the <a href="api/#exec"><code>exec</code></a> function. You can continue to use most of the functions in this package without worrying about whether the input tree has lazy values or not. You will get the corresponding lazy outputs wherever the input trees had lazy values. Lazy values also encode dependency between them, hence making it possible for <code>exec</code> to compute them in parallel.</p>
-<p>To know more details about the usage of laziness and parallelism, go to <a href="lazy-parallel/">this article</a>.</p>
+<p>See <a href="/FileTrees.jl/values/">this article</a> to learn more about how to work with values. To know more details about the usage of laziness and parallelism, go to <a href="lazy-parallel/">this article</a>.</p>
 <h1 id="looking_files_up"><a href="#looking_files_up">Looking files up</a></h1>
 <p>Let&#39;s look at one of these DataFrames by indexing into the tree with the path to a file, namely <code>&quot;2020/01/yellow.csv&quot;</code>.</p>
 <pre><code class="julia hljs">yellow_jan_20 = dfs[<span class="hljs-string">&quot;2020/01/yellow.csv&quot;</span>]</code></pre><pre><code class="plaintext hljs">File(taxi-data/2020/01/yellow.csv)</code></pre>
@@ -321,6 +312,7 @@ FileTree(<span class="hljs-string">&quot;yellow&quot;</span>)</code></pre><pre><
 </code></pre>
 
 <p>Happy Hacking&#33;</p>
+<p>Next: <strong>More on <a href="/FileTrees.jl/values/">values in trees &rarr;</a></strong></p>
 <div class="page-foot">
   <div class="copyright">
     &copy; Shashi Gowda, Julian Samaroo. Last modified: August 12, 2020. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a>.

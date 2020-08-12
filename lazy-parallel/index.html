@@ -29,7 +29,7 @@
   <div class="container sidebar-sticky">
     <div class="sidebar-about">
       <h1 style="font-size:2em"><a href="/FileTrees.jl/">FileTrees<span style="opacity:0.4">.jl</span></a></h1>
-      <p class="lead">Easy parallel file loading</p>
+      <p class="lead">Easy everyday parallelism with a file tree abstraction</p>
     </div>
     <style>
 @media (min-width: 768px) {
@@ -52,13 +52,15 @@
     }
     </style>
     <nav class="sidebar-nav" style="opacity: 0.9">
-      <a class="sidebar-nav-item " href="/FileTrees.jl/">Home page</a>
-      <a class="sidebar-nav-item " href="/FileTrees.jl/create-trees/">Creating file trees</a>
-      <a class="sidebar-nav-item " href="/FileTrees.jl/values/">File processing</a>
-      <a class="sidebar-nav-item " href="/FileTrees.jl/patterns/">Pattern matching</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/">Getting started</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/values/">Values in file trees</a>
       <a class="sidebar-nav-item " href="/FileTrees.jl/tree-manipulation/">Manipulating file trees</a>
       <a class="sidebar-nav-item active" href="/FileTrees.jl/lazy-parallel/">Laziness and parallelism</a>
       <a class="sidebar-nav-item " href="/FileTrees.jl/api/">API documentation</a>
+      <small>EXTRAS</small>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/patterns/">Pattern matching</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/create-trees/">Creating file trees from scratch</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/images/">Example: Images</a>
     </nav>
 
   </div>
@@ -170,17 +172,6 @@ first(exec(reducevalues(vcat, lazy_dfs[<span class="hljs-string">r&quot;yellow.c
 <p>It is also necessary to keep in mind what amount of memory a call to <code>exec</code> will produce, since that memory allocation cannot be avoided. This means <code>reducevalues</code> where the reduction computes a small value &#40;such as sum or mean&#41; works best.</p>
 <h1 id="caching"><a href="#caching">Caching</a></h1>
 <p>The <code>compute</code> function is different from the <code>exec</code> function in that, it will compute the results of the tasks in the tree and leave the data on remote processes rather than fetch it to the master process. Calling <code>compute</code> on a tree will also cause any subsequent requests to compute the same tasks to be served from a cache memory rather than recomputed.</p>
-<h1 id="advanced_tree_manipulation_subtrees"><a href="#advanced_tree_manipulation_subtrees">Advanced tree manipulation: subtrees</a></h1>
-<p><a href="api/#mapsubtrees"><code>mapsubtrees</code></a> is a powerful function since it allows you to recursively apply tree operations on subtrees of a tree.</p>
-<p>This allows a lot of great functionality. Here is a brief list,</p>
-<ul>
-<li><p>flatten a tree to be only 2 levels: <code>mapsubtrees&#40;flatten, glob&quot;*/*&quot;&#41;</code></p>
-</li>
-<li><p>collapse the directories at level 3: <code>mapsubtrees&#40;x-&gt;clip&#40;x, 1&#41;, glob&quot;*/*&quot;&#41;</code></p>
-</li>
-<li><p>reduce 2nd level directories with hcat, but 1st level with <code>vcat</code>: <code>reducevalues&#40;vcat, mapsubtrees&#40;x-&gt;reducevalues&#40;hcat, x&#41;, glob&quot;*&quot;&#41;&#41;</code> Note that this will work on lazy trees by creating lazy nodes as well.</p>
-</li>
-</ul>
 <div class="page-foot">
   <div class="copyright">
     &copy; Shashi Gowda, Julian Samaroo. Last modified: August 12, 2020. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a>.

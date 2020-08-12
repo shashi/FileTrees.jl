@@ -29,7 +29,7 @@
   <div class="container sidebar-sticky">
     <div class="sidebar-about">
       <h1 style="font-size:2em"><a href="/FileTrees.jl/">FileTrees<span style="opacity:0.4">.jl</span></a></h1>
-      <p class="lead">Easy parallel file loading</p>
+      <p class="lead">Easy everyday parallelism with a file tree abstraction</p>
     </div>
     <style>
 @media (min-width: 768px) {
@@ -52,13 +52,15 @@
     }
     </style>
     <nav class="sidebar-nav" style="opacity: 0.9">
-      <a class="sidebar-nav-item " href="/FileTrees.jl/">Home page</a>
-      <a class="sidebar-nav-item " href="/FileTrees.jl/create-trees/">Creating file trees</a>
-      <a class="sidebar-nav-item active" href="/FileTrees.jl/values/">File processing</a>
-      <a class="sidebar-nav-item " href="/FileTrees.jl/patterns/">Pattern matching</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/">Getting started</a>
+      <a class="sidebar-nav-item active" href="/FileTrees.jl/values/">Values in file trees</a>
       <a class="sidebar-nav-item " href="/FileTrees.jl/tree-manipulation/">Manipulating file trees</a>
       <a class="sidebar-nav-item " href="/FileTrees.jl/lazy-parallel/">Laziness and parallelism</a>
       <a class="sidebar-nav-item " href="/FileTrees.jl/api/">API documentation</a>
+      <small>EXTRAS</small>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/patterns/">Pattern matching</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/create-trees/">Creating file trees from scratch</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/images/">Example: Images</a>
     </nav>
 
   </div>
@@ -73,8 +75,10 @@
 
 <!-- Content appended here -->
 <div class="franklin-content"><h1 id="values_in_file_trees"><a href="#values_in_file_trees">Values in file trees</a></h1>
-<p>And how to work with them.</p>
-<h2 id="loading_values"><a href="#loading_values">loading values</a></h2>
+<p style="font-size: 1.15em; color: #333; line-height:1.5em"> And how to work with them.</p>
+<p>Files and subtrees in a FileTree can have <a href="#loading-values">any value attached to them</a> &#40;not necessarily those loaded from the file itself&#41;, you can map and reduce over these values using <a href="#mapvalues"><code>mapvalues</code></a> and <a href="#reducevalues"><code>reducevalues</code></a>, or combine them by merging with other trees or <a href="#mapsubtrees_value_operations">collapsing subtrees</a>.</p>
+<p>All these operations will be lazy if files are loaded lazily. Calling <a href="/FileTrees.jl/api/#exec"><code>exec</code></a>, <a href="/FileTrees.jl/api/#compute"><code>compute</code></a> or <a href="/FileTrees.jl/api/#save"><code>save</code></a> on a lazy value or tree with lazy values will cause the dependent values to be loaded and computed.</p>
+<h2 id="loading_values"><a href="#loading_values">Loading values</a></h2>
 <p><a href="/FileTrees.jl/api/#load"><code>FileTrees.load</code></a> can be used to load values into a tree.</p>
 <pre><code class="julia hljs"><span class="hljs-keyword">using</span> DataFrames, CSV, FileTrees
 
@@ -122,7 +126,7 @@ dfs = FileTrees.load(taxi_dir) <span class="hljs-keyword">do</span> file
 <h2 id="mapvalues"><a href="#mapvalues">mapvalues</a></h2>
 <p><code>mapvalues&#40;f, t::FileTree&#41;</code> applies <code>f</code> to every node in <code>t</code> which has a value loaded into it. It returns a new tree with the resultant values in place of the original ones.</p>
 <p>Let&#39;s drop all but the first 5 columns of the dataframes we have loaded:</p>
-<pre><code class="julia hljs">mapvalues(df-&gt;df[:, <span class="hljs-number">1</span>:<span class="hljs-number">5</span>], dfs)</code></pre><pre><code class="plaintext hljs">taxi-data/
+<pre><code class="julia hljs">small_dfs = mapvalues(df-&gt;df[:, <span class="hljs-number">1</span>:<span class="hljs-number">5</span>], dfs)</code></pre><pre><code class="plaintext hljs">taxi-data/
 ├─ 2019/
 │  ├─ 01/
 │  │  ├─ green.csv (9×5 DataFrame)
@@ -139,7 +143,7 @@ dfs = FileTrees.load(taxi_dir) <span class="hljs-keyword">do</span> file
       └─ yellow.csv (9×5 DataFrame)
 </code></pre>
 <p>mapvalues on a lazy tree creates a lazy tree, where the values on <code>exec</code> will be the right computed values.</p>
-<pre><code class="julia hljs">mapvalues(df-&gt;df[:, <span class="hljs-number">1</span>:<span class="hljs-number">5</span>], lazy_dfs)</code></pre><pre><code class="plaintext hljs">taxi-data/
+<pre><code class="julia hljs">small_dfs_lazy = mapvalues(df-&gt;df[:, <span class="hljs-number">1</span>:<span class="hljs-number">5</span>], lazy_dfs)</code></pre><pre><code class="plaintext hljs">taxi-data/
 ├─ 2019/
 │  ├─ 01/
 │  │  ├─ green.csv (Dagger.Thunk)
@@ -155,7 +159,9 @@ dfs = FileTrees.load(taxi_dir) <span class="hljs-keyword">do</span> file
       ├─ green.csv (Dagger.Thunk)
       └─ yellow.csv (Dagger.Thunk)
 </code></pre>
-<pre><code class="julia hljs">exec(mapvalues(df-&gt;df[:, <span class="hljs-number">1</span>:<span class="hljs-number">5</span>], lazy_dfs))</code></pre><pre><code class="plaintext hljs">taxi-data/
+<p>This map function should be instantaneous since it does not actually carry out the computation, instead returns a tree with lazy tasks that need to be carried out.</p>
+<p><code>exec</code> will materialize these values:</p>
+<pre><code class="julia hljs">exec(small_dfs_lazy)</code></pre><pre><code class="plaintext hljs">taxi-data/
 ├─ 2019/
 │  ├─ 01/
 │  │  ├─ green.csv (9×5 DataFrame)
@@ -173,53 +179,51 @@ dfs = FileTrees.load(taxi_dir) <span class="hljs-keyword">do</span> file
 </code></pre>
 <h2 id="reducevalues"><a href="#reducevalues">reducevalues</a></h2>
 <p><code>reducevalues&#40;f, t::FileTree&#41;</code> reduce all nodes in <code>t</code> into a single value by successively applying <code>f</code>. <code>f</code> is assumed to be <a href="https://en.wikipedia.org/wiki/Associative_property">associative</a> and an ordering that is optimal for parallelism is chosen. If <code>f</code> is not <code>associative</code>, pass <code>associative&#61;false</code> keyword argument.</p>
-<p>Let&#39;s use reducevalues to combine the yellow.csv 5-column dataframes.</p>
-<pre><code class="julia hljs">mapvalues(df-&gt;df[:, <span class="hljs-number">1</span>:<span class="hljs-number">5</span>], dfs[<span class="hljs-string">r&quot;yellow.csv$&quot;</span>])</code></pre><pre><code class="plaintext hljs">taxi-data/
-├─ 2019/
-│  ├─ 01/
-│  │  └─ yellow.csv (9×5 DataFrame)
-│  └─ 02/
-│     └─ yellow.csv (9×5 DataFrame)
-└─ 2020/
-   ├─ 01/
-   │  └─ yellow.csv (9×5 DataFrame)
-   └─ 02/
-      └─ yellow.csv (9×5 DataFrame)
-</code></pre>
-<p>mapvalues on a lazy tree creates a lazy tree, where the values on <code>exec</code> will be the right computed values.</p>
-<pre><code class="julia hljs">mapvalues(df-&gt;df[:, <span class="hljs-number">1</span>:<span class="hljs-number">5</span>], lazy_dfs)</code></pre><pre><code class="plaintext hljs">taxi-data/
-├─ 2019/
-│  ├─ 01/
-│  │  ├─ green.csv (Dagger.Thunk)
-│  │  └─ yellow.csv (Dagger.Thunk)
-│  └─ 02/
-│     ├─ green.csv (Dagger.Thunk)
-│     └─ yellow.csv (Dagger.Thunk)
-└─ 2020/
-   ├─ 01/
-   │  ├─ green.csv (Dagger.Thunk)
-   │  └─ yellow.csv (Dagger.Thunk)
-   └─ 02/
-      ├─ green.csv (Dagger.Thunk)
-      └─ yellow.csv (Dagger.Thunk)
-</code></pre>
-<pre><code class="julia hljs">exec(mapvalues(df-&gt;df[:, <span class="hljs-number">1</span>:<span class="hljs-number">5</span>], lazy_dfs))</code></pre><pre><code class="plaintext hljs">taxi-data/
-├─ 2019/
-│  ├─ 01/
-│  │  ├─ green.csv (9×5 DataFrame)
-│  │  └─ yellow.csv (9×5 DataFrame)
-│  └─ 02/
-│     ├─ green.csv (9×5 DataFrame)
-│     └─ yellow.csv (9×5 DataFrame)
-└─ 2020/
-   ├─ 01/
-   │  ├─ green.csv (9×5 DataFrame)
-   │  └─ yellow.csv (9×5 DataFrame)
-   └─ 02/
-      ├─ green.csv (9×5 DataFrame)
-      └─ yellow.csv (9×5 DataFrame)
-</code></pre>
+<pre><code class="julia hljs">first(reducevalues(vcat, small_dfs[<span class="hljs-string">r&quot;yellow.csv$&quot;</span>]), <span class="hljs-number">12</span>)</code></pre><pre><code class="plaintext hljs">12×5 DataFrame
+│ Row │ VendorID │ tpep_pickup_datetime │ tpep_dropoff_datetime │ passenger_count │ trip_distance │
+│     │ Int64    │ String               │ String                │ Int64           │ Float64       │
+├─────┼──────────┼──────────────────────┼───────────────────────┼─────────────────┼───────────────┤
+│ 1   │ 1        │ 2019-01-01 00:46:40  │ 2019-01-01 00:53:20   │ 1               │ 1.5           │
+│ 2   │ 1        │ 2019-01-01 00:59:47  │ 2019-01-01 01:18:59   │ 1               │ 2.6           │
+│ 3   │ 2        │ 2018-12-21 13:48:30  │ 2018-12-21 13:52:40   │ 3               │ 0.0           │
+│ 4   │ 2        │ 2018-11-28 15:52:25  │ 2018-11-28 15:55:45   │ 5               │ 0.0           │
+│ 5   │ 2        │ 2018-11-28 15:56:57  │ 2018-11-28 15:58:33   │ 5               │ 0.0           │
+│ 6   │ 2        │ 2018-11-28 16:25:49  │ 2018-11-28 16:28:26   │ 5               │ 0.0           │
+│ 7   │ 2        │ 2018-11-28 16:29:37  │ 2018-11-28 16:33:43   │ 5               │ 0.0           │
+│ 8   │ 1        │ 2019-01-01 00:21:28  │ 2019-01-01 00:28:37   │ 1               │ 1.3           │
+│ 9   │ 1        │ 2019-01-01 00:32:01  │ 2019-01-01 00:45:39   │ 1               │ 3.7           │
+│ 10  │ 1        │ 2019-02-01 00:59:04  │ 2019-02-01 01:07:27   │ 1               │ 2.1           │
+│ 11  │ 1        │ 2019-02-01 00:33:09  │ 2019-02-01 01:03:58   │ 1               │ 9.8           │
+│ 12  │ 1        │ 2019-02-01 00:09:03  │ 2019-02-01 00:09:16   │ 1               │ 0.0           │</code></pre>
+<pre><code class="julia hljs">reducevalues(vcat, small_dfs_lazy[<span class="hljs-string">r&quot;yellow.csv$&quot;</span>])</code></pre><pre><code class="plaintext hljs">*20*</code></pre>
+<p>This returned a delayed task that to compute the result. <code>exec</code> will compute it:</p>
+<pre><code class="julia hljs">first(exec(reducevalues(vcat, small_dfs_lazy[<span class="hljs-string">r&quot;yellow.csv$&quot;</span>])), <span class="hljs-number">12</span>)</code></pre><pre><code class="plaintext hljs">12×5 DataFrame
+│ Row │ VendorID │ tpep_pickup_datetime │ tpep_dropoff_datetime │ passenger_count │ trip_distance │
+│     │ Int64    │ String               │ String                │ Int64           │ Float64       │
+├─────┼──────────┼──────────────────────┼───────────────────────┼─────────────────┼───────────────┤
+│ 1   │ 1        │ 2019-01-01 00:46:40  │ 2019-01-01 00:53:20   │ 1               │ 1.5           │
+│ 2   │ 1        │ 2019-01-01 00:59:47  │ 2019-01-01 01:18:59   │ 1               │ 2.6           │
+│ 3   │ 2        │ 2018-12-21 13:48:30  │ 2018-12-21 13:52:40   │ 3               │ 0.0           │
+│ 4   │ 2        │ 2018-11-28 15:52:25  │ 2018-11-28 15:55:45   │ 5               │ 0.0           │
+│ 5   │ 2        │ 2018-11-28 15:56:57  │ 2018-11-28 15:58:33   │ 5               │ 0.0           │
+│ 6   │ 2        │ 2018-11-28 16:25:49  │ 2018-11-28 16:28:26   │ 5               │ 0.0           │
+│ 7   │ 2        │ 2018-11-28 16:29:37  │ 2018-11-28 16:33:43   │ 5               │ 0.0           │
+│ 8   │ 1        │ 2019-01-01 00:21:28  │ 2019-01-01 00:28:37   │ 1               │ 1.3           │
+│ 9   │ 1        │ 2019-01-01 00:32:01  │ 2019-01-01 00:45:39   │ 1               │ 3.7           │
+│ 10  │ 1        │ 2019-02-01 00:59:04  │ 2019-02-01 01:07:27   │ 1               │ 2.1           │
+│ 11  │ 1        │ 2019-02-01 00:33:09  │ 2019-02-01 01:03:58   │ 1               │ 9.8           │
+│ 12  │ 1        │ 2019-02-01 00:09:03  │ 2019-02-01 00:09:16   │ 1               │ 0.0           │</code></pre>
 <h2 id="mapsubtrees_value_operations"><a href="#mapsubtrees_value_operations">mapsubtrees &#43; value operations</a></h2>
+<p><a href="api/#mapsubtrees"><code>mapsubtrees</code></a> is a powerful function since it allows you to recursively apply tree operations on subtrees of a tree.</p>
+<p>This allows a lot of great functionality. Here is a brief list,</p>
+<ul>
+<li><p>flatten a tree to be only 2 levels: <code>mapsubtrees&#40;flatten, glob&quot;*/*&quot;&#41;</code></p>
+</li>
+<li><p>collapse the directories at level 3: <code>mapsubtrees&#40;x-&gt;clip&#40;x, 1&#41;, glob&quot;*/*&quot;&#41;</code></p>
+</li>
+<li><p>reduce 2nd level directories with hcat, but 1st level with <code>vcat</code>: <code>reducevalues&#40;vcat, mapsubtrees&#40;x-&gt;reducevalues&#40;hcat, x&#41;, glob&quot;*&quot;&#41;&#41;</code> Note that this will work on lazy trees by creating lazy nodes as well.</p>
+</li>
+</ul>
 <div class="page-foot">
   <div class="copyright">
     &copy; Shashi Gowda, Julian Samaroo. Last modified: August 12, 2020. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a>.

@@ -28,7 +28,7 @@
   <div class="container sidebar-sticky">
     <div class="sidebar-about">
       <h1 style="font-size:2em"><a href="/FileTrees.jl/">FileTrees<span style="opacity:0.4">.jl</span></a></h1>
-      <p class="lead">Easy parallel file loading</p>
+      <p class="lead">Easy everyday parallelism with a file tree abstraction</p>
     </div>
     <style>
 @media (min-width: 768px) {
@@ -51,13 +51,15 @@
     }
     </style>
     <nav class="sidebar-nav" style="opacity: 0.9">
-      <a class="sidebar-nav-item " href="/FileTrees.jl/">Home page</a>
-      <a class="sidebar-nav-item " href="/FileTrees.jl/create-trees/">Creating file trees</a>
-      <a class="sidebar-nav-item " href="/FileTrees.jl/values/">File processing</a>
-      <a class="sidebar-nav-item active" href="/FileTrees.jl/patterns/">Pattern matching</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/">Getting started</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/values/">Values in file trees</a>
       <a class="sidebar-nav-item " href="/FileTrees.jl/tree-manipulation/">Manipulating file trees</a>
       <a class="sidebar-nav-item " href="/FileTrees.jl/lazy-parallel/">Laziness and parallelism</a>
       <a class="sidebar-nav-item " href="/FileTrees.jl/api/">API documentation</a>
+      <small>EXTRAS</small>
+      <a class="sidebar-nav-item active" href="/FileTrees.jl/patterns/">Pattern matching</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/create-trees/">Creating file trees from scratch</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/images/">Example: Images</a>
     </nav>
 
   </div>
@@ -91,7 +93,7 @@
 <li><p>❌ means the pattern type cannot be used with the given function.</p>
 </li>
 </ul>
-<table><tr><th align="right">function/T</th><th align="right">String</th><th align="right">Glob</th><th align="right">Regex</th></tr><tr><td align="right"><code>t&#91;p&#93;</code></td><td align="right">gets node at path <sup id="fnref:1"><a href="#fndef:1" class="fnref">[1]</a></sup></td><td align="right">gets subtree of matches <sup id="fnref:2"><a href="#fndef:2" class="fnref">[2]</a></sup></td><td align="right">gets subtree of matches <sup id="fnref:2"><a href="#fndef:2" class="fnref">[2]</a></sup> <sup id="fnref:3"><a href="#fndef:3" class="fnref">[3]</a></sup></td></tr><tr><td align="right"><code>cp&#40;t, r::T, s&#41;</code> <br/> <code>mv&#40;t, r::T, s&#41;</code></td><td align="right">❌</td><td align="right">❌</td><td align="right">move each match to <code>replace&#40;path&#40;&lt;match&gt;&#41;, r &#61;&gt; s&#41;</code> <sup id="fnref:3"><a href="#fndef:3" class="fnref">[3]</a></sup> <sup id="fnref:4"><a href="#fndef:4" class="fnref">[4]</a></sup></td></tr><tr><td align="right"><code>mapmatches&#40;f,t,p::T&#41;</code></td><td align="right">applies <code>f</code> to <code>t&#91;p&#93;</code></td><td align="right">apply <code>f</code> to every match</td><td align="right">apply <code>f</code> to every match</td></tr><tr><td align="right"><code>mkpath&#40;t,p::T;value&#41;</code> <br/> <code>touch&#40;t,p::T;value&#41;</code></td><td align="right">Create a single node at p</td><td align="right">❌</td><td align="right">❌</td></tr></table>
+<table><tr><th align="right">function/T</th><th align="right">String</th><th align="right">Glob</th><th align="right">Regex</th></tr><tr><td align="right"><code>t&#91;p&#93;</code></td><td align="right">gets node at path <sup id="fnref:1"><a href="#fndef:1" class="fnref">[1]</a></sup></td><td align="right">gets subtree of matches <sup id="fnref:2"><a href="#fndef:2" class="fnref">[2]</a></sup></td><td align="right">gets subtree of matches <sup id="fnref:2"><a href="#fndef:2" class="fnref">[2]</a></sup> <sup id="fnref:3"><a href="#fndef:3" class="fnref">[3]</a></sup></td></tr><tr><td align="right"><code>cp&#40;t, r::T, s&#41;</code> <br/> <code>mv&#40;t, r::T, s&#41;</code></td><td align="right">❌</td><td align="right">❌</td><td align="right">move each match to <code>replace&#40;path&#40;&lt;match&gt;&#41;, r &#61;&gt; s&#41;</code> <sup id="fnref:3"><a href="#fndef:3" class="fnref">[3]</a></sup> <sup id="fnref:4"><a href="#fndef:4" class="fnref">[4]</a></sup></td></tr><tr><td align="right"><code>mapmatches&#40;f,t,p::T&#41;</code></td><td align="right">applies <code>f</code> to <code>t&#91;p&#93;</code></td><td align="right">apply <code>f</code> to every match</td><td align="right">apply <code>f</code> to every match</td></tr><tr><td align="right"><code>mkpath&#40;t,p::T;value&#41;</code> <br/> <code>touch&#40;t,p::T;value&#41;</code></td><td align="right">Create a single node at p</td><td align="right">❌</td><td align="right">❌</td></tr><tr><td align="right"><code>mapsubtrees&#40;t,p::T&#41;</code></td><td align="right">❌</td><td align="right">For every path in tree &#40;could be non-leaf&#41; which matches <code>p</code> fully, apply <code>f</code></td><td align="right">❌</td></tr></table>
 <p><table class="fndef" id="fndef:1">
     <tr>
         <td class="fndef-backref"><a href="#fnref:1">[1]</a></td>

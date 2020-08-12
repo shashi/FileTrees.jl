@@ -1,18 +1,16 @@
 # FileTree manipulation
 
-The tree manipulation functions are `mv`, `cp`, `rm`, `clip`, `flatten`, and `mapsubtrees` in combination with other functions.
+The tree manipulation functions are `map`, `filter`, `mv`, `cp`, `rm`, `merge`, `diff`, `clip`, and `mapsubtrees` in combination with other functions.
 
 A lot of tree manipulation involves pattern matching, so we recommend you read [the section on pattern matching first](/patterns).
 
 ## `mv` and `cp`
 
-`mv` and `cp` not only allow you to move or copy nodes within a `FileTree` but also merge many files by copying them to the same path.
-
 The signature of `mv` is `mv(tree::FileTree, r::Regex, s::SubstitutionString; combine)`.
 
 For every file in `tree` whose path matches the regular expression `r`, rewrite its path as decided by `s`. All paths are to be matched with delimiter `/` on all platforms (including Windows).
 
-`combine` is a callback that is called with the values of two files when a file is moved to an already existing or already created path. By default it is set to error on name clashes where either of the nodes has a non-null value.
+`mv` and `cp` not only allow you to move or copy nodes within a `FileTree` but also merge many files by copying them to the same path. `combine` is a callback that is called with the values of two files when a file is moved to an already existing or already created path. By default it is set to error on name clashes where either of the nodes has a non-null value.
 
 `s` can be a SubstitutionString, which is conveniently constructed using the [`s""` string macro](https://docs.julialang.org/en/v1/base/strings/#Base.@s_str).
 
@@ -42,7 +40,7 @@ It's also possible to just move all the yellow files into a single yellow.csv fi
 mv(tree, r"^([^/]*)/([^/]*)/yellow.csv$", s"yellow.csv")
 ```
 
-This just works when there is no value loaded into the tree. But let's see what happens when the yellow files have some values loaded in them:
+This works when there is no value loaded into the tree, but it probably shouldn't. Let's see what happens when the yellow files have some values loaded in them:
 
 
 ```julia:dir1

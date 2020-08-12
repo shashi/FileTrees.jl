@@ -21,7 +21,7 @@ end
 function attach(t, path::PathLike, t′; combine=_merge_error)
     spath = Path(path).segments
     t1 = foldl((x, acc) -> acc => [x], [t′; reverse(spath)...]) |> maketree
-    cp(t, maketree(name(t)=>[t1]); combine=combine)
+    merge(t, maketree(name(t)=>[t1]); combine=combine)
 end
 
 # rewrite `tree` according by performing string search and replace on every
@@ -93,12 +93,12 @@ normdots(x::File; kw...) = x
 ################################ rm ################################
 
 """
-    rm(t1::FileTree, t2::FileTree)
+    diff(t1::FileTree, t2::FileTree)
 
 For each node in `t2` remove a node in `t1` at the same path if it exists.
 Returns the difference tree.
 """
-function Base.rm(t1::FileTree, t2::FileTree)
+function Base.diff(t1::FileTree, t2::FileTree)
     if name(t1) == name(t2)
         t2_names = name.(children(t2))
         cs = []
@@ -108,7 +108,7 @@ function Base.rm(t1::FileTree, t2::FileTree)
                 if t2[idx] isa File
                     @assert x isa File
                 elseif x isa FileTree && t2[idx] isa FileTree
-                    d = rm(x, t2[idx])
+                    d = diff(x, t2[idx])
                     if !isempty(d)
                         push!(cs, d)
                     end
@@ -128,9 +128,7 @@ end
 
 remove nodes which match `pattern` from the file tree.
 """
-rm(t::FileTree, path) = rm(t, _getsubtree(t, path))
-
-
+rm(t::FileTree, path) = diff(t, _getsubtree(t, path))
 
 ################################ cp ################################
 
@@ -184,12 +182,11 @@ function cp(t::FileTree, from_path::Regex, to_path::SubstitutionString; combine=
     isempty(matches) && return t
 
     newtree = regex_rewrite_tree(matches, from_path, to_path, combine)
-    cp(t, newtree; combine=combine)
+    merge(t, newtree; combine=combine)
 end
 
-
 """
-    cp(t1::FileTree, t2::FileTree; combine)
+    merge(t1::FileTree, t2::FileTree; combine)
 
 Merge two FileTrees. If files at the same path contain values, the `combine` callback will
 be called with their values to result in a new value.
@@ -197,7 +194,7 @@ be called with their values to result in a new value.
 If one of the dirs does not have a value, its corresponding argument will be `NoValue()`
 If any of the values is lazy, the output value is lazy as well.
 """
-function Base.cp(t1::FileTree, t2::FileTree; combine=_merge_error, dotnorm=true)
+function Base.merge(t1::FileTree, t2::FileTree; combine=_merge_error, dotnorm=true)
     bigt = if name(t1) == name(t2)
         t2_names = name.(children(t2))
         t2_merged = zeros(Bool, length(t2_names))
@@ -207,7 +204,7 @@ function Base.cp(t1::FileTree, t2::FileTree; combine=_merge_error, dotnorm=true)
             if !isnothing(idx)
                 y = t2[idx]
                 if y isa FileTree
-                    push!(cs, cp(x, y; combine=combine, dotnorm=false))
+                    push!(cs, merge(x, y; combine=combine, dotnorm=false))
                 else
                     push!(cs, apply_combine(combine, x, y))
                 end
@@ -268,9 +265,9 @@ function mv(t::FileTree, from_path::Regex, to_path::SubstitutionString; combine=
     isempty(matches) && return t
 
     newtree = regex_rewrite_tree(matches, from_path, to_path, combine)
-    cp(rm(t, matches), newtree; combine=combine)
+    merge(diff(t, matches), newtree; combine=combine)
 end
-function Base.cp(x::Node, y::Node; combine=_merge_error)
+function Base.merge(x::Node, y::Node; combine=_merge_error)
     name(x) == name(y) ? apply_combine(combine, x, y) : FileTree(nothing, ".", [x,y], NoValue())
 end
 
@@ -286,7 +283,7 @@ function _mknode(T, t, path::PathLike, value)
     end
 
     if length(spath) == 1
-        cp(t, maketree(name(t) => [subdir]))
+        merge(t, maketree(name(t) => [subdir]))
     else
         p = joinpath(spath[1:end-1]...)
         attach(t, p, subdir)

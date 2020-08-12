@@ -1,31 +1,38 @@
 # API documentation
 
-### Tree manipulation
+### Data structure
 
 {{doc FileTree FileTree type}}
 
-{{doc cp(::FileTree, ::Regex, ::SubstitutionString; combine) cp method}}
+### Tree manipulation
 
-{{doc cp(::FileTree, ::FileTree; combine) rm method}}
+See the article on [tree manipulation](/tree-manipulation/).
 
-{{doc rm(::FileTree, path) rm method}}
-
-{{doc rm(::FileTree, ::FileTree) rm method}}
-
-{{doc mv(::FileTree, ::Regex, ::SubstitutionString; combine) mv method}}
+{{doc filter(f, ::FileTree; walk, dirs) map/filter methods}}
 
 {{doc mapsubtrees mapsubtrees method}}
 
-### Loading, computing and saving data
+{{doc merge(::FileTree, ::FileTree; combine) merge method}}
 
+{{doc diff(::FileTree, ::FileTree) diff method}}
 
-{{doc load load function}}
+{{doc mv(::FileTree, ::Regex, ::SubstitutionString; combine) mv method}}
+
+{{doc cp(::FileTree, ::Regex, ::SubstitutionString; combine) cp method}}
+
+{{doc rm(::FileTree, path) rm method}}
+
+### Values in trees
+
+See the article on [values](/values).
+
+{{doc load FileTrees.load function}}
 
 {{doc mapvalues mapvalues function}}
 
 {{doc reducevalues  reducevalues function}}
 
-{{doc save save function}}
+{{doc save FileTrees.save function}}
 
 ### Laziness and Parallelism
 

@@ -46,13 +46,13 @@ end
                                   "c"=>["c"=>[]]]]))
 end
 
-@testset "cp" begin
-    @test isequal(cp(t,t), t)
+@testset "merge" begin
+    @test isequal(merge(t,t), t)
 end
 
-@testset "rm" begin
-    @test isempty(FileTrees.rm(t,t))
-    @test isequal(FileTrees.rm(t,maketree([])), t)
+@testset "diff" begin
+    @test isempty(FileTrees.diff(t,t))
+    @test isequal(FileTrees.diff(t,maketree([])), t)
 end
 
 import FileTrees: attach
@@ -91,7 +91,7 @@ import FileTrees: attach
 
     t6 = cp(t1, r"^(.*)/(.*)/data.csv$", s"\1/\2.csv")
 
-    @test isequal(t6, cp(t1, t5))
+    @test isequal(t6, merge(t1, t5))
 end
 
 @testset "values" begin

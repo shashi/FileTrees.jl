@@ -103,7 +103,9 @@ lazy_dfs = FileTrees.load(taxi_dir; lazy=<span class="hljs-literal">true</span>)
       ├─ green.csv (Thunk(#1, (File(taxi-data/2020/02/green.csv),)))
       └─ yellow.csv (Thunk(#1, (File(taxi-data/2020/02/yellow.csv),)))
 </code></pre>
-<pre><code class="julia hljs">yellow′ = mv(lazy_dfs, <span class="hljs-string">r&quot;(.*)/(.*)/yellow.csv&quot;</span>, <span class="hljs-string">s&quot;yellow/\1/\2.csv&quot;</span>)[<span class="hljs-string">&quot;yellow&quot;</span>]</code></pre><pre><code class="plaintext hljs">yellow/
+<pre><code class="julia hljs">yellow′ = mv(lazy_dfs,
+             <span class="hljs-string">r&quot;(.*)/(.*)/yellow.csv&quot;</span>,
+             <span class="hljs-string">s&quot;yellow/\1/\2.csv&quot;</span>)[<span class="hljs-string">&quot;yellow&quot;</span>]</code></pre><pre><code class="plaintext hljs">yellow/
 ├─ 2019/
 │  ├─ 01.csv (Thunk(#1, (File(taxi-data/2019/01/yellow.csv),)))
 │  └─ 02.csv (Thunk(#1, (File(taxi-data/2019/02/yellow.csv),)))

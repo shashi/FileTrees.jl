@@ -214,16 +214,8 @@ dfs = FileTrees.load(taxi_dir) <span class="hljs-keyword">do</span> file
 │ 11  │ 1        │ 2019-02-01 00:33:09  │ 2019-02-01 01:03:58   │ 1               │ 9.8           │
 │ 12  │ 1        │ 2019-02-01 00:09:03  │ 2019-02-01 00:09:16   │ 1               │ 0.0           │</code></pre>
 <h2 id="mapsubtrees_value_operations"><a href="#mapsubtrees_value_operations">mapsubtrees &#43; value operations</a></h2>
-<p><a href="api/#mapsubtrees"><code>mapsubtrees</code></a> is a powerful function since it allows you to recursively apply tree operations on subtrees of a tree.</p>
-<p>This allows a lot of great functionality. Here is a brief list,</p>
-<ul>
-<li><p>flatten a tree to be only 2 levels: <code>mapsubtrees&#40;flatten, glob&quot;*/*&quot;&#41;</code></p>
-</li>
-<li><p>collapse the directories at level 3: <code>mapsubtrees&#40;x-&gt;clip&#40;x, 1&#41;, glob&quot;*/*&quot;&#41;</code></p>
-</li>
-<li><p>reduce 2nd level directories with hcat, but 1st level with <code>vcat</code>: <code>reducevalues&#40;vcat, mapsubtrees&#40;x-&gt;reducevalues&#40;hcat, x&#41;, glob&quot;*&quot;&#41;&#41;</code> Note that this will work on lazy trees by creating lazy nodes as well.</p>
-</li>
-</ul>
+<p><a href="/FileTrees.jl/api/#mapsubtrees"><code>mapsubtrees</code></a> is a powerful function since it allows you to recursively apply tree operations on subtrees of a tree.</p>
+<p>See <a href="/FileTrees.jl/tree-manipulation/#mapsubtrees">more about it here</a>.</p>
 <div class="page-foot">
   <div class="copyright">
     &copy; Shashi Gowda, Julian Samaroo. Last modified: August 12, 2020. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a>.

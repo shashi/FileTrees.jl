@@ -77,6 +77,40 @@
 <div class="franklin-content"><h1 id="filetree_manipulation"><a href="#filetree_manipulation">FileTree manipulation</a></h1>
 <p>The tree manipulation functions are <code>map</code>, <code>filter</code>, <code>mv</code>, <code>cp</code>, <code>rm</code>, <code>merge</code>, <code>diff</code>, <code>clip</code>, and <code>mapsubtrees</code> in combination with other functions.</p>
 <p>A lot of tree manipulation involves pattern matching, so we recommend you read <a href="/FileTrees.jl/patterns">the section on pattern matching first</a>.</p>
+<h2 id="map_and_filter"><a href="#map_and_filter"><code>map</code> and <code>filter</code></a></h2>
+<p><a href="/FileTrees.jl/api/#map/filter"><code>map</code></a> can be used to apply a function to every node in a file tree, to create a new file tree. This function should return a <code>File</code> or <code>FileTree</code> object.</p>
+<p><a href="/FileTrees.jl/api/#map/filter"><code>filter</code></a> can be used to filter only nodes that satisfy a given predicate function.</p>
+<p>Both <code>map</code> and <code>filter</code> take a <code>walk</code> keyword argument which can be either <code>FileTrees.prewalk</code> or <code>FileTrees.postwalk</code>, they do pre-order traversal and post-order traversal of the tree respectively. By default both operate on both <code>FileTree</code> &#40;subtree&#41; nodes and <code>File</code> nodes. You can pass in <code>dirs&#61;false</code> to work only on the file nodes.</p>
+<h2 id="merge"><a href="#merge"><code>merge</code></a></h2>
+  <div class="docstring">
+      <h2 class="doc-header" id="merge">
+        <a href="#merge">merge</a>
+        <div class="doc-type">method</div></h2>
+      <div class="doc-content"><pre><code class="julia hljs">merge(t1::FileTree, t2::FileTree; combine)</code></pre>
+<p>Merge two FileTrees. If files at the same path contain values, the <code>combine</code> callback will be called with their values to result in a new value.</p>
+<p>If one of the dirs does not have a value, its corresponding argument will be <code>NoValue&#40;&#41;</code> If any of the values is lazy, the output value is lazy as well.</p>
+</div>
+  </div>
+
+<h2 id="diff_and_rm"><a href="#diff_and_rm"><code>diff</code> and <code>rm</code></a></h2>
+  <div class="docstring">
+      <h2 class="doc-header" id="diff">
+        <a href="#diff">diff</a>
+        <div class="doc-type">method</div></h2>
+      <div class="doc-content"><pre><code class="julia hljs">diff(t1::FileTree, t2::FileTree)</code></pre>
+<p>For each node in <code>t2</code> remove a node in <code>t1</code> at the same path if it exists. Returns the difference tree.</p>
+</div>
+  </div>
+
+  <div class="docstring">
+      <h2 class="doc-header" id="rm">
+        <a href="#rm">rm</a>
+        <div class="doc-type">method</div></h2>
+      <div class="doc-content"><pre><code class="julia hljs">rm(t::FileTree, pattern::<span class="hljs-built_in">Union</span>{Glob, <span class="hljs-built_in">String</span>, AbstractPath, <span class="hljs-built_in">Regex</span>})</code></pre>
+<p>remove nodes which match <code>pattern</code> from the file tree.</p>
+</div>
+  </div>
+
 <h2 id="mv_and_cp"><a href="#mv_and_cp"><code>mv</code> and <code>cp</code></a></h2>
 <p>The signature of <code>mv</code> is <code>mv&#40;tree::FileTree, r::Regex, s::SubstitutionString; combine&#41;</code>.</p>
 <p>For every file in <code>tree</code> whose path matches the regular expression <code>r</code>, rewrite its path as decided by <code>s</code>. All paths are to be matched with delimiter <code>/</code> on all platforms &#40;including Windows&#41;.</p>
@@ -168,6 +202,79 @@ df2 = mv(df1, <span class="hljs-string">r&quot;.*green.csv$&quot;</span>, <span 
 ├─ green.csv (36×20 DataFrame)
 └─ yellow.csv (36×18 DataFrame)
 </code></pre>
+<h2 id="mapsubtrees"><a href="#mapsubtrees"><code>mapsubtrees</code></a></h2>
+<p><a href="/FileTrees.jl/api/#mapsubtrees"><code>mapsubtrees&#40;f, pattern&#41;</code></a> lets you apply a function to every node whose path matches <code>pattern</code> which is either a Glob or Regex &#40;see also <a href="/FileTrees.jl/patterns">pattern matching</a>&#41;.</p>
+<p><code>f</code> gets the subtree itself and may return a subtree which is to replace the one it matched. It can return <code>nothing</code> to delete the node in the output tree, returning any other value will cause it to empty the subtree and set the value of the node to the returned value.</p>
+<p>This last behavior makes it equivalent to Julia&#39;s <code>mapslices</code> but on trees.</p>
+<p>Suppose you have a nested tree of values, and you would like to join the data in the second level of the tree using <code>vcat</code> but the first level of the tree using <code>hcat</code>. This can be done in two stages: first use <code>mapsubtrees</code> to collapse the second level tree into a single value which is the <code>vcat</code> of all the values in each subtree. Then combine those results with an <code>hcat</code>.</p>
+<p>To demonstrate this let&#39;s create a nested tree with a nice structure:</p>
+<pre><code class="julia hljs">tree = maketree(<span class="hljs-string">&quot;dir&quot;</span>=&gt;
+                [string(i)=&gt;[(name=string(j), value=(i,j)) <span class="hljs-keyword">for</span> j <span class="hljs-keyword">in</span> <span class="hljs-number">1</span>:<span class="hljs-number">5</span>] <span class="hljs-keyword">for</span> i=<span class="hljs-number">1</span>:<span class="hljs-number">5</span>])</code></pre><pre><code class="plaintext hljs">dir/
+├─ 1/
+│  ├─ 1 ((1, 1))
+│  ├─ 2 ((1, 2))
+│  ├─ 3 ((1, 3))
+│  ├─ 4 ((1, 4))
+│  └─ 5 ((1, 5))
+├─ 2/
+│  ├─ 1 ((2, 1))
+│  ├─ 2 ((2, 2))
+│  ├─ 3 ((2, 3))
+│  ├─ 4 ((2, 4))
+│  └─ 5 ((2, 5))
+├─ 3/
+│  ├─ 1 ((3, 1))
+│  ├─ 2 ((3, 2))
+│  ├─ 3 ((3, 3))
+│  ├─ 4 ((3, 4))
+│  └─ 5 ((3, 5))
+├─ 4/
+│  ├─ 1 ((4, 1))
+│  ├─ 2 ((4, 2))
+│  ├─ 3 ((4, 3))
+│  ├─ 4 ((4, 4))
+│  └─ 5 ((4, 5))
+└─ 5/
+   ├─ 1 ((5, 1))
+   ├─ 2 ((5, 2))
+   ├─ 3 ((5, 3))
+   ├─ 4 ((5, 4))
+   └─ 5 ((5, 5))
+</code></pre>
+<p>Step 1: reduce level 2 onwards:</p>
+<pre><code class="julia hljs">vcated = mapsubtrees(tree, <span class="hljs-string">glob&quot;*&quot;</span>) <span class="hljs-keyword">do</span> subtree
+    reducevalues(vcat, subtree)
+<span class="hljs-keyword">end</span></code></pre><pre><code class="plaintext hljs">dir/
+├─ 1/ (5-element Array{Tuple{Int64,Int64},1})
+├─ 2/ (5-element Array{Tuple{Int64,Int64},1})
+├─ 3/ (5-element Array{Tuple{Int64,Int64},1})
+├─ 4/ (5-element Array{Tuple{Int64,Int64},1})
+└─ 5/ (5-element Array{Tuple{Int64,Int64},1})
+</code></pre>
+<p>Step 2: reduce intermediate results</p>
+<pre><code class="julia hljs">reducevalues(hcat, vcated)</code></pre><pre><code class="plaintext hljs">5×5 Array{Tuple{Int64,Int64},2}:
+ (1, 1)  (2, 1)  (3, 1)  (4, 1)  (5, 1)
+ (1, 2)  (2, 2)  (3, 2)  (4, 2)  (5, 2)
+ (1, 3)  (2, 3)  (3, 3)  (4, 3)  (5, 3)
+ (1, 4)  (2, 4)  (3, 4)  (4, 4)  (5, 4)
+ (1, 5)  (2, 5)  (3, 5)  (4, 5)  (5, 5)</code></pre>
+<p>This can also be done lazily&#33;</p>
+<pre><code class="julia hljs">vcated = mapsubtrees(tree, <span class="hljs-string">glob&quot;*&quot;</span>) <span class="hljs-keyword">do</span> subtree
+    reducevalues(vcat, subtree, lazy=<span class="hljs-literal">true</span>)
+<span class="hljs-keyword">end</span></code></pre><pre><code class="plaintext hljs">dir/
+├─ 1/ (Thunk(vcat, (Thunk(vcat, ...), Thunk(vcat, ...))))
+├─ 2/ (Thunk(vcat, (Thunk(vcat, ...), Thunk(vcat, ...))))
+├─ 3/ (Thunk(vcat, (Thunk(vcat, ...), Thunk(vcat, ...))))
+├─ 4/ (Thunk(vcat, (Thunk(vcat, ...), Thunk(vcat, ...))))
+└─ 5/ (Thunk(vcat, (Thunk(vcat, ...), Thunk(vcat, ...))))
+</code></pre>
+<pre><code class="julia hljs">final = reducevalues(hcat, vcated)</code></pre><pre><code class="plaintext hljs">Thunk(hcat, (Thunk(hcat, ...), Thunk(hcat, ...)))</code></pre>
+<pre><code class="julia hljs">exec(final)</code></pre><pre><code class="plaintext hljs">5×5 Array{Tuple{Int64,Int64},2}:
+ (1, 1)  (2, 1)  (3, 1)  (4, 1)  (5, 1)
+ (1, 2)  (2, 2)  (3, 2)  (4, 2)  (5, 2)
+ (1, 3)  (2, 3)  (3, 3)  (4, 3)  (5, 3)
+ (1, 4)  (2, 4)  (3, 4)  (4, 4)  (5, 4)
+ (1, 5)  (2, 5)  (3, 5)  (4, 5)  (5, 5)</code></pre>
 <div class="page-foot">
   <div class="copyright">
     &copy; Shashi Gowda, Julian Samaroo. Last modified: August 12, 2020. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a>.

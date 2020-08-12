@@ -80,13 +80,107 @@
       <h2 class="doc-header" id="FileTree">
         <a href="#FileTree">FileTree</a>
         <div class="doc-type">type</div></h2>
-      <div class="doc-content"><pre><code class="julia hljs">FileTree(parent, name, children, value)
+      <div class="doc-content"><pre><code class="language-julia">FileTree(parent, name, children, value)</code></pre>
+<h4 id="fields"><a href="#fields">Fields:</a></h4>
+<ul>
+<li><p><code>parent::Union&#123;FileTree, Nothing&#125;</code> – The parent node. <code>nothing</code> if it&#39;s the root node.</p>
+</li>
+<li><p><code>name::String</code> – Name of the root.</p>
+</li>
+<li><p><code>children::Vector</code> – children</p>
+</li>
+<li><p><code>value::Any</code> – the value at the node, if no value is present, a <code>NoValue&#40;&#41;</code> sentinal value.</p>
+<p>FileTree&#40;tree::FileTree; parent, name, children, value&#41;</p>
+</li>
+</ul>
+<p>Copy over all fields from <code>tree</code>, but use any fields provided as keyword arguments.</p>
+<pre><code class="language-julia">FileTree(dirname::String)</code></pre>
+<p>Construct a <code>FileTree</code> to reflect directory from disk in the current working directory.</p>
+</div>
+  </div>
 
-FileTree(d::FileTree; parent, name, children, value)
+  <div class="docstring">
+      <h2 class="doc-header" id="File">
+        <a href="#File">File</a>
+        <div class="doc-type">type</div></h2>
+      <div class="doc-content"><pre><code class="language-julia">File(parent, name, value=NoValue())</code></pre>
+<h4 id="fields__2"><a href="#fields__2">Fields:</a></h4>
+<ul>
+<li><p><code>parent::Union&#123;FileTree, Nothing&#125;</code> – The parent node. <code>nothing</code> if it&#39;s the root node.</p>
+</li>
+<li><p><code>name::String</code> – Name of the root.</p>
+</li>
+<li><p><code>value::Any</code> – the value at the node, if no value is present, a <code>NoValue&#40;&#41;</code> sentinal value.</p>
+</li>
+</ul>
+</div>
+  </div>
 
-FileTree(dirname::<span class="hljs-built_in">String</span>)
+  <div class="docstring">
+      <h2 class="doc-header" id="name">
+        <a href="#name">name</a>
+        <div class="doc-type">function</div></h2>
+      <div class="doc-content"><pre><code class="language-julia">name(node::Union{FileTree, File})</code></pre>
+<p>Get the file or directory name.</p>
+</div>
+  </div>
 
-FileTree(g::Glob)</code></pre>
+  <div class="docstring">
+      <h2 class="doc-header" id="parent">
+        <a href="#parent">parent</a>
+        <div class="doc-type">function</div></h2>
+      <div class="doc-content"><pre><code class="language-julia">parent(node::Union{FileTree, File})</code></pre>
+<p>Get the parent node. Returns <code>nothing</code> if there are no parents.</p>
+</div>
+  </div>
+
+  <div class="docstring">
+      <h2 class="doc-header" id="node[]">
+        <a href="#node[]">node[]</a>
+        <div class="doc-type">method</div></h2>
+      <div class="doc-content"><pre><code class="language-julia">getindex(type[, elements...])</code></pre>
+<p>Construct a 1-d array of the specified type. This is usually called with the syntax <code>Type&#91;&#93;</code>. Element values can be specified using <code>Type&#91;a,b,c,...&#93;</code>.</p>
+<h1 id="examples"><a href="#examples">Examples</a></h1>
+<pre><code class="language-jldoctest">julia> Int8[1, 2, 3]
+3-element Array{Int8,1}:
+ 1
+ 2
+ 3
+
+julia> getindex(Int8, 1, 2, 3)
+3-element Array{Int8,1}:
+ 1
+ 2
+ 3</code></pre>
+<pre><code class="language-julia">`node[]`</code></pre>
+<p>Get the value stored in the node. <code>NoValue&#40;&#41;</code> is returned if there is no value stored.</p>
+</div>
+  </div>
+
+  <div class="docstring">
+      <h2 class="doc-header" id="rename">
+        <a href="#rename">rename</a>
+        <div class="doc-type">function</div></h2>
+      <div class="doc-content"><pre><code class="language-julia">rename(node::Union{FileTree, File}, newname)</code></pre>
+<p>Return a copy of node with <code>name</code> set to <code>newname</code>.</p>
+</div>
+  </div>
+
+  <div class="docstring">
+      <h2 class="doc-header" id="setparent">
+        <a href="#setparent">setparent</a>
+        <div class="doc-type">function</div></h2>
+      <div class="doc-content"><pre><code class="language-julia">setparent(node::Union{FileTree, File}, parent)</code></pre>
+<p>Return a copy of node with <code>parent</code> set as the parent.</p>
+</div>
+  </div>
+
+  <div class="docstring">
+      <h2 class="doc-header" id="setvalue">
+        <a href="#setvalue">setvalue</a>
+        <div class="doc-type">function</div></h2>
+      <div class="doc-content"><pre><code class="language-julia">setvalue(node::Union{FileTree, File}, val)</code></pre>
+<p>Return a copy of node with <code>val</code> set as the value.</p>
 </div>
   </div>
 
@@ -96,10 +190,10 @@ FileTree(g::Glob)</code></pre>
       <h2 class="doc-header" id="map/filter">
         <a href="#map/filter">map/filter</a>
         <div class="doc-type">methods</div></h2>
-      <div class="doc-content"><pre><code class="julia hljs">map(f, tree::FileTree; walk=FileTrees.postwalk, dirs=<span class="hljs-literal">true</span>)</code></pre>
+      <div class="doc-content"><pre><code class="language-julia">map(f, tree::FileTree; walk=FileTrees.postwalk, dirs=true)</code></pre>
 <p>apply <code>f</code> to every node in the tree. To only visit File nodes, pass <code>dirs&#61;false</code>.</p>
 <p>walk can be either <code>FileTrees.postwalk</code> or <code>FileTrees.postwalk</code>.</p>
-<pre><code class="julia hljs">filter(f, tree::FileTree; walk=FileTrees.postwalk, dirs=<span class="hljs-literal">true</span>)</code></pre>
+<pre><code class="language-julia">filter(f, tree::FileTree; walk=FileTrees.postwalk, dirs=true)</code></pre>
 <p>remove every node <code>x</code> from <code>tree</code> where <code>f&#40;x&#41;</code> is <code>true</code>. <code>f&#40;x&#41;</code> must return a boolean value.</p>
 </div>
   </div>
@@ -108,7 +202,7 @@ FileTree(g::Glob)</code></pre>
       <h2 class="doc-header" id="mapsubtrees">
         <a href="#mapsubtrees">mapsubtrees</a>
         <div class="doc-type">method</div></h2>
-      <div class="doc-content"><pre><code class="julia hljs">mapsubtrees(f, t::FileTree, pattern::<span class="hljs-built_in">Union</span>{GlobMatch, <span class="hljs-built_in">Regex</span>})</code></pre>
+      <div class="doc-content"><pre><code class="language-julia">mapsubtrees(f, t::FileTree, pattern::Union{GlobMatch, Regex})</code></pre>
 <p>For every node that matches the pattern provided, apply the function <code>f</code>.</p>
 <p>If <code>f</code> returns either a <code>File</code> or <code>FileTree</code>, this new node will replace the matched node.</p>
 <p>If <code>f</code> returns <code>nothing</code>, the matched node will be deleted</p>
@@ -116,12 +210,13 @@ FileTree(g::Glob)</code></pre>
 <p>This will allow use of mapsubtrees for complex use cases.</p>
 <p>Suppose you would like to combine the values of a subdirectory with the function <code>hcat</code> and in turn those values using <code>vcat</code>, you can use <code>mapsubtrees</code> to accomplish this:</p>
 <p>Here is a demo:</p>
-<pre><code class="julia hljs">t = maketree(<span class="hljs-string">&quot;dir&quot;</span>=&gt;([string(j)=&gt;[(name=string(i), value=(i,j)] <span class="hljs-keyword">for</span> i=<span class="hljs-number">1</span>:<span class="hljs-number">2</span>] <span class="hljs-keyword">for</span> j=<span class="hljs-number">1</span>:<span class="hljs-number">3</span>]
+<pre><code class="language-julia">t = maketree("dir"=>([string(j)=>[(name=string(i), value=(i,j)]
+                        for i=1:2] for j=1:3]
 
-t1 = mapsubtrees(<span class="hljs-string">&quot;*&quot;</span>) <span class="hljs-keyword">do</span> subtree
+t1 = mapsubtrees("*") do subtree
     reducevalues(vcat, subtree)
-<span class="hljs-keyword">end</span></code></pre>
-<pre><code class="julia hljs">reducevalues(hcat, t1)</code></pre>
+end</code></pre>
+<pre><code class="language-julia">reducevalues(hcat, t1)</code></pre>
 </div>
   </div>
 
@@ -129,7 +224,7 @@ t1 = mapsubtrees(<span class="hljs-string">&quot;*&quot;</span>) <span class="hl
       <h2 class="doc-header" id="merge">
         <a href="#merge">merge</a>
         <div class="doc-type">method</div></h2>
-      <div class="doc-content"><pre><code class="julia hljs">merge(t1::FileTree, t2::FileTree; combine)</code></pre>
+      <div class="doc-content"><pre><code class="language-julia">merge(t1::FileTree, t2::FileTree; combine)</code></pre>
 <p>Merge two FileTrees. If files at the same path contain values, the <code>combine</code> callback will be called with their values to result in a new value.</p>
 <p>If one of the dirs does not have a value, its corresponding argument will be <code>NoValue&#40;&#41;</code> If any of the values is lazy, the output value is lazy as well.</p>
 </div>
@@ -139,7 +234,7 @@ t1 = mapsubtrees(<span class="hljs-string">&quot;*&quot;</span>) <span class="hl
       <h2 class="doc-header" id="diff">
         <a href="#diff">diff</a>
         <div class="doc-type">method</div></h2>
-      <div class="doc-content"><pre><code class="julia hljs">diff(t1::FileTree, t2::FileTree)</code></pre>
+      <div class="doc-content"><pre><code class="language-julia">diff(t1::FileTree, t2::FileTree)</code></pre>
 <p>For each node in <code>t2</code> remove a node in <code>t1</code> at the same path if it exists. Returns the difference tree.</p>
 </div>
   </div>
@@ -148,31 +243,35 @@ t1 = mapsubtrees(<span class="hljs-string">&quot;*&quot;</span>) <span class="hl
       <h2 class="doc-header" id="mv">
         <a href="#mv">mv</a>
         <div class="doc-type">method</div></h2>
-      <div class="doc-content"><pre><code class="julia hljs">mv(t::FileTree, from_path::<span class="hljs-built_in">Regex</span>, to_path::SubstitutionString; combine)</code></pre>
+      <div class="doc-content"><pre><code class="language-julia">mv(t::FileTree,
+   from_path::Regex,
+   to_path::SubstitutionString; combine)</code></pre>
 <p>move nodes in the file tree whose path matches the <code>from_tree</code> regular expression pattern by renaming it to <code>to_path</code> pattern. Any sub-pattern in <code>from_path</code> which is surrounded by paranthesis will be read as a matched substring which can be accessed in the to_path substitution pattern using \1, \2 etc. positional matches.</p>
 <p>If a file overwrites an existing node after copy, <code>combine</code> will be called to combine them together. By default <code>combine</code> will error.</p>
 <h2 id="example"><a href="#example">Example:</a></h2>
-<pre><code class="julia hljs">julia&gt; t = maketree(<span class="hljs-string">&quot;dir&quot;</span> =&gt; [string(j) =&gt; [string(i)=&gt;[<span class="hljs-string">&quot;data.csv&quot;</span>] <span class="hljs-keyword">for</span> i = <span class="hljs-number">1</span>:<span class="hljs-number">2</span>] <span class="hljs-keyword">for</span> j=<span class="hljs-number">1</span>:<span class="hljs-number">2</span>])
+<pre><code class="language-julia">julia> t = maketree("dir" => [string(j) =>
+                                [string(i)=>["data.csv"]
+                                    for i = 1:2] for j=1:2])
 dir/
-├─ <span class="hljs-number">1</span>/
-│  ├─ <span class="hljs-number">1</span>/
+├─ 1/
+│  ├─ 1/
 │  │  └─ data.csv
-│  └─ <span class="hljs-number">2</span>/
+│  └─ 2/
 │     └─ data.csv
-└─ <span class="hljs-number">2</span>/
-   ├─ <span class="hljs-number">1</span>/
+└─ 2/
+   ├─ 1/
    │  └─ data.csv
-   └─ <span class="hljs-number">2</span>/
+   └─ 2/
       └─ data.csv
 
-julia&gt; mv(t, <span class="hljs-string">r&quot;^([^/]*)/([^/]*)/data.csv$&quot;</span>, <span class="hljs-string">s&quot;\1/\2.csv&quot;</span>)
+julia> mv(t, r"^([^/]*)/([^/]*)/data.csv$", s"\1/\2.csv")
 dir/
-├─ <span class="hljs-number">1</span>/
-│  ├─ <span class="hljs-number">1.</span>csv
-│  └─ <span class="hljs-number">2.</span>csv
-└─ <span class="hljs-number">2</span>/
-   ├─ <span class="hljs-number">1.</span>csv
-   └─ <span class="hljs-number">2.</span>csv</code></pre>
+├─ 1/
+│  ├─ 1.csv
+│  └─ 2.csv
+└─ 2/
+   ├─ 1.csv
+   └─ 2.csv</code></pre>
 </div>
   </div>
 
@@ -180,39 +279,41 @@ dir/
       <h2 class="doc-header" id="cp">
         <a href="#cp">cp</a>
         <div class="doc-type">method</div></h2>
-      <div class="doc-content"><pre><code class="julia hljs">cp(t::FileTree, from_path::<span class="hljs-built_in">Regex</span>, to_path::SubstitutionString; combine)</code></pre>
+      <div class="doc-content"><pre><code class="language-julia">cp(t::FileTree,
+   from_path::Regex,
+   to_path::SubstitutionString; combine)</code></pre>
 <p>copy nodes in the file tree whose path matches the <code>from_tree</code> regular expression pattern by renaming it to <code>to_path</code> pattern. Any sub-pattern in <code>from_path</code> which is surrounded by paranthesis will be read as a matched substring which can be accessed in the to_path substitution pattern using \1, \2 etc. positional matches.</p>
 <p>If a file overwrites an existing node after copy, <code>combine</code> will be called to combine them together. By default <code>combine</code> will error.</p>
 <h2 id="example__2"><a href="#example__2">Example:</a></h2>
-<pre><code class="julia hljs">julia&gt; t = maketree(<span class="hljs-string">&quot;dir&quot;</span> =&gt; [string(j) =&gt; [string(i)=&gt;[<span class="hljs-string">&quot;data.csv&quot;</span>] <span class="hljs-keyword">for</span> i = <span class="hljs-number">1</span>:<span class="hljs-number">2</span>] <span class="hljs-keyword">for</span> j=<span class="hljs-number">1</span>:<span class="hljs-number">2</span>])
+<pre><code class="language-julia">julia> t = maketree("dir" => [string(j) => [string(i)=>["data.csv"] for i = 1:2] for j=1:2])
 dir/
-├─ <span class="hljs-number">1</span>/
-│  ├─ <span class="hljs-number">1</span>/
+├─ 1/
+│  ├─ 1/
 │  │  └─ data.csv
-│  └─ <span class="hljs-number">2</span>/
+│  └─ 2/
 │     └─ data.csv
-└─ <span class="hljs-number">2</span>/
-   ├─ <span class="hljs-number">1</span>/
+└─ 2/
+   ├─ 1/
    │  └─ data.csv
-   └─ <span class="hljs-number">2</span>/
+   └─ 2/
       └─ data.csv
 
-julia&gt; cp(t, <span class="hljs-string">r&quot;^([^/]*)/([^/]*)/data.csv$&quot;</span>, <span class="hljs-string">s&quot;/.csv&quot;</span>)
+julia> cp(t, r"^([^/]*)/([^/]*)/data.csv$", s"/.csv")
 dir/
-├─ <span class="hljs-number">1</span>/
-│  ├─ <span class="hljs-number">1</span>/
+├─ 1/
+│  ├─ 1/
 │  │  └─ data.csv
-│  ├─ <span class="hljs-number">1.</span>csv
-│  ├─ <span class="hljs-number">2</span>/
+│  ├─ 1.csv
+│  ├─ 2/
 │  │  └─ data.csv
-│  └─ <span class="hljs-number">2.</span>csv
-└─ <span class="hljs-number">2</span>/
-   ├─ <span class="hljs-number">1</span>/
+│  └─ 2.csv
+└─ 2/
+   ├─ 1/
    │  └─ data.csv
-   ├─ <span class="hljs-number">1.</span>csv
-   ├─ <span class="hljs-number">2</span>/
+   ├─ 1.csv
+   ├─ 2/
    │  └─ data.csv
-   └─ <span class="hljs-number">2.</span>csv</code></pre>
+   └─ 2.csv</code></pre>
 </div>
   </div>
 
@@ -220,7 +321,7 @@ dir/
       <h2 class="doc-header" id="rm">
         <a href="#rm">rm</a>
         <div class="doc-type">method</div></h2>
-      <div class="doc-content"><pre><code class="julia hljs">rm(t::FileTree, pattern::<span class="hljs-built_in">Union</span>{Glob, <span class="hljs-built_in">String</span>, AbstractPath, <span class="hljs-built_in">Regex</span>})</code></pre>
+      <div class="doc-content"><pre><code class="language-julia">rm(t::FileTree, pattern::Union{Glob, String, AbstractPath, Regex})</code></pre>
 <p>remove nodes which match <code>pattern</code> from the file tree.</p>
 </div>
   </div>
@@ -231,7 +332,7 @@ dir/
       <h2 class="doc-header" id="FileTrees.load">
         <a href="#FileTrees.load">FileTrees.load</a>
         <div class="doc-type">function</div></h2>
-      <div class="doc-content"><pre><code class="julia hljs">load(f, t::FileTree; dirs=<span class="hljs-literal">false</span>)</code></pre>
+      <div class="doc-content"><pre><code class="language-julia">load(f, t::FileTree; dirs=false)</code></pre>
 <p>Walk the tree and optionally load data for nodes in it.</p>
 <p><code>f&#40;file&#41;</code> is the loader function which takes <code>File</code> as input. Call <code>path&#40;file&#41;</code> to get the String path to read the  file.</p>
 <p>If <code>dirs &#61; true</code> then <code>f</code> can either get a <code>File</code> or <code>FileTree</code>. nodes within <code>FileTree</code> will have already been loaded.</p>
@@ -243,7 +344,7 @@ dir/
       <h2 class="doc-header" id="mapvalues">
         <a href="#mapvalues">mapvalues</a>
         <div class="doc-type">function</div></h2>
-      <div class="doc-content"><pre><code class="julia hljs">mapvalues(f, x::FileTree)</code></pre>
+      <div class="doc-content"><pre><code class="language-julia">mapvalues(f, x::FileTree)</code></pre>
 <p>&#40;See <code>load</code> to load values into nodes of a tree.&#41;</p>
 <p>Apply <code>f</code> to the value of all nodes in <code>x</code> which have a value. Returns a new tree where every value is replaced with the result of applying <code>f</code>.</p>
 <p><code>f</code> may return <code>NoValue&#40;&#41;</code> to cause no value to be associated with a node.</p>
@@ -254,7 +355,7 @@ dir/
       <h2 class="doc-header" id="reducevalues">
         <a href="#reducevalues">reducevalues</a>
         <div class="doc-type">function</div></h2>
-      <div class="doc-content"><pre><code class="julia hljs">reducevalues(f, t::FileTree; associative=<span class="hljs-literal">true</span>)</code></pre>
+      <div class="doc-content"><pre><code class="language-julia">reducevalues(f, t::FileTree; associative=true)</code></pre>
 <p>Use <code>f</code> to combine values in the tree.</p>
 <ul>
 <li><p><code>associative&#61;true</code> assumes <code>f</code> can be applied in an associative way</p>
@@ -267,7 +368,7 @@ dir/
       <h2 class="doc-header" id="FileTrees.save">
         <a href="#FileTrees.save">FileTrees.save</a>
         <div class="doc-type">function</div></h2>
-      <div class="doc-content"><pre><code class="julia hljs">save(f, x::Node)</code></pre>
+      <div class="doc-content"><pre><code class="language-julia">save(f, x::Node)</code></pre>
 <p>Save a FileTree to disk. Creates the directory structure and calls <code>f</code> with <code>File</code> for every file in the tree which has a value associated with it.</p>
 <p>&#40;see <code>load</code> and <code>mapvalues</code> for associating values with files.&#41;</p>
 </div>
@@ -278,7 +379,7 @@ dir/
       <h2 class="doc-header" id="compute">
         <a href="#compute">compute</a>
         <div class="doc-type">method</div></h2>
-      <div class="doc-content"><pre><code class="julia hljs">compute(tree::FileTree; cache=<span class="hljs-literal">true</span>)</code></pre>
+      <div class="doc-content"><pre><code class="language-julia">compute(tree::FileTree; cache=true)</code></pre>
 <p>Compute any lazy values &#40;Thunks&#41; in <code>tree</code> and return a new tree where the values refer to the computed values &#40;maybe on remote processes&#41;. The tree still behaves as a Lazy tree. <code>exec</code> on it will fetch the values from remote processes.</p>
 </div>
   </div>
@@ -287,7 +388,7 @@ dir/
       <h2 class="doc-header" id="exec">
         <a href="#exec">exec</a>
         <div class="doc-type">function</div></h2>
-      <div class="doc-content"><pre><code class="julia hljs">exec(x)</code></pre>
+      <div class="doc-content"><pre><code class="language-julia">exec(x)</code></pre>
 <p>If <code>x</code> is a FileTree, computes any uncomputed <code>Thunk</code>s stored as values in it. Returns a new tree with the computed values. If <code>x</code> is a <code>Thunk</code> &#40;such as the result of a <code>reducevalues</code>&#41;, then exec will compute the result. If <code>x</code> is anything else, <code>exec</code> just returns the same value.</p>
 </div>
   </div>
@@ -311,8 +412,8 @@ dir/
         }
     </script>
     
-        
-
+        <script src="/FileTrees.jl/libs/highlight/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();hljs.configure({tabReplace: '    '});</script>
 
     
   </body>

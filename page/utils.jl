@@ -14,8 +14,8 @@ function hfun_doc(params)
     body = Franklin.fd2html(txt, internal=true)
     return """
       <div class="docstring">
-          <h2 class="doc-header" id="$fname">
-            <a href="#$fname">$head</a>
+          <h2 class="doc-header" id="$head">
+            <a href="#$head">$head</a>
             <div class="doc-type">$type</div></h2>
           <div class="doc-content">$body</div>
       </div>

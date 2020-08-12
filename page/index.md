@@ -1,29 +1,20 @@
 ~~~
 <h1>FileTrees.jl &mdash; overview</h1>
-<p style="font-size: 1.15em; color: #666; line-height:1.5em">
-FileTrees is a set of tools to lazy-load, process and write file trees. Built-in parallelism allows you to max out compute on any machine.
-</p>
 ~~~
 
-Tree operations let you freely restructure file trees in memory so as to be convenient to set up computations. Files in a file tree can have any value attached to them (not necessarily those loaded from the file itself), you can map and reduce over these values, or combine them by merging or collapsing trees or subtrees.
+\blurb{
+FileTrees is a set of tools to lazy-load, process and write file trees.
+Built-in parallelism allows you to max out compute on any machine.}
 
-**On this website**
+Files and subtrees in a file tree can have any [value attached to them](/values/), you can map and reduce over these values, or combine them by merging or collapsing trees or subtrees. If used with laziness these values are held in distributed memory and operated on in parallel.
 
-~~~
-<ul>
-<li><a href="create-trees/">Creating file trees</a></li>
-<li><a href="values/">Values in file trees: file loading etc.</a></li>
-<li><a href="patterns/">Pattern matching on paths</a></li>
-<li><a href="tree-manipulation/">Manipulating file trees</a></li>
-<li><a href="lazy-parallel/">Lazy values and parallelism</a></li>
-<li><a href="api/">API documentation</a></li>
-</ul>
-~~~
+Tree operations such as [`map`, `filter`](/api/#map/filter), [`mv`](/api/#mv), [`merge`](/api/#merge), [`diff`](/api/#merge) return new trees. They are fast and return immutable trees. Nothing is written to disk until [`save`](/api/#save) is called to save a tree.
 
+**Getting started**
 
-**In this article**
+In this article we will see how to load a directory of CSV files and combine them into a single file. This should help you get started!
 
-We will look at a brief walk through of some of the most important functionality in this article using an example dataset.
+You can navigate to `page/` folder under the FileTrees package directory to try this out for yourself with the sample data there. Or you can try it with your own directory of data files!
 
 \toc
 
@@ -31,7 +22,7 @@ We will look at a brief walk through of some of the most important functionality
 
 The basic datastructure in FileTrees is the [`FileTree`](api/#FileTree).
 
-Calling `FileTree` with a directory name will walk the directory on disk and construct a `FileTree`.
+Calling `FileTree` with a directory name will walk the directory on disk and construct a `FileTree`. Here we have a tiny sampling of data from the [NYC Taxi dataset](https://www1.nyc.gov/site/tlc/about/tlc-trip-record-data.page), for January and February of 2019 and 2020. Let's read the FileTree from this directory:
 
 ```julia:dir1
 using FileTrees
@@ -39,8 +30,7 @@ using FileTrees
 taxi_dir = FileTree("taxi-data")
 ```
 
-The files in the directory can be loaded using the [`load`](api/#load) function.
-Here we will use CSV and DataFrames to load the csv files.
+The files in the directory can be loaded using the [`load`](api/#load) function. Here we will use CSV and DataFrames to load the csv files.
 
 ```julia:dir1
 
@@ -51,7 +41,7 @@ dfs = FileTrees.load(taxi_dir) do file
 end
 ```
 
-A summary of the value loaded into each file is shown in parentheses. The `file` argument passed to the load callback is a `File` object. It supports the [`name`](api/#name), [`path`](api/#path) and [`parent`](api/#parent) functions.
+A summary of the value loaded into each file is shown in parentheses. The `file` argument passed to the load callback is a `File` object. It supports the [`name`](api/#name), [`path`](api/#path) function among others `path` returns an [`AbstractPath`](https://rofinn.github.io/FilePathsBase.jl/stable/api/#FilePathsBase.AbstractPath).
 
 `load` returns a new `FileTree` which has the same structure as before, but contains the loaded data in each `File` node.
 
@@ -67,6 +57,8 @@ end
 
 As you can see the nodes have the value of type `Dagger.Thunk` -- this represents a lazy task that can later be executed using the [`exec`](api/#exec) function. You can continue to use most of the functions in this package without worrying about whether the input tree has lazy values or not. You will get the corresponding lazy outputs wherever the input trees had lazy values. Lazy values also encode dependency between them, hence making it possible for `exec` to compute them in parallel.
 
+
+See [this article](/values/) to learn more about how to work with values.
 To know more details about the usage of laziness and parallelism, go to [this article](lazy-parallel/).
 
 # Looking files up
@@ -186,5 +178,7 @@ FileTree("yellow")
 rm("yellow", recursive=true) # hide
 ```
 
-
 Happy Hacking!
+
+
+Next: **More on [values in trees &rarr;](/values/)**

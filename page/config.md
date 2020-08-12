@@ -140,3 +140,5 @@ commands that are defined and used in PkgPage.jl
 
 \newcommand{\center}[1]{~~~<div style="text-align:center;">~~~#1~~~</div>~~~}
 \newcommand{\out}[1]{@@code-output \show{#1} @@}
+
+\newcommand{\blurb}[1]{~~~<p style="font-size: 1.15em; color: #333; line-height:1.5em">~~~#1~~~</p>~~~}

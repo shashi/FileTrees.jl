@@ -68,18 +68,3 @@ It is also necessary to keep in mind what amount of memory a call to `exec` will
 # Caching
 
 The `compute` function is different from the `exec` function in that, it will compute the results of the tasks in the tree and leave the data on remote processes rather than fetch it to the master process. Calling `compute` on a tree will also cause any subsequent requests to compute the same tasks to be served from a cache memory rather than recomputed.
-
-
-# Advanced tree manipulation: subtrees
-
-[`mapsubtrees`](api/#mapsubtrees) is a powerful function since it allows you to recursively apply tree operations on subtrees of a tree.
-
-This allows a lot of great functionality. Here is a brief list,
-
-- flatten a tree to be only 2 levels:
-    `mapsubtrees(flatten, glob"*/*")`
-- collapse the directories at level 3:
-    `mapsubtrees(x->clip(x, 1), glob"*/*")`
-- reduce 2nd level directories with hcat, but 1st level with `vcat`:
-    `reducevalues(vcat, mapsubtrees(x->reducevalues(hcat, x), glob"*"))`
-  Note that this will work on lazy trees by creating lazy nodes as well.

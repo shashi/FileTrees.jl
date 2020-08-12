@@ -20,6 +20,7 @@ In the table
 | `cp(t, r::T, s)` \\ `mv(t, r::T, s)`                | ❌        | ❌                       | move each match to `replace(path(<match>), r => s)`  [^3]        [^4]             |
 | `mapmatches(f,t,p::T)`                   | applies `f` to `t[p]` | apply `f` to every match | apply `f` to every match  |
 | `mkpath(t,p::T;value)` \\ `touch(t,p::T;value)` | Create a single node at p | ❌                       | ❌                    |
+| `mapsubtrees(t,p::T)` | ❌ | For every path in tree (could be non-leaf) which matches `p` fully, apply `f` | ❌                    |
 
 [^1]: the parent of this node is still set to its original parent in `t`. Hence `path(t[p])` will give its full path. But you can do `setparent(t[p], nothing)` to detach it from the original tree.
 [^2]: the subtree always has the same root as `t`

@@ -82,6 +82,9 @@
 <p>Files and subtrees in a file tree can have any <a href="/FileTrees.jl/values/">value attached to them</a>, you can map and reduce over these values, or combine them by merging or collapsing trees or subtrees. When computing <a href="/FileTrees.jl/lazy-parallel/">lazy</a> trees, these values are held in distributed memory and operated on in parallel.</p>
 <p>Tree operations such as <a href="/FileTrees.jl/api/#map/filter"><code>map</code>, <code>filter</code></a>, <a href="/FileTrees.jl/api/#mv"><code>mv</code></a>, <a href="/FileTrees.jl/api/#merge"><code>merge</code></a>, <a href="/FileTrees.jl/api/#merge"><code>diff</code></a> are immutable. Nothing is written to disk until <a href="/FileTrees.jl/api/#save"><code>save</code></a> is called to save a tree, hence tree restructuring is cheap and fast.</p>
 <p><strong>Getting started</strong></p>
+<p>You can install FileTrees with:</p>
+<pre><code class="julia hljs"><span class="hljs-keyword">using</span> Pkg
+Pkg.add(<span class="hljs-string">&quot;https://github.com/shashi/FileTrees.jl&quot;</span>)</code></pre>
 <p>In this article we will see how to load a directory of files, do something to them, and then combine the results. This should help you get started&#33;</p>
 <p>You can navigate to <code>page/</code> folder under the FileTrees package directory to try this out for yourself with the sample data there. Or you can try it with your own directory of data files&#33;</p>
 <div class="franklin-toc"><ol><li><a href="#loading_directories">Loading directories</a></li><li><a href="#looking_files_up">Looking files up</a></li><li><a href="#combining_loaded_data">Combining loaded data</a></li><li><a href="#saving_to_a_directory">Saving to a directory</a></li></ol></div>

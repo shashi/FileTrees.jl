@@ -8,6 +8,8 @@
 
 {{doc name name function}}
 
+{{doc path path function}}
+
 {{doc parent(::FileTree) parent function}}
 
 {{doc getindex(::Union{FileTree,File}) node[] method}}

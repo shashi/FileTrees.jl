@@ -277,6 +277,12 @@ maketree(node::Vector) = maketree("."=>node)
 
 Base.basename(d::Node) = Path(d.name)
 
+"""
+    path(file::Union{File, FileTree)
+
+Returns an [`AbstractPath`](https://rofinn.github.io/FilePathsBase.jl/stable/design/#Path-Types-1) object which is the path of the file from the
+root node leading up to this file.
+"""
 function path(d::Node)
     parent(d) === nothing && return Path(d.name)
     path(parent(d)) / Path(d.name)

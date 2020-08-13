@@ -2,9 +2,15 @@
 
 [![Build Status](https://travis-ci.org/shashi/FileTrees.jl.svg?branch=master)](https://travis-ci.org/shashi/FileTrees.jl) [![Build status](https://ci.appveyor.com/api/projects/status/6sei8e7et721usx6?svg=true)](https://ci.appveyor.com/project/shashi/filetrees-jl)
  [![Coverage Status](https://coveralls.io/repos/github/shashi/FileTrees.jl/badge.svg?branch=master)](https://coveralls.io/github/shashi/FileTrees.jl?branch=master)
-
+ 
 Easy everyday parallelism with a file tree abstraction.
 
+## Installation
+
+```julia
+using Pkg
+Pkg.add("https://github.com/shashi/FileTrees.jl")
+```
 
 ## With FileTrees you can
 

@@ -1,4 +1,4 @@
-# FileTrees
+# <a href="http://shashi.biz/FileTrees.jl">FileTrees</a>
 
 [![Build Status](https://travis-ci.org/shashi/FileTrees.jl.svg?branch=master)](https://travis-ci.org/shashi/FileTrees.jl) [![Build status](https://ci.appveyor.com/api/projects/status/6sei8e7et721usx6?svg=true)](https://ci.appveyor.com/project/shashi/filetrees-jl)
  [![Coverage Status](https://coveralls.io/repos/github/shashi/FileTrees.jl/badge.svg?branch=master)](https://coveralls.io/github/shashi/FileTrees.jl?branch=master)
@@ -13,6 +13,7 @@ Easy everyday parallelism with a file tree abstraction.
 - Make up a file tree in memory, create some data to go with each file (in parallel), write the tree to disk (in parallel). (See example below)
 - Virtually `mv` and `cp` files within trees, merge and diff trees, apply different functions to different subtrees. ([docs](http://shashi.biz/FileTrees.jl/tree-manipulation/))
 
+[Go to the documentation &rarr;](http://shashi.biz/FileTrees.jl)
 
 ## Example
 
@@ -33,10 +34,10 @@ end
 
 # map over the values to create an image at each node.
 # 300x300 tile per image.
-t1 = FileTrees.mapvalues(tree) do params
+t1 = FileTrees.mapvalues(tree, lazy=true) do params
     mandelbrot(50, params..., 300) # zoom level, moveX, moveY, size
 end
-
+ 
 # save it
 @time FileTrees.save(t1) do file
     FileIO.save(path(file), file.value)

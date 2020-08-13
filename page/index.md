@@ -12,6 +12,13 @@ Tree operations such as [`map`, `filter`](/api/#map/filter), [`mv`](/api/#mv), [
 
 **Getting started**
 
+You can install FileTrees with:
+
+```julia
+using Pkg
+Pkg.add("https://github.com/shashi/FileTrees.jl")
+```
+
 In this article we will see how to load a directory of files, do something to them, and then combine the results. This should help you get started!
 
 You can navigate to `page/` folder under the FileTrees package directory to try this out for yourself with the sample data there. Or you can try it with your own directory of data files!

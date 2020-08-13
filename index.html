@@ -130,9 +130,9 @@ dfs = FileTrees.load(taxi_dir) <span class="hljs-keyword">do</span> file
       ├─ green.csv (9×20 DataFrame)
       └─ yellow.csv (9×18 DataFrame)
 </code></pre>
-<p>A summary of the value loaded into each file is shown in parentheses. The <code>file</code> argument passed to the load callback is a <code>File</code> object. It supports the <a href="api/#name"><code>name</code></a>, <a href="api/#path"><code>path</code></a> function among others <code>path</code> returns an <a href="https://rofinn.github.io/FilePathsBase.jl/stable/api/#FilePathsBase.AbstractPath"><code>AbstractPath</code></a>.</p>
+<p>A summary of the value loaded into each file is shown in parentheses. The <code>file</code> argument passed to the load callback is a <code>File</code> object. It supports the <a href="api/#name"><code>name</code></a>, <a href="api/#path"><code>path</code></a> function among others. <code>path</code> returns an <a href="https://rofinn.github.io/FilePathsBase.jl/stable/api/#FilePathsBase.AbstractPath"><code>AbstractPath</code></a> which refers to the file&#39;s location.</p>
 <p><code>load</code> returns a new <code>FileTree</code> which has the same structure as before, but contains the loaded data in each <code>File</code> node.</p>
-<p>Here <code>load</code> actually read the files eagerly. This may not be feasible if the files contain data that is too big to fit in memory.</p>
+<p>Here <code>load</code> actually read the files eagerly. This may not be desirable if the data to be loaded are too big to fit in memory, or you don&#39;t intend to use all of it, but only a subtree of it.</p>
 <p>In such a case, you can load the files lazily using <code>lazy&#61;true</code></p>
 <pre><code class="julia hljs">lazy_dfs = FileTrees.load(taxi_dir; lazy=<span class="hljs-literal">true</span>) <span class="hljs-keyword">do</span> file
     DataFrame(CSV.File(path(file)))
@@ -152,7 +152,7 @@ dfs = FileTrees.load(taxi_dir) <span class="hljs-keyword">do</span> file
       ├─ green.csv (Thunk(#3, (File(taxi-data/2020/02/green.csv),)))
       └─ yellow.csv (Thunk(#3, (File(taxi-data/2020/02/yellow.csv),)))
 </code></pre>
-<p>As you can see the nodes have the value of type <code>Dagger.Thunk</code> – this represents a lazy task that can later be executed using the <a href="api/#exec"><code>exec</code></a> function. You can continue to use most of the functions in this package without worrying about whether the input tree has lazy values or not. You will get the corresponding lazy outputs wherever the input trees had lazy values. Lazy values also encode dependency between them, hence making it possible for <code>exec</code> to compute them in parallel.</p>
+<p>As you can see the nodes have <code>Thunk</code> objects – this represents a lazy task that can later be executed using the <a href="api/#exec"><code>exec</code></a> function. You can continue to use most of the functions in this package without worrying about whether the input tree has lazy values or not. You will get the corresponding lazy outputs wherever the input trees had lazy values. Lazy values also encode dependency between them, hence making it possible for <code>exec</code> to compute them in parallel.</p>
 <p>See <a href="/FileTrees.jl/values/">this article</a> to learn more about how to work with values. To know more details about the usage of laziness and parallelism, go to <a href="lazy-parallel/">this article</a>.</p>
 <h1 id="looking_files_up"><a href="#looking_files_up">Looking files up</a></h1>
 <p>Let&#39;s look at one of these DataFrames by indexing into the tree with the path to a file, namely <code>&quot;2020/01/yellow.csv&quot;</code>.</p>

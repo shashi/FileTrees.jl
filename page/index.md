@@ -48,11 +48,11 @@ dfs = FileTrees.load(taxi_dir) do file
 end
 ```
 
-A summary of the value loaded into each file is shown in parentheses. The `file` argument passed to the load callback is a `File` object. It supports the [`name`](api/#name), [`path`](api/#path) function among others `path` returns an [`AbstractPath`](https://rofinn.github.io/FilePathsBase.jl/stable/api/#FilePathsBase.AbstractPath).
+A summary of the value loaded into each file is shown in parentheses. The `file` argument passed to the load callback is a `File` object. It supports the [`name`](api/#name), [`path`](api/#path) function among others. `path` returns an [`AbstractPath`](https://rofinn.github.io/FilePathsBase.jl/stable/api/#FilePathsBase.AbstractPath) which refers to the file's location.
 
 `load` returns a new `FileTree` which has the same structure as before, but contains the loaded data in each `File` node.
 
-Here `load` actually read the files eagerly. This may not be feasible if the files contain data that is too big to fit in memory.
+Here `load` actually read the files eagerly. This may not be desirable if the data to be loaded are too big to fit in memory, or you don't intend to use all of it, but only a subtree of it.
 
 In such a case, you can load the files lazily using `lazy=true`
 
@@ -62,7 +62,7 @@ lazy_dfs = FileTrees.load(taxi_dir; lazy=true) do file
 end
 ```
 
-As you can see the nodes have the value of type `Dagger.Thunk` -- this represents a lazy task that can later be executed using the [`exec`](api/#exec) function. You can continue to use most of the functions in this package without worrying about whether the input tree has lazy values or not. You will get the corresponding lazy outputs wherever the input trees had lazy values. Lazy values also encode dependency between them, hence making it possible for `exec` to compute them in parallel.
+As you can see the nodes have `Thunk` objects -- this represents a lazy task that can later be executed using the [`exec`](api/#exec) function. You can continue to use most of the functions in this package without worrying about whether the input tree has lazy values or not. You will get the corresponding lazy outputs wherever the input trees had lazy values. Lazy values also encode dependency between them, hence making it possible for `exec` to compute them in parallel.
 
 
 See [this article](/values/) to learn more about how to work with values.

@@ -330,7 +330,7 @@ walk can be either `FileTrees.postwalk` or `FileTrees.postwalk`.
 """
 function Base.map(f, tree::FileTree; walk=postwalk, dirs=true)
     walk(tree, collect_children=identity) do n
-        (dirs || x isa File) ? f(n) : n
+        (dirs || n isa File) ? f(n) : n
     end
 end
 

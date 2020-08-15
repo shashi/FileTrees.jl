@@ -65,7 +65,7 @@ using Distributed
 t = FileTree("mandel")
 
 # Lazy-load each image and compute its histogram
-t1 = FileTree.load(t; lazy=true) do f
+t1 = FileTrees.load(t; lazy=true) do f
     h = Hist(0:0.05:1)
     img = FileIO.load(path(f))
     println("pid, ", myid(), "threadid ", threadid(), ": ", path(f))

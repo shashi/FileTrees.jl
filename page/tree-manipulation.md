@@ -115,7 +115,7 @@ end
 Step 2: reduce intermediate results
 
 ```julia:dir1
-reducevalues(hcat, vcated)
+reducevalues(hcat, vcated, dirs=true)
 ```
 
 This can also be done lazily!
@@ -127,7 +127,7 @@ end
 ```
 
 ```julia:dir1
-final = reducevalues(hcat, vcated)
+final = reducevalues(hcat, vcated, dirs=true)
 ```
 
 ```julia:dir1

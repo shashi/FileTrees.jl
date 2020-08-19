@@ -12,7 +12,15 @@
 
 {{doc parent(::FileTree) parent function}}
 
-{{doc get(::Union{FileTree,File}) get method}}
+{{doc get_doc get method}}
+
+{{doc values_doc values method}}
+
+{{doc nodes nodes method}}
+
+{{doc files(::FileTree) files function}}
+
+{{doc dirs(::FileTree) dirs function}}
 
 {{doc rename rename function}}
 

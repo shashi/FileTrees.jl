@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+   <link rel="stylesheet" href="/FileTrees.jl/libs/highlight/github.min.css">
+   
+  <link rel="stylesheet" href="/FileTrees.jl/css/franklin.css">
+<link rel="stylesheet" href="/FileTrees.jl/css/poole_hyde.css">
+<link rel="stylesheet" href="/FileTrees.jl/css/custom.css">
+<!-- style adjustments -->
+<style>
+  html {font-size: 17px;}
+  .franklin-content {position: relative; padding-left: 8%; padding-right: 5%; line-height: 1.35em;}
+  @media (min-width: 940px) {
+    .franklin-content {width: 100%; margin-left: auto; margin-right: auto;}
+  }
+  @media (max-width: 768px) {
+    .franklin-content {padding-left: 6%; padding-right: 6%;}
+  }
+</style>
+<link rel="icon" href="/FileTrees.jl/assets/favicon.png">
+
+   <title>FileTrees.jl</title>  
+</head>
+<body>
+<div class="sidebar">
+  <div class="container sidebar-sticky">
+    <div class="sidebar-about">
+      <h1 style="font-size:2em"><a href="/FileTrees.jl/">FileTrees<span style="opacity:0.4">.jl</span></a></h1>
+      <p class="lead" style="font-size: 0.86em">Easy everyday parallelism with a file tree abstraction</p>
+    </div>
+    <style>
+@media (min-width: 768px) {
+    .sidebar-nav {
+    }
+}
+    .sidebar .container.sidebar-sticky {
+        top: 2rem;
+    }
+    .sidebar-nav .sidebar-nav-item.active {
+        box-sizing: border-box;
+        border-bottom: 1px #f1f1f1 solid;
+        margin-right: -1em;
+        margin-left: -0.5em;
+        padding-left: 0.5em;
+        color: white;
+        font-weight: normal !important;
+    }
+    .sidebar-nav .sidebar-nav-item {
+        color: #cccccc;
+        margin: 0.25em 0;
+    }
+    </style>
+    <nav class="sidebar-nav" style="opacity: 0.9">
+      <a class="sidebar-nav-item " href="/FileTrees.jl/">Getting started</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/values/">Values in file trees</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/tree-manipulation/">Manipulating file trees</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/lazy-parallel/">Laziness and parallelism</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/api/">API documentation</a>
+      <small>EXTRAS</small>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/metadata/">Working with metadata</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/patterns/">Pattern matching</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/create-trees/">Creating file trees from scratch</a>
+      <a class="sidebar-nav-item active" href="/FileTrees.jl/split-files/">Splitting files</a>
+      <a class="sidebar-nav-item " href="/FileTrees.jl/images/">Example: Images</a>
+    </nav>
+
+  </div>
+  <div style="font-size: 0.85em; bottom: 3em; position: fixed">
+      <a href="https://github.com/shashi/FileTrees.jl">Go to GitHub repository &rarr;</a> <br>  <br>
+
+      <a href="https://julialang.org/"><img src="https://raw.githubusercontent.com/JuliaLang/julia-logo-graphics/master/images/julia-logo-dark.svg" height="32" style="display: inline-block; margin-bottom: -8px; opacity: 0.7">
+          powered.</a>
+  </div>
+</div>
+<div class="content container">
+
+<!-- Content appended here -->
+<div class="franklin-content"><h1 id="splitting_a_file_into_many_files"><a href="#splitting_a_file_into_many_files">Splitting a file into many files</a></h1>
+<p>You can &quot;splat&quot; multiple files into a tree by returning <code>maketree&#40;&quot;.&quot; &#61;&gt; fs&#41;</code>. This will place the files <code>fs</code> in the same directory as the file it replaces.</p>
+<p>In <code>map</code> or <code>mapsubtrees</code> you can use <code>maketree&#40;&quot;.&quot; &#61;&gt; fs&#41;</code> where <code>fs</code> is a vector to &quot;splat&quot; files into multiple files.</p>
+<p>A convenience function will come in handy:</p>
+<pre><code class="julia hljs">splatfiles(fs) = maketree(<span class="hljs-string">&quot;.&quot;</span> =&gt; fs)</code></pre><pre><code class="plaintext hljs">splatfiles (generic function with 1 method)</code></pre>
+<pre><code class="julia hljs"><span class="hljs-keyword">using</span> FileTrees
+<span class="hljs-keyword">using</span> DataFrames, CSV
+
+taxi_dir = FileTree(<span class="hljs-string">&quot;taxi-data&quot;</span>)
+
+dfs = FileTrees.load(taxi_dir) <span class="hljs-keyword">do</span> file
+    DataFrame(CSV.File(path(file)))
+<span class="hljs-keyword">end</span></code></pre><pre><code class="plaintext hljs">taxi-data/
+├─ 2019/
+│  ├─ 01/
+│  │  ├─ green.csv (9×20 DataFrame)
+│  │  └─ yellow.csv (9×18 DataFrame)
+│  └─ 02/
+│     ├─ green.csv (9×20 DataFrame)
+│     └─ yellow.csv (9×18 DataFrame)
+└─ 2020/
+   ├─ 01/
+   │  ├─ green.csv (9×20 DataFrame)
+   │  └─ yellow.csv (9×18 DataFrame)
+   └─ 02/
+      ├─ green.csv (9×20 DataFrame)
+      └─ yellow.csv (9×18 DataFrame)
+</code></pre>
+<p>Split up each yellow file into multiple files:</p>
+<pre><code class="julia hljs">yellowdfs = dfs[<span class="hljs-string">r&quot;yellow.csv$&quot;</span>]
+
+expanded_tree = mapsubtrees(yellowdfs, <span class="hljs-string">glob&quot;*/*/yellow.csv&quot;</span>) <span class="hljs-keyword">do</span> df
+    map(groupby(get(df), :RatecodeID) |&gt; collect) <span class="hljs-keyword">do</span> group
+        (name=string(<span class="hljs-string">&quot;yellow-ratecode-&quot;</span>, group.RatecodeID[<span class="hljs-number">1</span>], <span class="hljs-string">&quot;.df&quot;</span>), value=DataFrame(group))
+    <span class="hljs-keyword">end</span> |&gt; splatfiles
+<span class="hljs-keyword">end</span></code></pre><pre><code class="plaintext hljs">taxi-data/
+├─ 2019/
+│  ├─ 01/
+│  │  ├─ yellow-ratecode-1.df (7×18 DataFrame)
+│  │  └─ yellow-ratecode-2.df (2×18 DataFrame)
+│  └─ 02/
+│     └─ yellow-ratecode-1.df (9×18 DataFrame)
+└─ 2020/
+   ├─ 01/
+   │  ├─ yellow-ratecode-1.df (8×18 DataFrame)
+   │  └─ yellow-ratecode-5.df (1×18 DataFrame)
+   └─ 02/
+      └─ yellow-ratecode-1.df (9×18 DataFrame)
+</code></pre>
+<p>You can save these files if you wish.</p>
+<h2 id="how_to_create_lazy_subtrees"><a href="#how_to_create_lazy_subtrees">How to create lazy subtrees?</a></h2>
+<p>If the <code>value</code> field of a file passed to <code>splatfiles</code> is a <code>Thunk</code>, then it becomes a lazy value.</p>
+<p>A thunk can be created with the syntax <code>lazy&#40;f&#41;&#40;x...&#41;</code>. where the result is a <code>Thunk</code> which represents the result of executing <code>f&#40;x...&#41;</code>.</p>
+<pre><code class="julia hljs">yellowdfs = dfs[<span class="hljs-string">r&quot;yellow.csv$&quot;</span>]
+
+expanded_tree = mapsubtrees(yellowdfs, <span class="hljs-string">glob&quot;*/*/yellow.csv&quot;</span>) <span class="hljs-keyword">do</span> df
+    map(groupby(get(df), :payment_type) |&gt; collect) <span class="hljs-keyword">do</span> group
+        id = group.payment_type[<span class="hljs-number">1</span>]
+        (name=string(<span class="hljs-string">&quot;yellow-ptype-&quot;</span>, group.payment_type[<span class="hljs-number">1</span>], <span class="hljs-string">&quot;.df&quot;</span>), value=lazy(repr)(group))
+    <span class="hljs-keyword">end</span> |&gt; splatfiles
+<span class="hljs-keyword">end</span></code></pre><pre><code class="plaintext hljs">taxi-data/
+├─ 2019/
+│  ├─ 01/
+│  │  ├─ yellow-ptype-1.df (Thunk(repr, (5×18 SubDataFrame
+│  │  │  │ Row │ VendorID │ tpep_pickup_datetime │ tpep_dropoff_datetime │ passenger_count │ trip_distance │ RatecodeID │ store_and_fwd_flag │ PULocationID │ DOLocationID │ payment_type │ fare_amount │ extra   │ mta_tax │ tip_amount │ tolls_amount │ improvement_surcharge │ total_amount │ congestion_surcharge │
+│  │  │  │     │ Int64    │ String               │ String                │ Int64           │ Float64       │ Int64      │ String             │ Int64        │ Int64        │ Int64        │ Float64     │ Float64 │ Float64 │ Float64    │ Float64      │ Float64               │ Float64      │ Missing              │
+│  │  │  ├─────┼──────────┼──────────────────────┼───────────────────────┼─────────────────┼───────────────┼────────────┼────────────────────┼──────────────┼──────────────┼──────────────┼─────────────┼─────────┼─────────┼────────────┼──────────────┼───────────────────────┼──────────────┼──────────────────────┤
+│  │  │  │ 1   │ 1        │ 2019-01-01 00:46:40  │ 2019-01-01 00:53:20   │ 1               │ 1.5           │ 1          │ N                  │ 151          │ 239          │ 1            │ 7.0         │ 0.5     │ 0.5     │ 1.65       │ 0.0          │ 0.3                   │ 9.95         │ missing              │
+│  │  │  │ 2   │ 1        │ 2019-01-01 00:59:47  │ 2019-01-01 01:18:59   │ 1               │ 2.6           │ 1          │ N                  │ 239          │ 246          │ 1            │ 14.0        │ 0.5     │ 0.5     │ 1.0        │ 0.0          │ 0.3                   │ 16.3         │ missing              │
+│  │  │  │ 3   │ 2        │ 2018-12-21 13:48:30  │ 2018-12-21 13:52:40   │ 3               │ 0.0           │ 1          │ N                  │ 236          │ 236          │ 1            │ 4.5         │ 0.5     │ 0.5     │ 0.0        │ 0.0          │ 0.3                   │ 5.8          │ missing              │
+│  │  │  │ 4   │ 1        │ 2019-01-01 00:21:28  │ 2019-01-01 00:28:37   │ 1               │ 1.3           │ 1          │ N                  │ 163          │ 229          │ 1            │ 6.5         │ 0.5     │ 0.5     │ 1.25       │ 0.0          │ 0.3                   │ 9.05         │ missing              │
+│  │  │  │ 5   │ 1        │ 2019-01-01 00:32:01  │ 2019-01-01 00:45:39   │ 1               │ 3.7           │ 1          │ N                  │ 229          │ 7            │ 1            │ 13.5        │ 0.5     │ 0.5     │ 3.7        │ 0.0          │ 0.3                   │ 18.5         │ missing              │,)))
+│  │  └─ yellow-ptype-2.df (Thunk(repr, (4×18 SubDataFrame
+│  │     │ Row │ VendorID │ tpep_pickup_datetime │ tpep_dropoff_datetime │ passenger_count │ trip_distance │ RatecodeID │ store_and_fwd_flag │ PULocationID │ DOLocationID │ payment_type │ fare_amount │ extra   │ mta_tax │ tip_amount │ tolls_amount │ improvement_surcharge │ total_amount │ congestion_surcharge │
+│  │     │     │ Int64    │ String               │ String                │ Int64           │ Float64       │ Int64      │ String             │ Int64        │ Int64        │ Int64        │ Float64     │ Float64 │ Float64 │ Float64    │ Float64      │ Float64               │ Float64      │ Missing              │
+│  │     ├─────┼──────────┼──────────────────────┼───────────────────────┼─────────────────┼───────────────┼────────────┼────────────────────┼──────────────┼──────────────┼──────────────┼─────────────┼─────────┼─────────┼────────────┼──────────────┼───────────────────────┼──────────────┼──────────────────────┤
+│  │     │ 1   │ 2        │ 2018-11-28 15:52:25  │ 2018-11-28 15:55:45   │ 5               │ 0.0           │ 1          │ N                  │ 193          │ 193          │ 2            │ 3.5         │ 0.5     │ 0.5     │ 0.0        │ 0.0          │ 0.3                   │ 7.55         │ missing              │
+│  │     │ 2   │ 2        │ 2018-11-28 15:56:57  │ 2018-11-28 15:58:33   │ 5               │ 0.0           │ 2          │ N                  │ 193          │ 193          │ 2            │ 52.0        │ 0.0     │ 0.5     │ 0.0        │ 0.0          │ 0.3                   │ 55.55        │ missing              │
+│  │     │ 3   │ 2        │ 2018-11-28 16:25:49  │ 2018-11-28 16:28:26   │ 5               │ 0.0           │ 1          │ N                  │ 193          │ 193          │ 2            │ 3.5         │ 0.5     │ 0.5     │ 0.0        │ 5.76         │ 0.3                   │ 13.31        │ missing              │
+│  │     │ 4   │ 2        │ 2018-11-28 16:29:37  │ 2018-11-28 16:33:43   │ 5               │ 0.0           │ 2          │ N                  │ 193          │ 193          │ 2            │ 52.0        │ 0.0     │ 0.5     │ 0.0        │ 0.0          │ 0.3                   │ 55.55        │ missing              │,)))
+│  └─ 02/
+│     ├─ yellow-ptype-1.df (Thunk(repr, (1×18 SubDataFrame
+│     │  │ Row │ VendorID │ tpep_pickup_datetime │ tpep_dropoff_datetime │ passenger_count │ trip_distance │ RatecodeID │ store_and_fwd_flag │ PULocationID │ DOLocationID │ payment_type │ fare_amount │ extra   │ mta_tax │ tip_amount │ tolls_amount │ improvement_surcharge │ total_amount │ congestion_surcharge │
+│     │  │     │ Int64    │ String               │ String                │ Int64           │ Float64       │ Int64      │ String             │ Int64        │ Int64        │ Int64        │ Float64     │ Float64 │ Float64 │ Int64      │ Int64        │ Float64               │ Float64      │ Int64                │
+│     │  ├─────┼──────────┼──────────────────────┼───────────────────────┼─────────────────┼───────────────┼────────────┼────────────────────┼──────────────┼──────────────┼──────────────┼─────────────┼─────────┼─────────┼────────────┼──────────────┼───────────────────────┼──────────────┼──────────────────────┤
+│     │  │ 1   │ 1        │ 2019-02-01 00:59:04  │ 2019-02-01 01:07:27   │ 1               │ 2.1           │ 1          │ N                  │ 48           │ 234          │ 1            │ 9.0         │ 0.5     │ 0.5     │ 2          │ 0            │ 0.3                   │ 12.3         │ 0                    │,)))
+│     └─ yellow-ptype-2.df (Thunk(repr, (8×18 SubDataFrame
+│        │ Row │ VendorID │ tpep_pickup_datetime │ tpep_dropoff_datetime │ passenger_count │ trip_distance │ RatecodeID │ store_and_fwd_flag │ PULocationID │ DOLocationID │ payment_type │ fare_amount │ extra   │ mta_tax │ tip_amount │ tolls_amount │ improvement_surcharge │ total_amount │ congestion_surcharge │
+│        │     │ Int64    │ String               │ String                │ Int64           │ Float64       │ Int64      │ String             │ Int64        │ Int64        │ Int64        │ Float64     │ Float64 │ Float64 │ Int64      │ Int64        │ Float64               │ Float64      │ Int64                │
+│        ├─────┼──────────┼──────────────────────┼───────────────────────┼─────────────────┼───────────────┼────────────┼────────────────────┼──────────────┼──────────────┼──────────────┼─────────────┼─────────┼─────────┼────────────┼──────────────┼───────────────────────┼──────────────┼──────────────────────┤
+│        │ 1   │ 1        │ 2019-02-01 00:33:09  │ 2019-02-01 01:03:58   │ 1               │ 9.8           │ 1          │ N                  │ 230          │ 93           │ 2            │ 32.0        │ 0.5     │ 0.5     │ 0          │ 0            │ 0.3                   │ 33.3         │ 0                    │
+│        │ 2   │ 1        │ 2019-02-01 00:09:03  │ 2019-02-01 00:09:16   │ 1               │ 0.0           │ 1          │ N                  │ 145          │ 145          │ 2            │ 2.5         │ 0.5     │ 0.5     │ 0          │ 0            │ 0.3                   │ 3.8          │ 0                    │
+│        │ 3   │ 1        │ 2019-02-01 00:45:38  │ 2019-02-01 00:51:10   │ 1               │ 0.8           │ 1          │ N                  │ 95           │ 95           │ 2            │ 5.5         │ 0.5     │ 0.5     │ 0          │ 0            │ 0.3                   │ 6.8          │ 0                    │
+│        │ 4   │ 1        │ 2019-02-01 00:25:30  │ 2019-02-01 00:28:14   │ 1               │ 0.8           │ 1          │ N                  │ 140          │ 263          │ 2            │ 5.0         │ 0.5     │ 0.5     │ 0          │ 0            │ 0.3                   │ 6.3          │ 0                    │
+│        │ 5   │ 1        │ 2019-02-01 00:38:02  │ 2019-02-01 00:40:57   │ 1               │ 0.8           │ 1          │ N                  │ 229          │ 141          │ 2            │ 4.5         │ 0.5     │ 0.5     │ 0          │ 0            │ 0.3                   │ 5.8          │ 0                    │
+│        │ 6   │ 1        │ 2019-02-01 00:06:49  │ 2019-02-01 00:10:34   │ 1               │ 0.9           │ 1          │ N                  │ 75           │ 41           │ 2            │ 5.0         │ 0.5     │ 0.5     │ 0          │ 0            │ 0.3                   │ 6.3          │ 0                    │
+│        │ 7   │ 1        │ 2019-02-01 00:04:04  │ 2019-02-01 00:24:27   │ 1               │ 2.8           │ 1          │ N                  │ 246          │ 229          │ 2            │ 14.0        │ 0.5     │ 0.5     │ 0          │ 0            │ 0.3                   │ 15.3         │ 0                    │
+│        │ 8   │ 1        │ 2019-02-01 00:28:20  │ 2019-02-01 00:40:31   │ 1               │ 2.1           │ 1          │ N                  │ 79           │ 232          │ 2            │ 10.5        │ 0.5     │ 0.5     │ 0          │ 0            │ 0.3                   │ 11.8         │ 0                    │,)))
+└─ 2020/
+   ├─ 01/
+   │  ├─ yellow-ptype-1.df (Thunk(repr, (7×18 SubDataFrame
+   │  │  │ Row │ VendorID │ tpep_pickup_datetime │ tpep_dropoff_datetime │ passenger_count │ trip_distance │ RatecodeID │ store_and_fwd_flag │ PULocationID │ DOLocationID │ payment_type │ fare_amount │ extra   │ mta_tax │ tip_amount │ tolls_amount │ improvement_surcharge │ total_amount │ congestion_surcharge │
+   │  │  │     │ Int64    │ String               │ String                │ Int64           │ Float64       │ Int64      │ String             │ Int64        │ Int64        │ Int64        │ Float64     │ Float64 │ Float64 │ Float64    │ Int64        │ Float64               │ Float64      │ Float64              │
+   │  │  ├─────┼──────────┼──────────────────────┼───────────────────────┼─────────────────┼───────────────┼────────────┼────────────────────┼──────────────┼──────────────┼──────────────┼─────────────┼─────────┼─────────┼────────────┼──────────────┼───────────────────────┼──────────────┼──────────────────────┤
+   │  │  │ 1   │ 1        │ 2020-01-01 00:28:15  │ 2020-01-01 00:33:03   │ 1               │ 1.2           │ 1          │ N                  │ 238          │ 239          │ 1            │ 6.0         │ 3.0     │ 0.5     │ 1.47       │ 0            │ 0.3                   │ 11.27        │ 2.5                  │
+   │  │  │ 2   │ 1        │ 2020-01-01 00:35:39  │ 2020-01-01 00:43:04   │ 1               │ 1.2           │ 1          │ N                  │ 239          │ 238          │ 1            │ 7.0         │ 3.0     │ 0.5     │ 1.5        │ 0            │ 0.3                   │ 12.3         │ 2.5                  │
+   │  │  │ 3   │ 1        │ 2020-01-01 00:47:41  │ 2020-01-01 00:53:52   │ 1               │ 0.6           │ 1          │ N                  │ 238          │ 238          │ 1            │ 6.0         │ 3.0     │ 0.5     │ 1.0        │ 0            │ 0.3                   │ 10.8         │ 2.5                  │
+   │  │  │ 4   │ 1        │ 2020-01-01 00:55:23  │ 2020-01-01 01:00:14   │ 1               │ 0.8           │ 1          │ N                  │ 238          │ 151          │ 1            │ 5.5         │ 0.5     │ 0.5     │ 1.36       │ 0            │ 0.3                   │ 8.16         │ 0.0                  │
+   │  │  │ 5   │ 2        │ 2020-01-01 00:39:25  │ 2020-01-01 00:39:29   │ 1               │ 0.0           │ 1          │ N                  │ 193          │ 193          │ 1            │ 2.5         │ 0.5     │ 0.5     │ 0.01       │ 0            │ 0.3                   │ 3.81         │ 0.0                  │
+   │  │  │ 6   │ 2        │ 2019-12-18 15:27:49  │ 2019-12-18 15:28:59   │ 1               │ 0.0           │ 5          │ N                  │ 193          │ 193          │ 1            │ 0.01        │ 0.0     │ 0.0     │ 0.0        │ 0            │ 0.3                   │ 2.81         │ 2.5                  │
+   │  │  │ 7   │ 2        │ 2019-12-18 15:30:35  │ 2019-12-18 15:31:35   │ 4               │ 0.0           │ 1          │ N                  │ 193          │ 193          │ 1            │ 2.5         │ 0.5     │ 0.5     │ 0.0        │ 0            │ 0.3                   │ 6.3          │ 2.5                  │,)))
+   │  └─ yellow-ptype-2.df (Thunk(repr, (2×18 SubDataFrame
+   │     │ Row │ VendorID │ tpep_pickup_datetime │ tpep_dropoff_datetime │ passenger_count │ trip_distance │ RatecodeID │ store_and_fwd_flag │ PULocationID │ DOLocationID │ payment_type │ fare_amount │ extra   │ mta_tax │ tip_amount │ tolls_amount │ improvement_surcharge │ total_amount │ congestion_surcharge │
+   │     │     │ Int64    │ String               │ String                │ Int64           │ Float64       │ Int64      │ String             │ Int64        │ Int64        │ Int64        │ Float64     │ Float64 │ Float64 │ Float64    │ Int64        │ Float64               │ Float64      │ Float64              │
+   │     ├─────┼──────────┼──────────────────────┼───────────────────────┼─────────────────┼───────────────┼────────────┼────────────────────┼──────────────┼──────────────┼──────────────┼─────────────┼─────────┼─────────┼────────────┼──────────────┼───────────────────────┼──────────────┼──────────────────────┤
+   │     │ 1   │ 2        │ 2020-01-01 00:01:58  │ 2020-01-01 00:04:16   │ 1               │ 0.0           │ 1          │ N                  │ 193          │ 193          │ 2            │ 3.5         │ 0.5     │ 0.5     │ 0.0        │ 0            │ 0.3                   │ 4.8          │ 0.0                  │
+   │     │ 2   │ 2        │ 2020-01-01 00:09:44  │ 2020-01-01 00:10:37   │ 1               │ 0.03          │ 1          │ N                  │ 7            │ 193          │ 2            │ 2.5         │ 0.5     │ 0.5     │ 0.0        │ 0            │ 0.3                   │ 3.8          │ 0.0                  │,)))
+   └─ 02/
+      ├─ yellow-ptype-1.df (Thunk(repr, (7×18 SubDataFrame
+      │  │ Row │ VendorID │ tpep_pickup_datetime │ tpep_dropoff_datetime │ passenger_count │ trip_distance │ RatecodeID │ store_and_fwd_flag │ PULocationID │ DOLocationID │ payment_type │ fare_amount │ extra   │ mta_tax │ tip_amount │ tolls_amount │ improvement_surcharge │ total_amount │ congestion_surcharge │
+      │  │     │ Int64    │ String               │ String                │ Int64           │ Float64       │ Int64      │ String             │ Int64        │ Int64        │ Int64        │ Float64     │ Float64 │ Float64 │ Float64    │ Int64        │ Float64               │ Float64      │ Float64              │
+      │  ├─────┼──────────┼──────────────────────┼───────────────────────┼─────────────────┼───────────────┼────────────┼────────────────────┼──────────────┼──────────────┼──────────────┼─────────────┼─────────┼─────────┼────────────┼──────────────┼───────────────────────┼──────────────┼──────────────────────┤
+      │  │ 1   │ 1        │ 2020-02-01 00:17:35  │ 2020-02-01 00:30:32   │ 1               │ 2.6           │ 1          │ N                  │ 145          │ 7            │ 1            │ 11.0        │ 0.5     │ 0.5     │ 2.45       │ 0            │ 0.3                   │ 14.75        │ 0.0                  │
+      │  │ 2   │ 1        │ 2020-02-01 00:32:47  │ 2020-02-01 01:05:36   │ 1               │ 4.8           │ 1          │ N                  │ 45           │ 61           │ 1            │ 21.5        │ 3.0     │ 0.5     │ 6.3        │ 0            │ 0.3                   │ 31.6         │ 2.5                  │
+      │  │ 3   │ 1        │ 2020-02-01 00:31:44  │ 2020-02-01 00:43:28   │ 1               │ 3.2           │ 1          │ N                  │ 186          │ 140          │ 1            │ 11.0        │ 3.0     │ 0.5     │ 1.0        │ 0            │ 0.3                   │ 15.8         │ 2.5                  │
+      │  │ 4   │ 2        │ 2020-02-01 00:07:35  │ 2020-02-01 00:31:39   │ 1               │ 4.38          │ 1          │ N                  │ 144          │ 140          │ 1            │ 18.0        │ 0.5     │ 0.5     │ 3.0        │ 0            │ 0.3                   │ 24.8         │ 2.5                  │
+      │  │ 5   │ 1        │ 2020-02-01 00:15:49  │ 2020-02-01 00:20:48   │ 2               │ 1.0           │ 1          │ N                  │ 249          │ 107          │ 1            │ 5.5         │ 3.0     │ 0.5     │ 1.85       │ 0            │ 0.3                   │ 11.15        │ 2.5                  │
+      │  │ 6   │ 1        │ 2020-02-01 00:25:31  │ 2020-02-01 00:50:22   │ 2               │ 3.4           │ 1          │ N                  │ 79           │ 256          │ 1            │ 18.5        │ 3.0     │ 0.5     │ 4.45       │ 0            │ 0.3                   │ 26.75        │ 2.5                  │
+      │  │ 7   │ 2        │ 2020-02-01 00:58:26  │ 2020-02-01 01:02:26   │ 1               │ 0.8           │ 1          │ N                  │ 116          │ 42           │ 1            │ 5.0         │ 0.5     │ 0.5     │ 1.26       │ 0            │ 0.3                   │ 7.56         │ 0.0                  │,)))
+      └─ yellow-ptype-2.df (Thunk(repr, (2×18 SubDataFrame
+         │ Row │ VendorID │ tpep_pickup_datetime │ tpep_dropoff_datetime │ passenger_count │ trip_distance │ RatecodeID │ store_and_fwd_flag │ PULocationID │ DOLocationID │ payment_type │ fare_amount │ extra   │ mta_tax │ tip_amount │ tolls_amount │ improvement_surcharge │ total_amount │ congestion_surcharge │
+         │     │ Int64    │ String               │ String                │ Int64           │ Float64       │ Int64      │ String             │ Int64        │ Int64        │ Int64        │ Float64     │ Float64 │ Float64 │ Float64    │ Int64        │ Float64               │ Float64      │ Float64              │
+         ├─────┼──────────┼──────────────────────┼───────────────────────┼─────────────────┼───────────────┼────────────┼────────────────────┼──────────────┼──────────────┼──────────────┼─────────────┼─────────┼─────────┼────────────┼──────────────┼───────────────────────┼──────────────┼──────────────────────┤
+         │ 1   │ 2        │ 2020-02-01 00:51:43  │ 2020-02-01 01:01:29   │ 1               │ 2.28          │ 1          │ N                  │ 238          │ 152          │ 2            │ 9.5         │ 0.5     │ 0.5     │ 0.0        │ 0            │ 0.3                   │ 10.8         │ 0.0                  │
+         │ 2   │ 1        │ 2020-02-01 00:11:15  │ 2020-02-01 00:24:29   │ 1               │ 2.1           │ 1          │ N                  │ 224          │ 68           │ 2            │ 10.5        │ 3.0     │ 0.5     │ 0.0        │ 0            │ 0.3                   │ 14.3         │ 2.5                  │,)))
+</code></pre>
+<pre><code class="julia hljs">exec(expanded_tree)</code></pre><pre><code class="plaintext hljs">taxi-data/
+├─ 2019/
+│  ├─ 01/
+│  │  ├─ yellow-ptype-1.df (String)
+│  │  └─ yellow-ptype-2.df (String)
+│  └─ 02/
+│     ├─ yellow-ptype-1.df (String)
+│     └─ yellow-ptype-2.df (String)
+└─ 2020/
+   ├─ 01/
+   │  ├─ yellow-ptype-1.df (String)
+   │  └─ yellow-ptype-2.df (String)
+   └─ 02/
+      ├─ yellow-ptype-1.df (String)
+      └─ yellow-ptype-2.df (String)
+</code></pre>
+<pre><code class="julia hljs">exec(expanded_tree) |&gt; files |&gt; first |&gt; get |&gt; print</code></pre><pre><code class="plaintext hljs">5×18 SubDataFrame
+│ Row │ VendorID │ tpep_pickup_datetime │ tpep_dropoff_datetime │ passenger_count │ trip_distance │ RatecodeID │ store_and_fwd_flag │ PULocationID │ DOLocationID │ payment_type │ fare_amount │ extra   │ mta_tax │ tip_amount │ tolls_amount │ improvement_surcharge │ total_amount │ congestion_surcharge │
+│     │ Int64    │ String               │ String                │ Int64           │ Float64       │ Int64      │ String             │ Int64        │ Int64        │ Int64        │ Float64     │ Float64 │ Float64 │ Float64    │ Float64      │ Float64               │ Float64      │ Missing              │
+├─────┼──────────┼──────────────────────┼───────────────────────┼─────────────────┼───────────────┼────────────┼────────────────────┼──────────────┼──────────────┼──────────────┼─────────────┼─────────┼─────────┼────────────┼──────────────┼───────────────────────┼──────────────┼──────────────────────┤
+│ 1   │ 1        │ 2019-01-01 00:46:40  │ 2019-01-01 00:53:20   │ 1               │ 1.5           │ 1          │ N                  │ 151          │ 239          │ 1            │ 7.0         │ 0.5     │ 0.5     │ 1.65       │ 0.0          │ 0.3                   │ 9.95         │ missing              │
+│ 2   │ 1        │ 2019-01-01 00:59:47  │ 2019-01-01 01:18:59   │ 1               │ 2.6           │ 1          │ N                  │ 239          │ 246          │ 1            │ 14.0        │ 0.5     │ 0.5     │ 1.0        │ 0.0          │ 0.3                   │ 16.3         │ missing              │
+│ 3   │ 2        │ 2018-12-21 13:48:30  │ 2018-12-21 13:52:40   │ 3               │ 0.0           │ 1          │ N                  │ 236          │ 236          │ 1            │ 4.5         │ 0.5     │ 0.5     │ 0.0        │ 0.0          │ 0.3                   │ 5.8          │ missing              │
+│ 4   │ 1        │ 2019-01-01 00:21:28  │ 2019-01-01 00:28:37   │ 1               │ 1.3           │ 1          │ N                  │ 163          │ 229          │ 1            │ 6.5         │ 0.5     │ 0.5     │ 1.25       │ 0.0          │ 0.3                   │ 9.05         │ missing              │
+│ 5   │ 1        │ 2019-01-01 00:32:01  │ 2019-01-01 00:45:39   │ 1               │ 3.7           │ 1          │ N                  │ 229          │ 7            │ 1            │ 13.5        │ 0.5     │ 0.5     │ 3.7        │ 0.0          │ 0.3                   │ 18.5         │ missing              │</code></pre>
+<div class="page-foot">
+  <div class="copyright">
+    &copy; Shashi Gowda, Julian Samaroo. Last modified: August 19, 2020. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a>.
+  </div>
+</div>
+</div><!-- CONTENT ENDS HERE -->
+    </div>  <!-- div: content container -->
+    
+    <script>
+        var els =  document.querySelectorAll(".language-julia")
+        for (var i=0, l = els.length; i < l; i++) {
+            var el = els[i]
+            var out = el.parentNode.nextSibling
+            if (out.tagName === "PRE") {
+                out.className = out.className + " code-output"
+            }
+        }
+    </script>
+    
+        
+
+
+    
+  </body>
+</html>

@@ -8,12 +8,9 @@ h1, h2 {
     color: #555;
 }
 
-.sidebar-sticky {
-    top:5em;
-}
 
 .content {
-    padding-top: 3em;
+    padding-top: 0;
 }
 .franklin-content pre > code {
     border: 1px solid #6B8E2340;

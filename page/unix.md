@@ -63,18 +63,18 @@ t = mv(t, r".*/.*/yellow.csv", s"yellow.csv"; combine=vcat)
 Look at the result:
 
 ```julia:dir1
-t["green.csv"][]
+get(t["green.csv"])
 ```
 
 ```julia:dir1
-t["yellow.csv"][]
+get(t["yellow.csv"])
 ```
 
 Save this new directory:
 
 ```julia:dir1
 FileTrees.save(FileTrees.rename(t, "collated")) do file
-    CSV.write(path(file), file[])
+    CSV.write(path(file), get(file))
 end
 ```
 
@@ -115,7 +115,7 @@ t = mv(t, r".*/.*/yellow.csv", s"yellow.csv"; combine=vcat)
 
 ```julia:dir1
 FileTrees.save(FileTrees.rename(t, "lazily_collated")) do file
-    CSV.write(path(file), file[])
+    CSV.write(path(file), get(file))
 end
 ```
 

@@ -76,19 +76,19 @@ Let's look at one of these DataFrames by indexing into the tree with the path to
 yellow_jan_20 = dfs["2020/01/yellow.csv"]
 ```
 
-`file[]` syntax fetches the value stored in a `File` or `FileTree` node:
+`get(file)` fetches the value stored in a `File` or `FileTree` node:
 
 ```julia:dir1
-yellow_jan_20[] # file[] gets the value
+get(yellow_jan_20)
 ```
 
-When a tree is lazy, the `[]` operation returns a `Thunk`, a delayed computation.
+When a tree is lazy, the `get` operation returns a `Thunk`, a delayed computation.
 
 You can call `exec` on the this value to compute and fetch the value.
 
 
 ```julia:dir1
-val = lazy_dfs["2020/01/yellow.csv"][]
+val = get(lazy_dfs["2020/01/yellow.csv"])
 
 @show typeof(val)
 @show exec(val);
@@ -142,7 +142,7 @@ df2 = mv(df1, r"^([^/]*)/([^/]*)/yellow.csv$",
 @show df2
 
 FileTrees.save(setparent(df2, nothing)) do file
-    CSV.write(path(file), file[])
+    CSV.write(path(file), get(file))
 end
 ```
 

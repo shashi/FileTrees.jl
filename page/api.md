@@ -12,7 +12,7 @@
 
 {{doc parent(::FileTree) parent function}}
 
-{{doc getindex(::Union{FileTree,File}) node[] method}}
+{{doc get(::Union{FileTree,File}) get method}}
 
 {{doc rename rename function}}
 

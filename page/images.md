@@ -22,7 +22,7 @@ end
 end
 
 @time FileTrees.save(t1) do file
-    FileIO.save(path(file), file.value)
+    FileIO.save(path(file), get(file))
 end |> exec
 ```
 

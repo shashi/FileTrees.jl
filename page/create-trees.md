@@ -22,7 +22,7 @@ t1 = maketree("mydir" => ["foo" => [(name="baz", value=42)], "bar"])
 ```
 
 ```julia:dir1
-t1["foo"]["baz"][]
+get(t1["foo"]["baz"])
 ```
 
 Another neat way of constructing a tree is to use `touch` to create files in an empty `FileTree`.

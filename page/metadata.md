@@ -32,7 +32,7 @@ Now let's say you want to load only the data for files which contain the Retecod
 First we work on the metadata tree to filter it thus:
 
 ```julia:dir1
-only_5 = filter(x->FileTrees.hasvalue(x) && (5 in x[]), metadata, dirs=false)
+only_5 = filter(x->FileTrees.hasvalue(x) && (5 in get(x)), metadata, dirs=false)
 ```
 
 You can now "index" into the data to get only files with this structure.

@@ -100,14 +100,14 @@ end
         rm("test_dir", recursive=true)
     end
 
-    @test t1["a/b/a"][] == string(p"." / "a" / "b" / "a")
+    @test get(t1["a/b/a"]) == string(p"." / "a" / "b" / "a")
 
     @test reducevalues(*, mapvalues(lowercase, t1)) == lowercase(reducevalues(*, t1))
 
     FileTrees.save(maketree("test_dir" => [t1])) do f
         @test f isa File
         open(path(f), "w") do io
-            print(io, f[])
+            print(io, get(f))
         end
     end
 
@@ -135,14 +135,14 @@ end
 
     t1 = FileTrees.load(x->uppercase(string(path(x))), t, lazy=true)
 
-    @test t1["a/b/a"][] isa Thunk
-    @test exec(t1)["a/b/a"][] == string(p"."/"A"/"B"/"A")
+    @test get(t1["a/b/a"]) isa Thunk
+    @test get(exec(t1)["a/b/a"]) == string(p"."/"A"/"B"/"A")
 
     @test exec(reducevalues(*, mapvalues(lowercase, t1))) == lowercase(exec(reducevalues(*, t1)))
 
     s = FileTrees.save(maketree("test_dir_lazy" => [t1])) do f
         open(path(f), "w") do io
-            print(io, f[])
+            print(io, get(f))
         end
     end
 

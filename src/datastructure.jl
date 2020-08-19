@@ -290,13 +290,15 @@ end
 
 Base.dirname(d::Node) = dirname(path(d))
 
+Base.getindex(d::Node) = d.value
+
 """
-    `node[]`
+    get(node)
 
 Get the value stored in the node. `NoValue()` is
 returned if there is no value stored.
 """
-Base.getindex(d::Node) = d.value
+Base.get(d::Node) = d.value
 
 hasvalue(x::Node) = !(x[] isa NoValue)
 

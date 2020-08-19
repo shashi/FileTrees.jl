@@ -10,21 +10,32 @@ Files and subtrees in a file tree can have any [value attached to them](/values/
 
 Tree operations such as [`map`, `filter`](/api/#map/filter), [`mv`](/api/#mv), [`merge`](/api/#merge), [`diff`](/api/#merge) are immutable. Nothing is written to disk until [`save`](/api/#save) is called to save a tree, hence tree restructuring is cheap and fast.
 
-**Getting started**
+~~~
+<h2>Getting started</h2>
+~~~
 
 You can install FileTrees with:
 
 ```julia
 using Pkg
-Pkg.add("https://github.com/shashi/FileTrees.jl")
+Pkg.add("FileTrees")
 ```
 
-In this article we will see how to load a directory of files, do something to them, and then combine the results. This should help you get started!
+**In this article**
 
-You can navigate to `page/` folder under the FileTrees package directory to try this out for yourself with the sample data there. Or you can try it with your own directory of data files!
+Below, we will see how to load a directory of files, do something to them, and then combine the results. This should help you get started!
 
 \toc
 
+**Follow along**
+
+You can navigate to `page/` folder under the FileTrees package directory to try this out for yourself with the sample data there.
+
+```sh
+julia -e 'using Pkg; Pkg.dev("FileTrees")'
+cd ~/.julia/dev/FileTrees/page/
+```
+Or you can try it with your own directory of data files!
 # Loading directories
 
 The basic datastructure in FileTrees is the [`FileTree`](api/#FileTree).

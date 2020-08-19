@@ -157,8 +157,8 @@ dfs = FileTrees.load(taxi_dir) <span class="hljs-keyword">do</span> file
 <h1 id="looking_files_up"><a href="#looking_files_up">Looking files up</a></h1>
 <p>Let&#39;s look at one of these DataFrames by indexing into the tree with the path to a file, namely <code>&quot;2020/01/yellow.csv&quot;</code>.</p>
 <pre><code class="julia hljs">yellow_jan_20 = dfs[<span class="hljs-string">&quot;2020/01/yellow.csv&quot;</span>]</code></pre><pre><code class="plaintext hljs">File(taxi-data/2020/01/yellow.csv)</code></pre>
-<p><code>file&#91;&#93;</code> syntax fetches the value stored in a <code>File</code> or <code>FileTree</code> node:</p>
-<pre><code class="julia hljs">yellow_jan_20[] <span class="hljs-comment"># file[] gets the value</span></code></pre><pre><code class="plaintext hljs">9×18 DataFrame
+<p><code>get&#40;file&#41;</code> fetches the value stored in a <code>File</code> or <code>FileTree</code> node:</p>
+<pre><code class="julia hljs">get(yellow_jan_20)</code></pre><pre><code class="plaintext hljs">9×18 DataFrame
 │ Row │ VendorID │ tpep_pickup_datetime │ tpep_dropoff_datetime │ passenger_count │ trip_distance │ RatecodeID │ store_and_fwd_flag │ PULocationID │ DOLocationID │ payment_type │ fare_amount │ extra   │ mta_tax │ tip_amount │ tolls_amount │ improvement_surcharge │ total_amount │ congestion_surcharge │
 │     │ Int64    │ String               │ String                │ Int64           │ Float64       │ Int64      │ String             │ Int64        │ Int64        │ Int64        │ Float64     │ Float64 │ Float64 │ Float64    │ Int64        │ Float64               │ Float64      │ Float64              │
 ├─────┼──────────┼──────────────────────┼───────────────────────┼─────────────────┼───────────────┼────────────┼────────────────────┼──────────────┼──────────────┼──────────────┼─────────────┼─────────┼─────────┼────────────┼──────────────┼───────────────────────┼──────────────┼──────────────────────┤
@@ -171,9 +171,9 @@ dfs = FileTrees.load(taxi_dir) <span class="hljs-keyword">do</span> file
 │ 7   │ 2        │ 2020-01-01 00:39:25  │ 2020-01-01 00:39:29   │ 1               │ 0.0           │ 1          │ N                  │ 193          │ 193          │ 1            │ 2.5         │ 0.5     │ 0.5     │ 0.01       │ 0            │ 0.3                   │ 3.81         │ 0.0                  │
 │ 8   │ 2        │ 2019-12-18 15:27:49  │ 2019-12-18 15:28:59   │ 1               │ 0.0           │ 5          │ N                  │ 193          │ 193          │ 1            │ 0.01        │ 0.0     │ 0.0     │ 0.0        │ 0            │ 0.3                   │ 2.81         │ 2.5                  │
 │ 9   │ 2        │ 2019-12-18 15:30:35  │ 2019-12-18 15:31:35   │ 4               │ 0.0           │ 1          │ N                  │ 193          │ 193          │ 1            │ 2.5         │ 0.5     │ 0.5     │ 0.0        │ 0            │ 0.3                   │ 6.3          │ 2.5                  │</code></pre>
-<p>When a tree is lazy, the <code>&#91;&#93;</code> operation returns a <code>Thunk</code>, a delayed computation.</p>
+<p>When a tree is lazy, the <code>get</code> operation returns a <code>Thunk</code>, a delayed computation.</p>
 <p>You can call <code>exec</code> on the this value to compute and fetch the value.</p>
-<pre><code class="julia hljs">val = lazy_dfs[<span class="hljs-string">&quot;2020/01/yellow.csv&quot;</span>][]
+<pre><code class="julia hljs">val = get(lazy_dfs[<span class="hljs-string">&quot;2020/01/yellow.csv&quot;</span>])
 
 <span class="hljs-meta">@show</span> typeof(val)
 <span class="hljs-meta">@show</span> exec(val);</code></pre><pre><code class="plaintext hljs">typeof(val) = Dagger.Thunk
@@ -279,7 +279,7 @@ df2 = mv(df1, <span class="hljs-string">r&quot;^([^/]*)/([^/]*)/yellow.csv$&quot
 <span class="hljs-meta">@show</span> df2
 
 FileTrees.save(setparent(df2, <span class="hljs-literal">nothing</span>)) <span class="hljs-keyword">do</span> file
-    CSV.write(path(file), file[])
+    CSV.write(path(file), get(file))
 <span class="hljs-keyword">end</span></code></pre><pre><code class="plaintext hljs">df2 = yellow/
 ├─ 2019/
 │  ├─ 01.csv (9×18 DataFrame)
@@ -304,7 +304,7 @@ FileTree(<span class="hljs-string">&quot;yellow&quot;</span>)</code></pre><pre><
 <p>Next: <strong>More on <a href="/FileTrees.jl/values/">values in trees &rarr;</a></strong></p>
 <div class="page-foot">
   <div class="copyright">
-    &copy; Shashi Gowda, Julian Samaroo. Last modified: August 16, 2020. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a>.
+    &copy; Shashi Gowda, Julian Samaroo. Last modified: August 19, 2020. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a>.
   </div>
 </div>
 </div><!-- CONTENT ENDS HERE -->

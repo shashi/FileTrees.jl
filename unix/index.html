@@ -166,7 +166,7 @@ t = mapvalues(t) <span class="hljs-keyword">do</span> df
 └─ yellow.csv (8×2 DataFrame)
 </code></pre>
 <p>Look at the result:</p>
-<pre><code class="julia hljs">t[<span class="hljs-string">&quot;green.csv&quot;</span>][]</code></pre><pre><code class="plaintext hljs">8×2 DataFrame
+<pre><code class="julia hljs">get(t[<span class="hljs-string">&quot;green.csv&quot;</span>])</code></pre><pre><code class="plaintext hljs">8×2 DataFrame
 │ Row │ payment_type │ total_amount_mean │
 │     │ Int64        │ Float64           │
 ├─────┼──────────────┼───────────────────┤
@@ -178,7 +178,7 @@ t = mapvalues(t) <span class="hljs-keyword">do</span> df
 │ 6   │ 2            │ 17.3              │
 │ 7   │ 2            │ 10.3              │
 │ 8   │ 1            │ 15.3683           │</code></pre>
-<pre><code class="julia hljs">t[<span class="hljs-string">&quot;yellow.csv&quot;</span>][]</code></pre><pre><code class="plaintext hljs">8×2 DataFrame
+<pre><code class="julia hljs">get(t[<span class="hljs-string">&quot;yellow.csv&quot;</span>])</code></pre><pre><code class="plaintext hljs">8×2 DataFrame
 │ Row │ payment_type │ total_amount_mean │
 │     │ Int64        │ Float64           │
 ├─────┼──────────────┼───────────────────┤
@@ -192,7 +192,7 @@ t = mapvalues(t) <span class="hljs-keyword">do</span> df
 │ 8   │ 2            │ 32.99             │</code></pre>
 <p>Save this new directory:</p>
 <pre><code class="julia hljs">FileTrees.save(FileTrees.rename(t, <span class="hljs-string">&quot;collated&quot;</span>)) <span class="hljs-keyword">do</span> file
-    CSV.write(path(file), file[])
+    CSV.write(path(file), get(file))
 <span class="hljs-keyword">end</span></code></pre>
 <p>Verify:</p>
 <pre><code class="julia hljs">FileTree(<span class="hljs-string">&quot;collated&quot;</span>)</code></pre><pre><code class="plaintext hljs">collated/
@@ -228,7 +228,7 @@ t = mv(t, <span class="hljs-string">r&quot;.*/.*/yellow.csv&quot;</span>, <span 
 └─ yellow.csv (8×2 DataFrame)
 </code></pre>
 <pre><code class="julia hljs">FileTrees.save(FileTrees.rename(t, <span class="hljs-string">&quot;lazily_collated&quot;</span>)) <span class="hljs-keyword">do</span> file
-    CSV.write(path(file), file[])
+    CSV.write(path(file), get(file))
 <span class="hljs-keyword">end</span></code></pre>
 <p>Verify:</p>
 <pre><code class="julia hljs">result = FileTrees.load(DataFrame∘CSV.File∘path, FileTree(<span class="hljs-string">&quot;lazily_collated&quot;</span>))</code></pre><pre><code class="plaintext hljs">lazily_collated/
@@ -263,7 +263,7 @@ t = mv(t, <span class="hljs-string">r&quot;.*/.*/yellow.csv&quot;</span>, <span 
 </code></pre>
 <div class="page-foot">
   <div class="copyright">
-    &copy; Shashi Gowda, Julian Samaroo. Last modified: August 16, 2020. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a>.
+    &copy; Shashi Gowda, Julian Samaroo. Last modified: August 19, 2020. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a>.
   </div>
 </div>
 </div><!-- CONTENT ENDS HERE -->

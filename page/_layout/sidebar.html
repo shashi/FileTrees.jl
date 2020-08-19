@@ -2,14 +2,16 @@
   <div class="container sidebar-sticky">
     <div class="sidebar-about">
       <h1 style="font-size:2em"><a href="/">FileTrees<span style="opacity:0.4">.jl</span></a></h1>
-      <p class="lead">Easy everyday parallelism with a file tree abstraction</p>
+      <p class="lead" style="font-size: 0.86em">Easy everyday parallelism with a file tree abstraction</p>
     </div>
     <style>
 @media (min-width: 768px) {
     .sidebar-nav {
-        margin-top: 1.5em;
     }
 }
+    .sidebar .container.sidebar-sticky {
+        top: 2rem;
+    }
     .sidebar-nav .sidebar-nav-item.active {
         box-sizing: border-box;
         border-bottom: 1px #f1f1f1 solid;
@@ -34,6 +36,7 @@
       <a class="sidebar-nav-item {{ispage metadata/*}}active{{end}}" href="/metadata/">Working with metadata</a>
       <a class="sidebar-nav-item {{ispage patterns/*}}active{{end}}" href="/patterns/">Pattern matching</a>
       <a class="sidebar-nav-item {{ispage create-trees/*}}active{{end}}" href="/create-trees/">Creating file trees from scratch</a>
+      <a class="sidebar-nav-item {{ispage split-files/*}}active{{end}}" href="/split-files/">Splitting files</a>
       <a class="sidebar-nav-item {{ispage images/*}}active{{end}}" href="/images/">Example: Images</a>
     </nav>
 

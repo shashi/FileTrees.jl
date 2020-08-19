@@ -352,3 +352,42 @@ function Base.filter(f, tree::FileTree; walk=prewalk, dirs=true)
         (dirs || n isa File) ? (f(n) ? n : nothing) : n
     end
 end
+
+
+"""
+    values(tree::FileTree; dirs=true)
+
+Get a vector of all non-null values from nodes in the tree.
+
+`dirs=false` will exclude any value stored in `FileTree` sub nodes.
+"""
+function Base.values(tree::FileTree; dirs=true, iter=PostOrderDFS)
+    map(get, Iterators.filter(x->(dirs || x isa File) && hasvalue(x), iter(tree)))
+end
+
+
+"""
+    nodes(tree::FileTree, dirs=true)
+
+Get a vector of all nodes in the tree.
+
+`dirs=false` will return only `File` nodes.
+"""
+function nodes(tree::FileTree; dirs=true, iter=PostOrderDFS)
+    collect(Iterators.filter(x->(dirs || x isa File), iter(tree)))
+end
+
+
+"""
+    files(tree::FileTree)
+
+Get a vector of all files in the tree.
+"""
+files(tree::FileTree) = nodes(tree, dirs=false)
+
+"""
+    dirs(tree::FileTree, dirs=true)
+
+Get a vector of all directories in the tree.
+"""
+dirs(tree::FileTree) = filter!(x->x isa FileTree, nodes(tree, dirs=true))

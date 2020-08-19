@@ -300,6 +300,14 @@ returned if there is no value stored.
 """
 Base.get(d::Node) = d.value
 
+"""
+    get(node)
+
+Get the value stored in the node. `NoValue()` is
+returned if there is no value stored.
+"""
+function get_doc end # hack to make API docs page show only this.
+
 hasvalue(x::Node) = !(x[] isa NoValue)
 
 ## Tree walking
@@ -353,6 +361,15 @@ function Base.filter(f, tree::FileTree; walk=prewalk, dirs=true)
     end
 end
 
+
+"""
+    values(tree::FileTree; dirs=true)
+
+Get a vector of all non-null values from nodes in the tree.
+
+`dirs=false` will exclude any value stored in `FileTree` sub nodes.
+"""
+function values_doc end # hack to make api docs work
 
 """
     values(tree::FileTree; dirs=true)

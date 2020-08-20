@@ -9,7 +9,7 @@ Easy everyday parallelism with a file tree abstraction.
 
 ```julia
 using Pkg
-Pkg.add("https://github.com/shashi/FileTrees.jl")
+Pkg.add("FileTrees")
 ```
 
 ## With FileTrees you can

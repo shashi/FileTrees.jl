@@ -391,10 +391,12 @@ dir/
       <h2 class="doc-header" id="reducevalues">
         <a href="#reducevalues">reducevalues</a>
         <div class="doc-type">function</div></h2>
-      <div class="doc-content"><pre><code class="julia hljs">reducevalues(f, t::FileTree; associative=<span class="hljs-literal">true</span>)</code></pre>
+      <div class="doc-content"><pre><code class="julia hljs">reducevalues(f, t::FileTree; associative=<span class="hljs-literal">true</span>, init=<span class="hljs-literal">nothing</span>)</code></pre>
 <p>Use <code>f</code> to combine values in the tree.</p>
 <ul>
 <li><p><code>associative&#61;true</code> assumes <code>f</code> can be applied in an associative way</p>
+</li>
+<li><p><code>init</code> keyword argument will be returned if the file tree is empty. if <code>init</code> is not provided, reduce over an empty tree will cause an error to be thrown</p>
 </li>
 </ul>
 </div>

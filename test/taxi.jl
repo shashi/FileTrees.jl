@@ -47,11 +47,11 @@ end
     @test_throws ErrorException mv(dfs, r"^([^/]*)/([^/]*)/yellow.csv$", s"yellow.csv")
 
     yellow = mv(dfs, r"^([^/]*)/([^/]*)/yellow.csv$", s"yellow.csv", combine=vcat)["yellow.csv"]
-    @test yellow[] isa DataFrame
+    @test get(yellow) isa DataFrame
 
     # correct?
     @test Set(DataFrames.Tables.rowtable(reducevalues(vcat, dfs[glob"*/*/yellow.csv"]))) ==
-           Set(DataFrames.Tables.rowtable(yellow[]))
+    Set(DataFrames.Tables.rowtable(get(yellow)))
 end
 
 @testset "metadata" begin
@@ -66,7 +66,7 @@ end
         (unique(df.RatecodeID)...,)
     end |> exec
 
-    only_5 = filter(x->FileTrees.hasvalue(x) && (5 in x[]), metadata, dirs=false)
+    only_5 = filter(x->FileTrees.hasvalue(x) && (5 in get(x)), metadata, dirs=false)
 
     df_only_5 = data[only_5]
 

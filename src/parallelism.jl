@@ -24,6 +24,7 @@ function mapcompute(xs;
 
     i = 0
     map(xs) do x
+        # Expression returns vals[i] or x
         if x isa Thunk
             i += 1
             vals[i]

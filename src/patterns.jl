@@ -115,12 +115,12 @@ end
 reducevalues(hcat, t1)
 ```
 """
-function mapsubtrees(f, t::FileTree, g::GlobMatch)
-    _glob_map(m->apply_to_match(f, m), identity, t, name(t), g.pattern...) |> setparent
+function mapsubtrees(f, t::FileTree, g::GlobMatch, combine=_merge_error)
+    _glob_map(m->apply_to_match(f, m), identity, t, name(t), g.pattern...) |> setparent |> xs->normdots(xs, combine=combine)
 end
 
-function mapsubtrees(f, t::FileTree, r::Regex)
-    _regex_map(m->apply_to_match(f, m), identity, t, r) |> setparent
+function mapsubtrees(f, t::FileTree, r::Regex, combine=_merge_error)
+    _regex_map(m->apply_to_match(f, m), identity, t, r) |> setparent |> xs->normdots(xs, combine=combine)
 end
 
 function apply_to_match(f, match)

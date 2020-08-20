@@ -1,7 +1,7 @@
 using Distributed
 @everywhere using Test
 @everywhere using FileTrees
-@everywhere using FileTrees: Thunk
+@everywhere using FileTrees: Thunk, NoValue
 @everywhere using Dates
 @everywhere import FilePathsBase: /
 
@@ -60,8 +60,9 @@ import FileTrees: attach
 @testset "touch mv and cp" begin
     global t1 = maketree([])
     for yr = 1:9
+        global t1 = mkpath(t1, joinpath(string("0", yr)), value=yr)
         for mo = 1:6
-            t1 = attach(t1, joinpath(string("0", yr), string("0", mo)),
+            global t1 = attach(t1, joinpath(string("0", yr), string("0", mo)),
                         File(nothing, "data.csv", (yr, mo)) )
         end
     end
@@ -87,7 +88,7 @@ import FileTrees: attach
         reducevalues(vcat, subtree)
     end
 
-    @test reducevalues(hcat, t7) == [(j, i) for i=1:6, j=1:9]
+    @test reducevalues(hcat, t7; dirs=true) == [(j, i) for i=1:6, j=1:9]
 
     t6 = cp(t1, r"^(.*)/(.*)/data.csv$", s"\1/\2.csv")
 
@@ -100,14 +101,14 @@ end
         rm("test_dir", recursive=true)
     end
 
-    @test t1["a/b/a"][] == string(p"." / "a" / "b" / "a")
+    @test get(t1["a/b/a"]) == string(p"." / "a" / "b" / "a")
 
     @test reducevalues(*, mapvalues(lowercase, t1)) == lowercase(reducevalues(*, t1))
 
     FileTrees.save(maketree("test_dir" => [t1])) do f
         @test f isa File
         open(path(f), "w") do io
-            print(io, f[])
+            print(io, get(f))
         end
     end
 
@@ -135,14 +136,14 @@ end
 
     t1 = FileTrees.load(x->uppercase(string(path(x))), t, lazy=true)
 
-    @test t1["a/b/a"][] isa Thunk
-    @test exec(t1)["a/b/a"][] == string(p"."/"A"/"B"/"A")
+    @test get(t1["a/b/a"]) isa Thunk
+    @test get(exec(t1)["a/b/a"]) == string(p"."/"A"/"B"/"A")
 
     @test exec(reducevalues(*, mapvalues(lowercase, t1))) == lowercase(exec(reducevalues(*, t1)))
 
     s = FileTrees.save(maketree("test_dir_lazy" => [t1])) do f
         open(path(f), "w") do io
-            print(io, f[])
+            print(io, get(f))
         end
     end
 
@@ -172,3 +173,14 @@ end
     end
 end
 
+
+@testset "iterators" begin
+    @test values(t1) == map(get, filter(hasvalue, nodes(t1)))
+    @test values(t1, dirs=false) != values(t1, dirs=true)
+    @test values(t1, dirs=false) == reducevalues(vcat, t1)
+    @test values(t1, dirs=true) == map(get, filter(hasvalue, nodes(t1)))
+    @test nodes(t1) == collect(FileTrees.PostOrderDFS(t1))
+    @test nodes(t1, dirs=false) == collect(Iterators.filter(x->x isa File, FileTrees.PostOrderDFS(t1)))
+    @test files(t1) == collect(nodes(t1, dirs=false))
+    @test dirs(t1) == collect(Iterators.filter(x->x isa FileTree, nodes(t1, dirs=true)))
+end

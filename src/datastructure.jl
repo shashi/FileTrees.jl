@@ -290,13 +290,23 @@ end
 
 Base.dirname(d::Node) = dirname(path(d))
 
+Base.getindex(d::Node) = d.value
+
 """
-    `node[]`
+    get(node)
 
 Get the value stored in the node. `NoValue()` is
 returned if there is no value stored.
 """
-Base.getindex(d::Node) = d.value
+Base.get(d::Node) = d.value
+
+"""
+    get(node)
+
+Get the value stored in the node. `NoValue()` is
+returned if there is no value stored.
+"""
+function get_doc end # hack to make API docs page show only this.
 
 hasvalue(x::Node) = !(x[] isa NoValue)
 
@@ -330,7 +340,7 @@ walk can be either `FileTrees.postwalk` or `FileTrees.postwalk`.
 """
 function Base.map(f, tree::FileTree; walk=postwalk, dirs=true)
     walk(tree, collect_children=identity) do n
-        (dirs || x isa File) ? f(n) : n
+        (dirs || n isa File) ? f(n) : n
     end
 end
 
@@ -350,3 +360,51 @@ function Base.filter(f, tree::FileTree; walk=prewalk, dirs=true)
         (dirs || n isa File) ? (f(n) ? n : nothing) : n
     end
 end
+
+
+"""
+    values(tree::FileTree; dirs=true)
+
+Get a vector of all non-null values from nodes in the tree.
+
+`dirs=false` will exclude any value stored in `FileTree` sub nodes.
+"""
+function values_doc end # hack to make api docs work
+
+"""
+    values(tree::FileTree; dirs=true)
+
+Get a vector of all non-null values from nodes in the tree.
+
+`dirs=false` will exclude any value stored in `FileTree` sub nodes.
+"""
+function Base.values(tree::FileTree; dirs=true, iter=PostOrderDFS)
+    map(get, Iterators.filter(x->(dirs || x isa File) && hasvalue(x), iter(tree)))
+end
+
+
+"""
+    nodes(tree::FileTree, dirs=true)
+
+Get a vector of all nodes in the tree.
+
+`dirs=false` will return only `File` nodes.
+"""
+function nodes(tree::FileTree; dirs=true, iter=PostOrderDFS)
+    collect(Iterators.filter(x->(dirs || x isa File), iter(tree)))
+end
+
+
+"""
+    files(tree::FileTree)
+
+Get a vector of all files in the tree.
+"""
+files(tree::FileTree) = nodes(tree, dirs=false)
+
+"""
+    dirs(tree::FileTree, dirs=true)
+
+Get a vector of all directories in the tree.
+"""
+dirs(tree::FileTree) = filter!(x->x isa FileTree, nodes(tree, dirs=true))

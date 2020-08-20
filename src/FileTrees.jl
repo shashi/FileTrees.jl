@@ -8,7 +8,7 @@ import Base: parent, getindex
 export FileTree, File, name, path, maketree, children, rename, setvalue, setparent
 
 import FilePathsBase: /, Path, @p_str
-export @p_str
+export @p_str, get, values, nodes, files, dirs
 
 include("datastructure.jl")
 

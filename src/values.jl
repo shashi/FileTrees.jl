@@ -55,9 +55,9 @@ Use `f` to combine values in the tree.
 
 - `associative=true` assumes `f` can be applied in an associative way
 """
-function reducevalues(f, t::FileTree; associative=true, lazy=nothing)
+function reducevalues(f, t::FileTree; associative=true, lazy=nothing, dirs=false)
     f′ = lazify(lazy, f)
-    itr = getindex.(collect(Iterators.filter(hasvalue, Leaves(t))))
+    itr = getindex.(collect(filter(hasvalue, nodes(t, dirs=dirs))))
     associative ? assocreduce(f′, itr) : reduce(f′, itr)
 end
 reducevalues(f, t::File; associative=true, lazy=nothing) = t[]

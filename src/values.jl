@@ -48,24 +48,44 @@ function mapvalues(f, t::Node; lazy=nothing, walk=postwalk)
     mapvalued(x -> setvalue(x, lazify(lazy, f)(x[])), t; walk=postwalk)
 end
 
+const no_init = [:_no_init]
 """
-    reducevalues(f, t::FileTree; associative=true)
+    reducevalues(f, t::FileTree; associative=true, init=nothing)
 
 Use `f` to combine values in the tree.
 
 - `associative=true` assumes `f` can be applied in an associative way
+- `init` keyword argument will be returned if the file tree is empty.
+  if `init` is not provided, reduce over an empty tree will cause an
+  error to be thrown
 """
-function reducevalues(f, t::FileTree; associative=true, lazy=nothing, dirs=false)
+function reducevalues(f, t::FileTree;
+                      associative=true,
+                      lazy=nothing,
+                      dirs=false,
+                      init=no_init)
     f′ = lazify(lazy, f)
     itr = getindex.(collect(filter(hasvalue, nodes(t, dirs=dirs))))
-    associative ? assocreduce(f′, itr) : reduce(f′, itr)
+    if associative
+        assocreduce(f′, itr, init=init)
+    elseif init !== no_init
+        reduce(f′, itr, init=init)
+    else
+        reduce(f′, itr)
+    end
 end
 reducevalues(f, t::File; associative=true, lazy=nothing) = t[]
 
 """
 Associative reduce
 """
-function assocreduce(f, xs)
+function assocreduce(f, xs; init=no_init)
+    if length(xs) == 0
+        if init === no_init
+            throw(ArgumentError("Reducing over an empty collection. Pass `init=val` to return val."))
+        end
+        return init
+    end
     length(xs) == 1 && return xs[1]
     l = length(xs)
     m = div(l, 2)

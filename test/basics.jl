@@ -171,6 +171,12 @@ end
     if isdir("test_dir_lazy")
         rm("test_dir_lazy", recursive=true)
     end
+
+    @test_throws ArgumentError reducevalues(+, maketree("." => []))
+    @test reducevalues(+, maketree("." => []), init=0) === 0
+
+    @test_throws ArgumentError reducevalues(+, maketree("." => []), associative=false)
+    @test reducevalues(+, maketree("." => []), init=0, associative=false) === 0
 end
 
 

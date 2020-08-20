@@ -119,5 +119,5 @@ function save(f, t::Node; lazy=nothing, exec=true)
     end
 
     # placeholder task that waits and returns nothing
-    (exec ? FileTrees.exec : identity)(reducevalues((x,y)->nothing, t′))
+    (exec ? FileTrees.exec : identity)(reducevalues((x,y)->nothing, t′, init=nothing))
 end

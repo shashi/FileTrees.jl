@@ -125,6 +125,16 @@ end
     if isdir("test_dir")
         rm("test_dir", recursive=true)
     end
+
+    # issue 16
+    @test_throws ArgumentError reducevalues(+, maketree("." => []))
+    @test reducevalues(+, maketree("." => []), init=0) === 0
+
+    @test_throws ArgumentError reducevalues(+, maketree("." => []), associative=false)
+    @test reducevalues(+, maketree("." => []), init=0, associative=false) === 0
+
+    # issue 23
+    @test FileTrees.save(identity, maketree([])) == nothing
 end
 
 @testset "lazy-exec" begin

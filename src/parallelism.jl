@@ -26,8 +26,13 @@ function compute(ctx, d::FileTree; cache=true, kw...)
 
     i = 0
     mapvalues(d; lazy=false) do x
-        i += 1
-        vals[i]
+        # Expression returns vals[i] or x
+        if x isa Thunk
+            i += 1
+            vals[i]
+        else
+            x
+        end
     end
 end
 

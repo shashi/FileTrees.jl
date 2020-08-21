@@ -150,18 +150,18 @@ dfs = FileTrees.load(taxi_dir) <span class="hljs-keyword">do</span> file
 <pre><code class="julia hljs">small_dfs_lazy = mapvalues(df-&gt;df[:, <span class="hljs-number">1</span>:<span class="hljs-number">5</span>], lazy_dfs)</code></pre><pre><code class="plaintext hljs">taxi-data/
 ├─ 2019/
 │  ├─ 01/
-│  │  ├─ green.csv (Thunk(#7, (Thunk(#3, ...),)))
-│  │  └─ yellow.csv (Thunk(#7, (Thunk(#3, ...),)))
+│  │  ├─ green.csv (Thunk(#71, (Thunk(#3, ...),)))
+│  │  └─ yellow.csv (Thunk(#71, (Thunk(#3, ...),)))
 │  └─ 02/
-│     ├─ green.csv (Thunk(#7, (Thunk(#3, ...),)))
-│     └─ yellow.csv (Thunk(#7, (Thunk(#3, ...),)))
+│     ├─ green.csv (Thunk(#71, (Thunk(#3, ...),)))
+│     └─ yellow.csv (Thunk(#71, (Thunk(#3, ...),)))
 └─ 2020/
    ├─ 01/
-   │  ├─ green.csv (Thunk(#7, (Thunk(#3, ...),)))
-   │  └─ yellow.csv (Thunk(#7, (Thunk(#3, ...),)))
+   │  ├─ green.csv (Thunk(#71, (Thunk(#3, ...),)))
+   │  └─ yellow.csv (Thunk(#71, (Thunk(#3, ...),)))
    └─ 02/
-      ├─ green.csv (Thunk(#7, (Thunk(#3, ...),)))
-      └─ yellow.csv (Thunk(#7, (Thunk(#3, ...),)))
+      ├─ green.csv (Thunk(#71, (Thunk(#3, ...),)))
+      └─ yellow.csv (Thunk(#71, (Thunk(#3, ...),)))
 </code></pre>
 <p>This map function should be instantaneous since it does not actually carry out the computation, instead returns a tree with lazy tasks that need to be carried out.</p>
 <p><code>exec</code> will materialize these values:</p>
@@ -222,7 +222,7 @@ dfs = FileTrees.load(taxi_dir) <span class="hljs-keyword">do</span> file
 <p>See <a href="/FileTrees.jl/tree-manipulation/#mapsubtrees">more about it here</a>.</p>
 <div class="page-foot">
   <div class="copyright">
-    &copy; Shashi Gowda, Julian Samaroo. Last modified: August 20, 2020. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a>.
+    &copy; Shashi Gowda, Julian Samaroo. Last modified: August 21, 2020. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a>.
   </div>
 </div>
 </div><!-- CONTENT ENDS HERE -->

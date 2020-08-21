@@ -1,6 +1,12 @@
 lazify(flag::Nothing, f) = maybe_lazy(f)
 lazify(flag::Bool, f) = flag ? lazy(f) : f
 
+maybe_apply(f, x::NoValue) = NoValue()
+maybe_apply(f, x) = f(x)
+# maybe_apply(f, xs...) = all(x->x isa NoValue, xs) ? NoValue() : f(xs...)
+# maybe needed later ^
+maybe(f) = (xs...)->maybe_apply(f, xs...)
+
 """
 apply `f` to any node that has a value. `f` gets the node itself
 and must return a node.
@@ -45,7 +51,7 @@ Returns a new tree where every value is replaced with the result of applying `f`
 `f` may return `NoValue()` to cause no value to be associated with a node.
 """
 function mapvalues(f, t::Node; lazy=nothing, walk=postwalk)
-    mapvalued(x -> setvalue(x, lazify(lazy, f)(x[])), t; walk=postwalk)
+    mapvalued(x -> setvalue(x, lazify(lazy, maybe(f))(x[])), t; walk=postwalk)
 end
 
 const no_init = [:_no_init]

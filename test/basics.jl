@@ -126,6 +126,14 @@ end
         rm("test_dir", recursive=true)
     end
 
+    x1 = maketree("a"=>[(name="b", value=1)])
+    x2 = mapvalues(x->NoValue(), x1, lazy=true)
+    @test !isempty(values(x2))
+    @test isempty(values(exec(x2)))
+    x3 = mapvalues(x->rand(), x2)
+    @test !isempty(values(x3))
+    @test isempty(values(exec(x3)))
+
     # issue 16
     @test_throws ArgumentError reducevalues(+, maketree("." => []))
     @test reducevalues(+, maketree("." => []), init=0) === 0

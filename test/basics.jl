@@ -191,6 +191,23 @@ end
     end
 end
 
+@testset "exec with context" begin
+    import Dagger
+
+    struct SpecialContext end
+    
+    contextpropagated = Ref(false)
+    function Dagger.compute(::SpecialContext, t::Dagger.Thunk, kws...)
+        contextpropagated[] = true
+        compute(Dagger.Context(), t; kws...)
+    end
+    
+    t = mapvalues(identity, maketree("a" => ["b" => [(name="c", value=1)], "d" => ["e" => [(name="f", value=2), (name="g", value=3)]]]), lazy=true)
+    
+    @test exec(SpecialContext(), t) |> values == [1,2,3] 
+    @test contextpropagated[] == true # Dummy compare to make failed test outprint a little less confusing
+end
+
 
 @testset "iterators" begin
     @test values(t1) == map(get, filter(hasvalue, nodes(t1)))

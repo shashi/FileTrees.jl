@@ -5,7 +5,7 @@ maybe_lazy(f, x) = any(x->x isa Union{Thunk, Chunk}, x) ? lazy(f)(x...) : f(x...
 
 maybe_lazy(f) = (x...) -> maybe_lazy(f, x)
 
-function mapcompute(xs;
+function mapcompute(ctx, xs;
                     cache=false,
                     collect_results=identity,
                     map=map, kw...)
@@ -20,7 +20,7 @@ function mapcompute(xs;
         x
     end
 
-    vals = collect_results(compute(delayed((xs...)->[xs...]; meta=true)(thunks...); kw...))
+    vals = collect_results(compute(ctx, delayed((xs...)->[xs...]; meta=true)(thunks...); kw...))
 
     i = 0
     map(xs) do x
@@ -34,8 +34,8 @@ function mapcompute(xs;
     end
 end
 
-function mapexec(xs; cache=false, map=map)
-    mapcompute(xs;
+function mapexec(ctx, xs; cache=false, map=map)
+    mapcompute(ctx, xs;
                map=map,
                cache=cache,
                collect_results=xs -> asyncmap(exec, xs))
@@ -51,7 +51,7 @@ the computed values (maybe on remote processes). The tree still behaves as a Laz
 compute(d::FileTree; cache=true, kw...) = compute(Dagger.Context(), d; cache=cache, kw...)
 
 function compute(ctx, d::FileTree; cache=true, kw...)
-    mapcompute(d, map=((f,t) -> mapvalues(f, t; lazy=false)), cache=cache; kw...)
+    mapcompute(ctx, d, map=((f,t) -> mapvalues(f, t; lazy=false)), cache=cache; kw...)
 end
 
 """
@@ -61,8 +61,15 @@ If `x` is a FileTree, computes any uncomputed `Thunk`s stored as values in it. R
 If `x` is a `Thunk` (such as the result of a `reducevalues`), then exec will compute the result.
 If `x` is anything else, `exec` just returns the same value.
 """
-exec(x) = x
+exec(x) = exec(Dagger.Context(), x)
 
-exec(d::FileTree) = mapexec(d, map=(f,t) -> mapvalues(f, t; lazy=false))
+"""
+    exec(ctx, x)
 
-exec(d::Union{Thunk, Chunk}) = collect(compute(d))
+Same as `exec(x)` with a ctx being passed to `Dagger` when computing any `Thunks`.
+"""
+exec(ctx, x) = x
+
+exec(ctx, d::FileTree) = mapexec(ctx, d, map=(f,t) -> mapvalues(f, t; lazy=false))
+
+exec(ctx, d::Union{Thunk, Chunk}) = collect(ctx, compute(ctx, d))

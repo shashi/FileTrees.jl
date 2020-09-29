@@ -196,16 +196,22 @@ end
 
     struct SpecialContext end
     
-    contextpropagated = Ref(false)
+    computespecial = Ref(false)
     function Dagger.compute(::SpecialContext, t::Dagger.Thunk, kws...)
-        contextpropagated[] = true
+        computespecial[] = true
         compute(Dagger.Context(), t; kws...)
+    end
+    ncollectspecial = Ref(0)
+    function Dagger.collect(::SpecialContext, c::Dagger.Chunk; kws...) 
+        ncollectspecial[] += 1
+        collect(Dagger.Context(), c; kws...)
     end
     
     t = mapvalues(identity, maketree("a" => ["b" => [(name="c", value=1)], "d" => ["e" => [(name="f", value=2), (name="g", value=3)]]]), lazy=true)
     
     @test exec(SpecialContext(), t) |> values == [1,2,3] 
-    @test contextpropagated[] == true # Dummy compare to make failed test outprint a little less confusing
+    @test computespecial[] == true # Dummy compare to make failed test outprint a little less confusing 
+    @test ncollectspecial[] == 3 # All values are collected with SpecialContext
 end
 
 

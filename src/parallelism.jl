@@ -38,7 +38,7 @@ function mapexec(ctx, xs; cache=false, map=map)
     mapcompute(ctx, xs;
                map=map,
                cache=cache,
-               collect_results=xs -> asyncmap(exec, xs))
+               collect_results=xs -> asyncmap(d -> exec(ctx, d), xs))
 end
 
 

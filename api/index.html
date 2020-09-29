@@ -428,12 +428,14 @@ dir/
         <div class="doc-type">function</div></h2>
       <div class="doc-content"><pre><code class="julia hljs">exec(x)</code></pre>
 <p>If <code>x</code> is a FileTree, computes any uncomputed <code>Thunk</code>s stored as values in it. Returns a new tree with the computed values. If <code>x</code> is a <code>Thunk</code> &#40;such as the result of a <code>reducevalues</code>&#41;, then exec will compute the result. If <code>x</code> is anything else, <code>exec</code> just returns the same value.</p>
+<pre><code class="julia hljs">exec(ctx, x)</code></pre>
+<p>Same as <code>exec&#40;x&#41;</code> with a ctx being passed to <code>Dagger</code> when computing any <code>Thunks</code>.</p>
 </div>
   </div>
 
 <div class="page-foot">
   <div class="copyright">
-    &copy; Shashi Gowda, Julian Samaroo. Last modified: August 21, 2020. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a>.
+    &copy; Shashi Gowda, Julian Samaroo. Last modified: September 29, 2020. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a>.
   </div>
 </div>
 </div><!-- CONTENT ENDS HERE -->

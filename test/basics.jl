@@ -191,6 +191,40 @@ end
     end
 end
 
+@testset "exec with context" begin
+    import Dagger
+
+    struct SpecialContext end
+    
+    computespecial = Ref(false)
+    function Dagger.compute(::SpecialContext, t::Dagger.Thunk, kws...)
+        computespecial[] = true
+        compute(Dagger.Context(procs()), t; kws...)
+    end
+    ncollectspecial = Ref(0)
+    function Dagger.collect(::SpecialContext, c::Dagger.Chunk; kws...) 
+        ncollectspecial[] += 1
+        collect(Dagger.Context(procs()), c; kws...)
+    end
+
+    # Stuff to make sure we never create a default Context
+    didfallback = Ref(false)
+    function Dagger.Context() 
+        didfallback[] = true
+        return Dagger.Context(procs())
+    end
+    # This should probably be fixed in Dagger so it takes the context as an argument
+    Dagger.collect_remote(chunk::Dagger.Chunk) = 
+    Dagger.move(Dagger.Context(procs()), chunk.processor, Dagger.OSProc(), Dagger.poolget(chunk.handle))
+
+    t = mapvalues(identity, maketree("a" => ["b" => [(name="c", value=1)], "d" => ["e" => [(name="f", value=2), (name="g", value=3)]]]), lazy=true)
+    
+    @test exec(SpecialContext(), t) |> values == [1,2,3] 
+    @test computespecial[] == true # Dummy compare to make failed test outprint a little less confusing 
+    @test ncollectspecial[] == 3 # All values are collected with SpecialContext
+    @test didfallback[] == false # We never tried to create a normal Context
+end
+
 
 @testset "iterators" begin
     @test values(t1) == map(get, filter(hasvalue, nodes(t1)))

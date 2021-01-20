@@ -31,7 +31,7 @@ function _glob_map(yes, no, t::FileTree, p, ps...)
         if isempty(cs)
             return no(t)
         else
-            return FileTree(t, children=cs)
+            return FileTree(t, children=cs) |> setparent
         end
     else
         return no(t)
@@ -73,7 +73,7 @@ function _regex_map(yes, no, t::FileTree, regex::Regex, toplevel=true)
     if isempty(cs)
         return no(t)
     else
-        return FileTree(t; children=cs)
+        return FileTree(t; children=cs) |> setparent
     end
 end
 

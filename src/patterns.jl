@@ -7,7 +7,7 @@ function Base.getindex(t::FileTree, g::GlobMatch)
     if sub === nothing
         error("$g did not match in tree")
     end
-    sub
+    setparent(sub)
 end
 
 _occursin(p::AbstractString, x) = p == x
@@ -31,7 +31,7 @@ function _glob_map(yes, no, t::FileTree, p, ps...)
         if isempty(cs)
             return no(t)
         else
-            return FileTree(t, children=cs) |> setparent
+            return FileTree(t, children=cs)
         end
     else
         return no(t)
@@ -53,7 +53,7 @@ Surround the regular expression in `^` and `\$` (to match the entire string).
 
 function Base.getindex(x::Union{FileTree, File}, regex::Regex)
     t = _regex_map(identity, x->nothing, x, regex)
-    isnothing(t) ?  empty(x) : t
+    isnothing(t) ?  empty(x) : setparent(t)
 end
 
 function _regex_map(yes, no, t::FileTree, regex::Regex, toplevel=true)

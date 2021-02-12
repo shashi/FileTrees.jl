@@ -20,6 +20,15 @@ using Distributed
                                   └─ c/"""
 end
 
+# Helper function to recursively check that all children of ft have ft as their parent
+function isconsistent(ft)
+    ok = true
+    for c in children(ft)
+        ok = parent(c) === ft && isconsistent(c)
+    end
+    return ok
+end
+
 @testset "indexing" begin
     @test name(t) == "."
     @test t["a"]["b"]["a"] isa File
@@ -38,6 +47,9 @@ end
                   maketree("c" => ["b","a"]))
 
     @test_throws ErrorException t["c"]
+
+    @test isconsistent(t[r"a|c"])
+    @test isconsistent(t[glob"a/*/*"])
 end
 
 @testset "filter" begin
@@ -66,17 +78,24 @@ import FileTrees: attach
                         File(nothing, "data.csv", (yr, mo)) )
         end
     end
+
+    @test isconsistent(t1)
+
     data1 = reducevalues(vcat, t1) |> exec
 
     t4 = mv(t1, r"^(.*)/(.*)/data.csv$", s"\1/\2.csv")
 
+    @test isconsistent(t4)
+
     t5 = maketree([])
     for yr = 1:9
         for mo = 1:6
-            t5 = attach(t5, string("0", yr),
+            t5 = attach(t5, joinpath(string("0", yr)),
                         File(nothing, string("0", mo) * ".csv", (yr, mo)))
         end
     end
+
+    @test isconsistent(t5)
 
     @test isequal(t4, t5)
 
@@ -88,9 +107,13 @@ import FileTrees: attach
         reducevalues(vcat, subtree)
     end
 
+    @test isconsistent(t7)
+
     @test reducevalues(hcat, t7; dirs=true) == [(j, i) for i=1:6, j=1:9]
 
     t6 = cp(t1, r"^(.*)/(.*)/data.csv$", s"\1/\2.csv")
+
+    @test isconsistent(t6)
 
     @test isequal(t6, merge(t1, t5))
 end

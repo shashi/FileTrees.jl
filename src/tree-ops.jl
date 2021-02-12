@@ -28,8 +28,12 @@ end
 # path use `combine` to overwrite multiple files which map to the same path
 function regex_rewrite_tree(tree, from_path, to_path, combine)
     newtree = maketree(name(tree)=>[])
+    # Exclude the root from the matching because
+    #   1) the public API where the pattern is relative to the root and 
+    #   2) attach wants a path relative to the root
+    rootoffset = length(canonical_path(path(tree)))+2
     for x in Leaves(tree)
-        newname = replace(canonical_path(path(x)), from_path => to_path)
+        newname = replace(canonical_path(path(x))[rootoffset:end], from_path => to_path)
         dir = dirname(newname)
         dir = isempty(dir) ? "." : dir
         newtree = attach(newtree,
@@ -84,7 +88,7 @@ function normdots(x::FileTree; combine=_merge_error)
         z=normdots(y; combine=combine)
         name(z) == "." ? children(z) : [z]
     end |> Iterators.flatten |> collect
-    FileTree(x; children=_combine(c2, combine))
+    FileTree(x; children=_combine(c2, combine)) |> setparent
 end
 
 normdots(x::File; kw...) = x

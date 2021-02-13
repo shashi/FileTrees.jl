@@ -60,6 +60,13 @@ end
 
 @testset "merge" begin
     @test isequal(merge(t,t), t)
+
+    # Check that we don't rearrange the tree more than necessary
+    t2 =  maketree(["b" => ["x"], "a" => ["y"]])
+    t3 =  maketree(["c" => ["x"], "a" => ["z"]])
+    @test name.(children(merge(t2, t3))) == ["b", "a", "c"]
+    @test name.(children(merge(t3, t2))) == ["c", "a", "b"]
+    @test isequal(merge(t2, t3), merge(t3,t2))
 end
 
 @testset "diff" begin

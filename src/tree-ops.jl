@@ -65,19 +65,16 @@ end
 apply_combine(f::OnNodes, x, y) = f(x, y)
 
 function _combine(cs, combine)
-    if !issorted(cs, by=name)
-        sort!(cs, by=name)
-    end
-    i = 0
-    prev = nothing
+    seen = Dict()
     out = []
     for c in cs
-        if prev == name(c)
+        prev = get(seen, name(c), nothing)
+        if prev !== nothing
             out[end] = apply_combine(combine, c, out[end])
         else
             push!(out, c)
+            seen[name(c)] = c
         end
-        prev = name(c)
     end
     map(identity, out)
 end

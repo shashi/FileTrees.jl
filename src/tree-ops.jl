@@ -70,10 +70,10 @@ function _combine(cs, combine)
     for c in cs
         prev = get(seen, name(c), nothing)
         if prev !== nothing
-            out[end] = apply_combine(combine, c, out[end])
+            out[prev] = apply_combine(combine, out[prev], c)
         else
             push!(out, c)
-            seen[name(c)] = c
+            seen[name(c)] = length(out)
         end
     end
     map(identity, out)

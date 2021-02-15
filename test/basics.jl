@@ -123,6 +123,16 @@ import FileTrees: attach
     @test isconsistent(t6)
 
     @test isequal(t6, merge(t1, t5))
+
+    @testset "combine" begin
+        tcombine = maketree(["a" => [(name="y", value="ay"), (name ="x", value="ax")], "b" => [(name ="x", value="bx"), (name="y", value="by")]])
+        tcombined = mv(tcombine, r"^([^/]*)/([x|y])", s"\2"; combine=(v1,v2) -> v1 * "_" * v2)
+
+        @test tcombined["x"][] == "ax_bx"
+        @test tcombined["y"][] == "ay_by"
+        # Also test that we maintained the same order as the first encountered node
+        @test name.(children(tcombined)) == ["y", "x"]
+    end
 end
 
 @testset "values" begin

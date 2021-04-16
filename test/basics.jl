@@ -34,10 +34,10 @@ end
     @test t["a"]["b"]["a"] isa File
     @test t["a"]["c"]["c"] isa FileTree
 
-    @test path(t["a"]["b"]["a"])  == p"." /"a"/"b"/"a"
+    @test Path(t["a"]["b"]["a"])  == p"." /"a"/"b"/"a"
 
     t1 = FileTrees.rename(t, "foo")
-    @test path(t1["a"]["b"]["a"])  == p"foo" /"a"/"b"/"a"
+    @test Path(t1["a"]["b"]["a"])  == p"foo" /"a"/"b"/"a"
 
     @test isequal(t[r"a|b"], t)
 
@@ -136,7 +136,7 @@ import FileTrees: attach
 end
 
 @testset "values" begin
-    t1 = FileTrees.load(x->string(path(x)), t)
+    t1 = FileTrees.load(path, t)
     if isdir("test_dir")
         rm("test_dir", recursive=true)
     end
@@ -192,7 +192,7 @@ end
     end
 
 
-    t1 = FileTrees.load(x->uppercase(string(path(x))), t, lazy=true)
+    t1 = FileTrees.load(uppercase∘path, t, lazy=true)
 
     @test get(t1["a/b/a"]) isa Thunk
     @test get(exec(t1)["a/b/a"]) == string(p"."/"A"/"B"/"A")

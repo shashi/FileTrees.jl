@@ -5,7 +5,7 @@ using AbstractTrees
 import AbstractTrees: children
 import Base: parent, getindex
 
-export FileTree, File, name, path, maketree, children, rename, setvalue, setparent
+export FileTree, File, name, Path, path, maketree, children, rename, setvalue, setparent
 
 import FilePathsBase: /, Path, @p_str
 export @p_str, get, values, nodes, files, dirs

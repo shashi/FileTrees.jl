@@ -150,7 +150,7 @@ function File(f::File; parent=parent(f), name=f.name, value=f.value)
     File(parent, name, value)
 end
 
-Base.show(io::IO, f::File) = print(io, string("File(", path(f), ")"))
+Base.show(io::IO, f::File) = print(io, string("File(", Path(f), ")"))
 
 function AbstractTrees.printnode(io::IO, f::Union{FileTree, File})
     print(io, name(f))
@@ -278,17 +278,19 @@ maketree(node::Vector) = maketree("."=>node)
 Base.basename(d::Node) = Path(d.name)
 
 """
-    path(file::Union{File, FileTree)
+    Path(file::Union{File, FileTree)
 
-Returns an [`AbstractPath`](https://rofinn.github.io/FilePathsBase.jl/stable/design/#Path-Types-1) object which is the path of the file from the
+Returns an [`AbstractPath`](https://rofinn.github.io/FilePathsBase.jl/stable/design/#Path-Types-1) object which is the Path of the file from the
 root node leading up to this file.
 """
-function path(d::Node)
+function Path(d::Node)
     parent(d) === nothing && return Path(d.name)
-    path(parent(d)) / Path(d.name)
+    Path(parent(d)) / Path(d.name)
 end
 
-Base.dirname(d::Node) = dirname(path(d))
+path(x::Node) = string(Path(x))
+
+Base.dirname(d::Node) = dirname(Path(d))
 
 Base.getindex(d::Node) = d.value
 

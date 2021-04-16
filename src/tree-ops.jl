@@ -31,9 +31,9 @@ function regex_rewrite_tree(tree, from_path, to_path, combine)
     # Exclude the root from the matching because
     #   1) the public API where the pattern is relative to the root and 
     #   2) attach wants a path relative to the root
-    rootoffset = length(canonical_path(path(tree)))+2
+    rootoffset = length(canonical_path(Path(tree)))+2
     for x in Leaves(tree)
-        newname = replace(canonical_path(path(x))[rootoffset:end], from_path => to_path)
+        newname = replace(canonical_path(Path(x))[rootoffset:end], from_path => to_path)
         dir = dirname(newname)
         dir = isempty(dir) ? "." : dir
         newtree = attach(newtree,

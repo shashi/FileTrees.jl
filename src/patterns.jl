@@ -57,7 +57,7 @@ function Base.getindex(x::Union{FileTree, File}, regex::Regex)
 end
 
 function _regex_map(yes, no, t::FileTree, regex::Regex, toplevel=true)
-    if !toplevel && !isnothing(match(regex, canonical_path(path(t))))
+    if !toplevel && !isnothing(match(regex, canonical_path(Path(t))))
         return yes(t)
     end
 
@@ -78,7 +78,7 @@ function _regex_map(yes, no, t::FileTree, regex::Regex, toplevel=true)
 end
 
 function _regex_map(yes, no, t::File, regex::Regex, toplevel=false)
-    !isnothing(match(regex, canonical_path(path(t)))) ? yes(t) : no(t)
+    !isnothing(match(regex, canonical_path(Path(t)))) ? yes(t) : no(t)
 end
 
 

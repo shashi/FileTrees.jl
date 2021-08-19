@@ -178,7 +178,7 @@ end
     @test_throws ArgumentError reducevalues(+, maketree("." => []))
     @test reducevalues(+, maketree("." => []), init=0) === 0
 
-    @test_throws ArgumentError reducevalues(+, maketree("." => []), associative=false)
+    @test_throws Union{ArgumentError,MethodError} reducevalues(+, maketree("." => []), associative=false)
     @test reducevalues(+, maketree("." => []), init=0, associative=false) === 0
 
     # issue 23
@@ -235,22 +235,22 @@ end
     import Dagger
 
     struct SpecialContext end
-    
+
     computespecial = Ref(false)
     function Dagger.compute(::SpecialContext, t::Dagger.Thunk, kws...)
         computespecial[] = true
         compute(Dagger.Context(procs()), t; kws...)
     end
     ncollectspecial = Ref(0)
-    function Dagger.collect(::SpecialContext, c::Dagger.Chunk; kws...) 
+    function Dagger.collect(::SpecialContext, c::Dagger.Chunk; kws...)
         ncollectspecial[] += 1
         collect(Dagger.Context(procs()), c; kws...)
     end
 
     t = mapvalues(identity, maketree("a" => ["b" => [(name="c", value=1)], "d" => ["e" => [(name="f", value=2), (name="g", value=3)]]]), lazy=true)
-    
-    @test exec(SpecialContext(), t) |> values == [1,2,3] 
-    @test computespecial[] == true # Dummy compare to make failed test outprint a little less confusing 
+
+    @test exec(SpecialContext(), t) |> values == [1,2,3]
+    @test computespecial[] == true # Dummy compare to make failed test outprint a little less confusing
     @test ncollectspecial[] == 3 # All values are collected with SpecialContext
 end
 

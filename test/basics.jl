@@ -124,12 +124,16 @@ import FileTrees: attach
 
     @test isequal(t6, merge(t1, t5))
 
-    @testset "combine" begin
-        tcombine = maketree(["a" => [(name="y", value="ay"), (name ="x", value="ax")], "b" => [(name ="x", value="bx"), (name="y", value="by")]])
-        tcombined = mv(tcombine, r"^([^/]*)/([x|y])", s"\2"; combine=(v1,v2) -> v1 * "_" * v2)
+    @testset "$fun combine$(associative ? " associative" : "")" for fun in (cp, mv), associative in (false, true)
+        tcombine = maketree([
+                            "a" => [(name="y", value="ay"), (name ="x", value="ax")], 
+                            "b" => [(name ="x", value="bx"), (name="y", value="by")],
+                            "c" => [(name ="x", value="cx"), (name="y", value="cy")],
+                            ])
+        tcombined = mv(tcombine, r"^([^/]*)/([xy])", s"\2"; combine=(v1,v2) -> v1 * "_" * v2, associative=associative)
 
-        @test tcombined["x"][] == "ax_bx"
-        @test tcombined["y"][] == "ay_by"
+        @test tcombined["x"][] == "ax_bx_cx"
+        @test tcombined["y"][] == "ay_by_cy"
         # Also test that we maintained the same order as the first encountered node
         @test name.(children(tcombined)) == ["y", "x"]
     end

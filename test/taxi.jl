@@ -46,12 +46,18 @@ end
     # this should throw
     @test_throws ErrorException mv(dfs, r"^([^/]*)/([^/]*)/yellow.csv$", s"yellow.csv")
 
-    yellow = mv(dfs, r"^([^/]*)/([^/]*)/yellow.csv$", s"yellow.csv", combine=vcat)["yellow.csv"]
+    yellow = mv(dfs, r"^([^/]*)/([^/]*)/yellow.csv$", s"yellow.csv", combine=vcat, associative=false)["yellow.csv"]
     @test get(yellow) isa DataFrame
 
     # correct?
     @test Set(DataFrames.Tables.rowtable(reducevalues(vcat, dfs[glob"*/*/yellow.csv"]))) ==
     Set(DataFrames.Tables.rowtable(get(yellow)))
+
+    # Check that we get the same when not combining associatively
+    yellow_assoc = mv(dfs, r"^([^/]*)/([^/]*)/yellow.csv$", s"yellow.csv", combine=vcat, associative=true)["yellow.csv"]
+    @test get(yellow_assoc) isa DataFrame
+
+    @test dropmissing(get(yellow)) == dropmissing(get(yellow_assoc))
 end
 
 @testset "metadata" begin

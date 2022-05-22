@@ -24,24 +24,47 @@ function attach(t, path::PathLike, t′; combine=_merge_error)
     merge(t, maketree(name(t)=>[t1]); combine=combine)
 end
 
+# Attach all paths_and_ts to t assuming combine is associative to enable more parllelism
+function assocattach(t, paths_and_ts::AbstractVector{<:Pair{<:PathLike, <:Node}}; combine=_merge_error)
+    isempty(paths_and_ts) && return t
+    length(paths_and_ts) == 1 && return attach(t, first(paths_and_ts)...; combine) 
+    l = length(paths_and_ts)
+    m = div(l, 2)
+    t1 = assocattach(t, @view(paths_and_ts[begin:begin+m-1]); combine)
+    t2 = assocattach(t, @view(paths_and_ts[begin+m:end]); combine)
+    merge(t1, t2; combine=combine)
+end
+
 # rewrite `tree` according by performing string search and replace on every
 # path use `combine` to overwrite multiple files which map to the same path
-function regex_rewrite_tree(tree, from_path, to_path, combine)
+function regex_rewrite_tree(tree, from_path, to_path, combine; associative=false)
     newtree = maketree(name(tree)=>[])
     # Exclude the root from the matching because
     #   1) the public API where the pattern is relative to the root and 
     #   2) attach wants a path relative to the root
     rootoffset = length(canonical_path(Path(tree)))+2
-    for x in Leaves(tree)
-        newname = replace(canonical_path(Path(x))[rootoffset:end], from_path => to_path)
-        dir = dirname(newname)
-        dir = isempty(dir) ? "." : dir
-        newtree = attach(newtree,
-                         dir,
-                         rename(x, basename(newname));
-                         combine=combine)
+
+    if associative
+        paths_and_ts = map(Leaves(tree)) do x
+            newname = replace(canonical_path(Path(x))[rootoffset:end], from_path => to_path)
+            dir = dirname(newname)
+            dir = isempty(dir) ? "." : dir
+            dir => rename(x, basename(newname))
+        end
+        assocattach(newtree, paths_and_ts; combine)
+    else
+
+        for x in Leaves(tree)
+            newname = replace(canonical_path(Path(x))[rootoffset:end], from_path => to_path)
+            dir = dirname(newname)
+            dir = isempty(dir) ? "." : dir
+            newtree = attach(newtree,
+                            dir,
+                            rename(x, basename(newname));
+                            combine=combine)
+        end
+        newtree
     end
-    newtree
 end
 
 # getindex but return the rooted tree
@@ -136,7 +159,7 @@ rm(t::FileTree, path) = diff(t, _getsubtree(t, path))
 """
     cp(t::FileTree,
        from_path::Regex,
-       to_path::SubstitutionString; combine)
+       to_path::SubstitutionString; combine, associative=false)
 
 copy nodes in the file tree whose path matches the `from_tree` regular expression pattern
 by renaming it to `to_path` pattern. Any sub-pattern in `from_path` which is surrounded by
@@ -145,6 +168,8 @@ substitution pattern using \\1, \\2 etc. positional matches.
 
 If a file overwrites an existing node after copy, `combine` will be called to combine
 them together. By default `combine` will error.
+
+Use `associative=true` if `combine` is associative to improve parallelism.
 
 ## Example:
 
@@ -180,11 +205,11 @@ dir/
    └─ 2.csv
 ```
 """
-function cp(t::FileTree, from_path::Regex, to_path::SubstitutionString; combine=_merge_error)
+function cp(t::FileTree, from_path::Regex, to_path::SubstitutionString; combine=_merge_error, associative=false)
     matches = t[from_path]
     isempty(matches) && return t
 
-    newtree = regex_rewrite_tree(matches, from_path, to_path, combine)
+    newtree = regex_rewrite_tree(matches, from_path, to_path, combine; associative=associative)
     merge(t, newtree; combine=combine)
 end
 
@@ -229,7 +254,7 @@ end
 """
     mv(t::FileTree,
        from_path::Regex,
-       to_path::SubstitutionString; combine)
+       to_path::SubstitutionString; combine, associative=false)
 
 move nodes in the file tree whose path matches the `from_tree` regular expression pattern
 by renaming it to `to_path` pattern. Any sub-pattern in `from_path` which is surrounded by
@@ -238,6 +263,8 @@ substitution pattern using \\1, \\2 etc. positional matches.
 
 If a file overwrites an existing node after copy, `combine` will be called to combine
 them together. By default `combine` will error.
+
+Use `associative=true` if `combine` is associative to improve parallelism.
 
 ## Example:
 
@@ -267,11 +294,11 @@ dir/
    └─ 2.csv
 ```
 """
-function mv(t::FileTree, from_path::Regex, to_path::SubstitutionString; combine=_merge_error)
+function mv(t::FileTree, from_path::Regex, to_path::SubstitutionString; combine=_merge_error, associative=false)
     matches = t[from_path]
     isempty(matches) && return t
 
-    newtree = regex_rewrite_tree(matches, from_path, to_path, combine)
+    newtree = regex_rewrite_tree(matches, from_path, to_path, combine; associative=associative)
     merge(diff(t, matches), newtree; combine=combine)
 end
 function Base.merge(x::Node, y::Node; combine=_merge_error)

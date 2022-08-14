@@ -200,6 +200,8 @@ end
 
     @test get(t1["a/b/a"]) isa Thunk
     @test get(exec(t1)["a/b/a"]) == string(p"."/"A"/"B"/"A")
+    # Exec a single File
+    @test get(exec(t1["a/b/a"])) == string(p"."/"A"/"B"/"A")
 
     @test exec(reducevalues(*, mapvalues(lowercase, t1))) == lowercase(exec(reducevalues(*, t1)))
 

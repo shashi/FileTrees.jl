@@ -71,5 +71,6 @@ Same as `exec(x)` with a ctx being passed to `Dagger` when computing any `Thunks
 exec(ctx, x) = x
 
 exec(ctx, d::FileTree) = mapexec(ctx, d, map=(f,t) -> mapvalues(f, t; lazy=false))
+exec(ctx, f::File) = setvalue(f, exec(ctx, f[]))
 
 exec(ctx, d::Union{Thunk, Chunk}) = collect(ctx, compute(ctx, d))

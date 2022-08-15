@@ -347,15 +347,14 @@ function Base.map(f, tree::FileTree; walk=postwalk, dirs=true)
 end
 
 """
-    map(f, tree::FileTree; walk=FileTrees.postwalk, dirs=true)
-
-apply `f` to every node in the tree. To only visit File nodes, pass `dirs=false`.
-
-walk can be either `FileTrees.postwalk` or `FileTrees.postwalk`.
-
     filter(f, tree::FileTree; walk=FileTrees.postwalk, dirs=true)
 
-remove every node `x` from `tree` where `f(x)` is `true`. `f(x)` must return a boolean value.
+Return a copy of `tree`, removing nodes for which `f` is `false`. 
+
+The function `f` is passed all nodes (`File`s and `FileTree`s) if `dirs=true` 
+and leaf nodes (`File`s) if `dirs=false`.
+
+`walk` can be either `FileTrees.postwalk` or `FileTrees.postwalk`.
 """
 function Base.filter(f, tree::FileTree; walk=prewalk, dirs=true)
     walk(tree, collect_children=cs->filter(!isnothing, cs)) do n

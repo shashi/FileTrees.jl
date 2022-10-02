@@ -140,100 +140,112 @@ import FileTrees: attach
 end
 
 @testset "values" begin
-    t1 = FileTrees.load(path, t)
-    if isdir("test_dir")
-        rm("test_dir", recursive=true)
-    end
 
-    @test get(t1["a/b/a"]) == string(p"." / "a" / "b" / "a")
+    mktempdir() do tmproot
+        basedir = joinpath(tmproot, "test_dir_values")
+        t1 = FileTrees.load(path, t)
 
-    @test reducevalues(*, mapvalues(lowercase, t1)) == lowercase(reducevalues(*, t1))
+        @test get(t1["a/b/a"]) == string(p"." / "a" / "b" / "a")
 
-    FileTrees.save(maketree("test_dir" => [t1])) do f
-        @test f isa File
-        open(path(f), "w") do io
-            print(io, get(f))
+        @test reducevalues(*, mapvalues(lowercase, t1)) == lowercase(reducevalues(*, t1))
+
+        FileTrees.save(maketree(basedir=> [t1])) do f
+            @test f isa File
+            open(path(f), "w") do io
+                print(io, get(f))
+            end
         end
-    end
 
-    t2 = FileTree("test_dir")
-    t3 = FileTrees.load(t2) do f
-        open(path(f), "r") do io
-            String(read(io))
+        t2 = FileTree(basedir)
+        t3 = FileTrees.load(t2) do f
+            open(path(f), "r") do io
+                String(read(io))
+            end
         end
+
+        t4 = filter(!isempty, t1)
+
+        @test isequal(t3, FileTrees.rename(t4, basedir))
+
+        x1 = maketree("a"=>[(name="b", value=1)])
+        x2 = mapvalues(x->NoValue(), x1, lazy=true)
+        @test !isempty(values(x2))
+        @test isempty(values(exec(x2)))
+        x3 = mapvalues(x->rand(), x2)
+        @test !isempty(values(x3))
+        @test isempty(values(exec(x3)))
+
+        # issue 16
+        @test_throws ArgumentError reducevalues(+, maketree("." => []))
+        @test reducevalues(+, maketree("." => []), init=0) === 0
+
+        @test_throws Union{ArgumentError,MethodError} reducevalues(+, maketree("." => []), associative=false)
+        @test reducevalues(+, maketree("." => []), init=0, associative=false) === 0
+
+        # issue 23
+        @test FileTrees.save(identity, maketree([])) == nothing
     end
-
-    t4 = filter(!isempty, t1)
-
-    @test isequal(t3, FileTrees.rename(t4, "test_dir"))
-    if isdir("test_dir")
-        rm("test_dir", recursive=true)
-    end
-
-    x1 = maketree("a"=>[(name="b", value=1)])
-    x2 = mapvalues(x->NoValue(), x1, lazy=true)
-    @test !isempty(values(x2))
-    @test isempty(values(exec(x2)))
-    x3 = mapvalues(x->rand(), x2)
-    @test !isempty(values(x3))
-    @test isempty(values(exec(x3)))
-
-    # issue 16
-    @test_throws ArgumentError reducevalues(+, maketree("." => []))
-    @test reducevalues(+, maketree("." => []), init=0) === 0
-
-    @test_throws Union{ArgumentError,MethodError} reducevalues(+, maketree("." => []), associative=false)
-    @test reducevalues(+, maketree("." => []), init=0, associative=false) === 0
-
-    # issue 23
-    @test FileTrees.save(identity, maketree([])) == nothing
 end
 
 @testset "lazy-exec" begin
+    mktempdir() do tmproot
+        basedir = joinpath(tmproot, "test_dir_lazy")
 
-    if isdir("test_dir_lazy")
-        rm("test_dir_lazy", recursive=true)
-    end
+        t1 = FileTrees.load(uppercase∘path, t, lazy=true)
 
+        @test get(t1["a/b/a"]) isa Thunk
+        @test get(exec(t1)["a/b/a"]) == string(p"."/"A"/"B"/"A")
+        # Exec a single File
+        @test get(exec(t1["a/b/a"])) == string(p"."/"A"/"B"/"A")
 
-    t1 = FileTrees.load(uppercase∘path, t, lazy=true)
+        @test exec(reducevalues(*, mapvalues(lowercase, t1))) == lowercase(exec(reducevalues(*, t1)))
 
-    @test get(t1["a/b/a"]) isa Thunk
-    @test get(exec(t1)["a/b/a"]) == string(p"."/"A"/"B"/"A")
-    # Exec a single File
-    @test get(exec(t1["a/b/a"])) == string(p"."/"A"/"B"/"A")
-
-    @test exec(reducevalues(*, mapvalues(lowercase, t1))) == lowercase(exec(reducevalues(*, t1)))
-
-    s = FileTrees.save(maketree("test_dir_lazy" => [t1])) do f
-        open(path(f), "w") do io
-            print(io, get(f))
+        s = FileTrees.save(maketree(basedir => [t1])) do f
+            open(path(f), "w") do io
+                print(io, get(f))
+            end
         end
-    end
-
-    @test isdir("test_dir_lazy")
-    @test isfile("test_dir_lazy/a/b/a")
+        @test isdir(basedir)
+        @test isfile(joinpath(basedir, "a", "b", "a"))
 
 
-    t2 = FileTree("test_dir_lazy")
-    t3 = FileTrees.load(t2; lazy=true) do f
-        open(path(f), "r") do io
-            (String(read(io)), now())
+        t2 = FileTree(basedir)
+        t3 = FileTrees.load(t2; lazy=true) do f
+            open(path(f), "r") do io
+                (String(read(io)), now())
+            end
         end
+        toc = now()
+        sleep(0.01)
+        tic = exec(reducevalues((x,y)->x, mapvalues(last, t3)))
+
+        @test tic > toc
+
+        t4 = filter(!isempty, t1) |> exec
+
+        t5 = mapvalues(first, t3) |> exec
+        @test isequal(t5, FileTrees.rename(t4, basedir))
     end
-    toc = now()
-    sleep(0.01)
-    tic = exec(reducevalues((x,y)->x, mapvalues(last, t3)))
+end
 
-    @test tic > toc
+@testset "lazy-exec heterogenous" begin
+    mktempdir() do tmproot
+        basedir = joinpath(tmproot, "test_dir_lazy")
 
-    t4 = filter(!isempty, t1) |> exec
+        smalltree = exec(FileTrees.load(maketree(basedir => [string(i) for i in 1:3]); lazy=true) do file
+                    isodd(parse(Int, name(file))) ? "AAA" : 13
+        end)
 
-    t5 = mapvalues(first, t3) |> exec
-    @test isequal(t5, FileTrees.rename(t4, "test_dir_lazy"))
+        @test unique(values(smalltree)[1:2:end]) == ["AAA"]
+        @test unique(values(smalltree)[2:2:end]) == [13]
 
-    if isdir("test_dir_lazy")
-        rm("test_dir_lazy", recursive=true)
+        # This used to create inference problems due to array of all values being splatted into a function
+        largetree = exec(FileTrees.load(maketree(basedir => [string(i) for i in 1:1200]); lazy=true) do file
+            isodd(parse(Int, name(file))) ? "AAA" : 13
+        end)
+
+        @test unique(values(largetree)[1:2:end]) == ["AAA"]
+        @test unique(values(largetree)[2:2:end]) == [13]
     end
 end
 

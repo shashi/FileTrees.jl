@@ -95,7 +95,7 @@ function assocreduce(f, xs; init=no_init)
     length(xs) == 1 && return xs[1]
     l = length(xs)
     m = div(l, 2)
-    f(assocreduce(f, xs[1:m]), assocreduce(f, xs[m+1:end]))
+    f(assocreduce(f, @view(xs[1:m])), assocreduce(f, @view(xs[m+1:end])))
 end
 
 """

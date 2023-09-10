@@ -108,6 +108,20 @@ has a value associated with it.
 (see `load` and `mapvalues` for associating values with files.)
 """
 function save(f, t::Node; lazy=nothing, exec=true)
+    # Dagger 0.18 does not allow passing Thunks between workers, so we create a copy of t where
+    # they are removed.
+    # Note that doing something like setvalue(x, NoValue()) when calling saver below won't work 
+    # since each x drags along the whole tree through its parent reference
+    # One could disconnect the parent as well, but users might have code which does things like
+    # dirname = path(parent(file)) e.g. when storing more than one file.
+    # We should probably remove all values here so we don't end up passing a huge tree between
+    # workers though...
+    t_nothunks = map(t) do n
+        n[] isa Thunk && return setvalue(n, NoValue())
+        n[] isa Chunk && return setvalue(n, NoValue())
+        n
+    end |> setparent
+
     t′ = mapvalued(t) do x
         isempty(x) && return NoValue()
 
@@ -121,7 +135,8 @@ function save(f, t::Node; lazy=nothing, exec=true)
             f(setvalue(file, val))
         end
 
-        setvalue(x, lazify(lazy, saver)(x, x[]))
+        relativepath = replace(path(x), path(t) => "")
+        setvalue(x, lazify(lazy, saver)(t_nothunks[relativepath], x[]))
     end
 
     # placeholder task that waits and returns nothing

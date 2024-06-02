@@ -1,46 +1,17 @@
-lazy(f; kw...) = delayed(f; kw...)
+
+# Types left off since this is what Dagger does, probably for inference reasons. Not sure if this is the best performance here...
+struct Thunk
+    f
+    args
+    kwargs
+end
+
+lazy(f) = (args...; kwargs...) -> Thunk(f, args, kwargs)
 
 # If any input is lazy, make the output lazy
-maybe_lazy(f, x) = any(x->x isa Union{Thunk, Chunk}, x) ? lazy(f)(x...) : f(x...)
+maybe_lazy(f, x) = any(x->x isa Thunk, x) ? lazy(f)(x...) : f(x...)
 
 maybe_lazy(f) = (x...) -> maybe_lazy(f, x)
-
-function mapcompute(ctx, xs;
-                    cache=false,
-                    collect_results=identity,
-                    map=map, kw...)
-    thunks = []
-    map(xs) do x
-        if x isa Thunk
-            if cache
-                x.cache = true
-            end
-            push!(thunks, x)
-        end
-        x
-    end
-
-    vals = collect_results(compute(ctx, delayed((xs...)->[xs...]; meta=true)(thunks...); kw...))
-
-    i = 0
-    map(xs) do x
-        # Expression returns vals[i] or x
-        if x isa Thunk
-            i += 1
-            vals[i]
-        else
-            x
-        end
-    end
-end
-
-function mapexec(ctx, xs; cache=false, map=map)
-    mapcompute(ctx, xs;
-               map=map,
-               cache=cache,
-               collect_results=xs -> asyncmap(d -> exec(ctx, d), xs))
-end
-
 
 """
     compute(tree::FileTree; cache=true)
@@ -49,10 +20,7 @@ Compute any lazy values (Thunks) in `tree` and return a new tree where the value
 the computed values (maybe on remote processes). The tree still behaves as a Lazy tree. `exec` on it will fetch the values from remote processes.
 """
 compute(d::FileTree; cache=true, kw...) = compute(Dagger.Context(), d; cache=cache, kw...)
-
-function compute(ctx, d::FileTree; cache=true, kw...)
-    mapcompute(ctx, d, map=((f,t) -> mapvalues(f, t; lazy=false)), cache=cache; kw...)
-end
+compute(ctx, d::FileTree; cache=true, kw...) = mapvalues(v -> exec(ctx, v, identity), d; lazy=false)
 
 """
     exec(x)
@@ -69,9 +37,23 @@ exec(x) = exec(Dagger.Context(), x)
 
 Same as `exec(x)` with a ctx being passed to `Dagger` when computing any `Thunks`.
 """
-exec(ctx, x) = x
+exec(ctx, x, args...) = x
 
-exec(ctx, d::FileTree) = mapexec(ctx, d, map=(f,t) -> mapvalues(f, t; lazy=false))
-exec(ctx, f::File) = setvalue(f, exec(ctx, f[]))
+exec(ctx, d::FileTree, args...) = mapvalues(fetch, compute(ctx, d))
+exec(ctx, f::File, collect_results=fetch) = setvalue(f, exec(ctx, f[], collect_results))
 
-exec(ctx, d::Union{Thunk, Chunk}) = collect(ctx, compute(ctx, d))
+# TODO: Probably need to rework this since there does not seem to be a (safe) way to set the context for a spawned task (context seems to be global since scheduler is global)?
+exec(ctx::Dagger.Context, t::Thunk, collect_results=fetch) = collect_results(Dagger.spawn(t.f, map(a -> exec(ctx, a, identity), t.args)...; (k => exec(ctx, v, identity) for (k,v) in t.kwargs)...))
+
+# TODO: Not sure if these are worth keeping. Added mostly for benchmarking reasons
+struct SingleTreadedContext end
+exec(ctx::SingleTreadedContext, t::Thunk, args...) = t.f(map(a -> exec(ctx, a), t.args)...; (k => exec(ctx, v) for (k,v) in t.kwargs)...)
+
+struct ThreadContext end
+function exec(ctx::ThreadContext, t::Thunk, collect_results=fetch) 
+    args = map(a -> exec(ctx, a, identity), t.args) 
+    kwargs = [k => exec(ctx, v, identity) for (k,v) in t.kwargs]
+    res = Threads.@spawn t.f(map(fetch, args)...; (k => fetch(v) for (k,v) in kwargs)...)
+    collect_results(res)
+end
+ 

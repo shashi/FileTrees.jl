@@ -118,7 +118,8 @@ function save(f, t::Node; lazy=nothing, exec=true)
     # workers though...
     t_nothunks = map(t) do n
         n[] isa Thunk && return setvalue(n, NoValue())
-        n[] isa Chunk && return setvalue(n, NoValue())
+        # TODO: Not sure if trees can have Chunks after switch to Daggers eager API 
+        n[] isa Chunk && return setvalue(n, NoValue()) 
         n
     end |> setparent
 

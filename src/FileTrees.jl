@@ -32,7 +32,7 @@ include("values.jl")
 
 
 import Dagger
-import Dagger: compute, delayed, Chunk, Thunk
+import Dagger: Chunk
 
 export lazy, exec, compute
 

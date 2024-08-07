@@ -338,7 +338,7 @@ postwalk(f, t::File; collect_children=identity) = f(t)
 
 apply `f` to every node in the tree. To only visit File nodes, pass `dirs=false`.
 
-walk can be either `FileTrees.postwalk` or `FileTrees.postwalk`.
+walk can be either `FileTrees.postwalk` or `FileTrees.prewalk`.  Which applies the function after recursively walking the tree, or before.
 """
 function Base.map(f, tree::FileTree; walk=postwalk, dirs=true)
     walk(tree, collect_children=identity) do n
@@ -354,7 +354,7 @@ Return a copy of `tree`, removing nodes for which `f` is `false`.
 The function `f` is passed all nodes (`File`s and `FileTree`s) if `dirs=true` 
 and leaf nodes (`File`s) if `dirs=false`.
 
-`walk` can be either `FileTrees.postwalk` or `FileTrees.postwalk`.
+`walk` can be either `FileTrees.postwalk` or `FileTrees.prewalk`. Which applies the function after recursively walking the tree, or before.
 """
 function Base.filter(f, tree::FileTree; walk=prewalk, dirs=true)
     walk(tree, collect_children=cs->filter(!isnothing, cs)) do n

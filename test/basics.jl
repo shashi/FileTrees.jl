@@ -187,7 +187,14 @@ end
     end
 end
 
-@testset "lazy-exec" begin
+import Dagger
+@testset "lazy-exec with $label" for (label, e) in (
+    # Tuples here only so we can splat into empty, i.e exec(e..., tl) becomes just exec(tl) for the first entry
+    ("default", tuple()),
+    ("MainThread", tuple(Executor.CurrentTask())),
+    ("Threads", tuple(Executor.Threads())),
+    ("Dagger", tuple(Executor.Dagger()))
+) 
 
     mktempdir() do rootpath
         testdir = joinpath(rootpath, "test_dir_lazy")
@@ -195,11 +202,11 @@ end
         t1 = FileTrees.load(uppercase∘path, t, lazy=true)
 
         @test get(t1["a/b/a"]) isa Thunk
-        @test get(exec(t1)["a/b/a"]) == string(p"."/"A"/"B"/"A")
+        @test get(exec(e..., t1)["a/b/a"]) == string(p"."/"A"/"B"/"A")
         # Exec a single File
-        @test get(exec(t1["a/b/a"])) == string(p"."/"A"/"B"/"A")
+        @test get(exec(e..., t1["a/b/a"])) == string(p"."/"A"/"B"/"A")
 
-        @test exec(reducevalues(*, mapvalues(lowercase, t1))) == lowercase(exec(reducevalues(*, t1)))
+        @test exec(e..., reducevalues(*, mapvalues(lowercase, t1))) == lowercase(exec(e..., reducevalues(*, t1)))
 
         s = FileTrees.save(maketree(testdir => [t1])) do f
             @test f isa File
@@ -219,40 +226,36 @@ end
         end
         toc = now()
         sleep(0.01)
-        tic = exec(reducevalues((x,y)->x, mapvalues(last, t3)))
+        tic = exec(e..., reducevalues((x,y)->x, mapvalues(last, t3)))
 
         @test tic > toc
 
-        t4 = filter(!isempty, t1) |> exec
+        t4 = exec(e..., filter(!isempty, t1))
 
-        t5 = mapvalues(first, t3) |> exec
+        t5 = exec(e..., mapvalues(first, t3))
         @test isequal(t5, FileTrees.rename(t4, testdir))
+
+        @testset "Keyword arguments" begin
+            kwfun(x; a) = string(x, ",a=", a)
+            kwfunl = FileTrees.maybe_lazy(kwfun)
+
+            @testset "Lazy arg, not lazy kwarg" begin
+                tkw = map(f -> setvalue(f, kwfunl(f[]; a=2)), t1; dirs=false)
+                @test get(exec(e..., tkw)["a/b/a"]) == string(p"."/"A"/"B"/"A,a=2")
+            end
+
+            @testset "Not lazy arg, lazy kwarg" begin
+                tkw = map(f -> setvalue(f, kwfunl(2; a=f[])), t1; dirs=false)
+                @test get(exec(e..., tkw)["a/b/a"]) == string("2,a=", p"."/"A"/"B"/"A")
+            end
+
+            @testset "Lazy arg, lazy kwarg" begin
+                tkw = map(f -> setvalue(f, kwfunl(f[]; a=f[])), t1; dirs=false)
+                @test get(exec(e..., tkw)["a/b/a"]) == string(p"."/"A"/"B"/"A,a=."/"A"/"B"/"A")
+            end
+        end
     end
 end
-
-# TODO: Just remove if we anyways can't select which context to use in Daggers eager/standard API?
-#= @testset "exec with context" begin
-    import Dagger
-
-    struct SpecialContext end
-
-    computespecial = Ref(false)
-    function Dagger.compute(::SpecialContext, t::Dagger.Thunk, kws...)
-        computespecial[] = true
-        compute(Dagger.Context(procs()), t; kws...)
-    end
-    ncollectspecial = Ref(0)
-    function Dagger.collect(::SpecialContext, c::Dagger.Chunk; kws...)
-        ncollectspecial[] += 1
-        collect(Dagger.Context(procs()), c; kws...)
-    end
-
-    t = mapvalues(identity, maketree("a" => ["b" => [(name="c", value=1)], "d" => ["e" => [(name="f", value=2), (name="g", value=3)]]]), lazy=true)
-
-    @test exec(SpecialContext(), t) |> values == [1,2,3]
-    @test computespecial[] == true # Dummy compare to make failed test outprint a little less confusing
-    @test ncollectspecial[] == 3 # All values are collected with SpecialContext
-end =#
 
 
 @testset "iterators" begin

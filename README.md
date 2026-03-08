@@ -49,18 +49,18 @@ end
     FileIO.save(path(file), file.value)
 end
 ```
-This takes about 150 seconds when Julia is started with 10 processes with 4 threads each, in other words on a 12 core machine. (oversubscribing this much gives good perormance in this case.)
+This takes about 150 seconds when Julia is started with 10 processes with 4 threads each, in other words on a 12 core machine. (oversubscribing this much gives good performance in this case.)
  In other words,
 ```
 export JULIA_NUM_THREADS=4
 julia -p 10
 ```
 
-Then load it back in a new session:
+Then load it back (using Dagger for massive parallelism) in a new session:
 
 ```julia
 using Distributed
-@everywhere using FileTrees, FileIO, Images, .Threads, OnlineStats, Distributed
+@everywhere using FileTrees, FileIO, Images, .Threads, OnlineStats, Distributed, Dagger
 
 t = FileTree("mandel")
 
@@ -74,7 +74,7 @@ end
 
 # combine them all into one histogram using `merge` method on OnlineStats
 
-@time h = reducevalues(merge, t1) |> exec # exec computes a lazy value
+@time h = exec(Executors.Dagger(), reducevalues(merge, t1)) # exec computes a lazy value
 ```
 Plot the Histogram:
 

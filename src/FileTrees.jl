@@ -31,10 +31,7 @@ export mapvalues, reducevalues, NoValue, hasvalue # load, save
 include("values.jl")
 
 
-import Dagger
-import Dagger: Chunk
-
-export lazy, exec, compute
+export lazy, exec, Executor
 
 include("parallelism.jl")
 

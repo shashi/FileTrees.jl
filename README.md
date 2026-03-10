@@ -74,7 +74,7 @@ end
 
 # combine them all into one histogram using `merge` method on OnlineStats
 
-@time h = exec(Executors.Dagger(), reducevalues(merge, t1)) # exec computes a lazy value
+@time h = exec(Executor.Dagger(), reducevalues(merge, t1)) # exec computes a lazy value
 ```
 Plot the Histogram:
 

@@ -1,7 +1,7 @@
 # <a href="http://shashi.biz/FileTrees.jl">FileTrees</a>
 
-[![Build Status](https://travis-ci.org/shashi/FileTrees.jl.svg?branch=master)](https://travis-ci.org/shashi/FileTrees.jl) [![Build status](https://ci.appveyor.com/api/projects/status/6sei8e7et721usx6?svg=true)](https://ci.appveyor.com/project/shashi/filetrees-jl)
- [![Coverage Status](https://coveralls.io/repos/github/shashi/FileTrees.jl/badge.svg?branch=master)](https://coveralls.io/github/shashi/FileTrees.jl?branch=master)
+[![CI](https://github.com/shashi/FileTrees.jl/actions/workflows/ci.yml/badge.svg)](https://github.com/shashi/FileTrees.jl/actions/workflows/ci.yml)
+[![Coverage Status](https://coveralls.io/repos/github/shashi/FileTrees.jl/badge.svg?branch=master)](https://coveralls.io/github/shashi/FileTrees.jl?branch=master)
  
 Easy everyday parallelism with a file tree abstraction.
 

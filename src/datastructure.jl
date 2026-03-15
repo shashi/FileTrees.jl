@@ -20,9 +20,11 @@ struct NoValue end
 
 Copy over all fields from `tree`, but use any fields provided as keyword arguments.
 
-    FileTree(dirname::String)
+    FileTree(dirname::String; [sort])
 
 Construct a `FileTree` to reflect directory from disk in the current working directory.
+
+If `sort=true` (the default) then each level of the tree will be lexicographically sorted.
 """
 struct FileTree
     parent::Union{FileTree, Nothing}
@@ -53,25 +55,25 @@ function FileTree(t::FileTree;
     FileTree(parent, name, children, value)
 end
 
-FileTree(dir) = FileTree(nothing, dir)
+FileTree(dir; kwargs...) = FileTree(nothing, dir; kwargs...)
 
-function FileTree(parent, dir)
-    children = []
-    parent′ = FileTree(parent, dir, children)
-
-    ls = readdir(dir)
-    cd(dir) do
-        children′ = map(ls) do f
-            if isdir(f)
-                FileTree(parent′, f)
-            else
-                File(parent′, f)
-            end
+function FileTree(parent, dir; sort=true, root="")
+    parent′ = FileTree(parent, dir, [])
+    for (path, dirs, files) in walkdir(joinpath(root, dir)) 
+        for dir in dirs
+            push!(parent′.children, FileTree(parent′, dir; sort, root=path))
         end
-        append!(children, children′)
+        for file in files
+            push!(parent′.children, File(parent′, file))
+        end
+        if sort 
+            sort!(parent′.children; by=name)
+        end
+        # this might look a bit silly, but we don't care much for walkdir recursing down the tree, only that it is
+        # much faster than readdir + isdir/isfile when it comes to separating files from directories 
+        break
     end
-
-    parent′
+    parent′ 
 end
 
 """

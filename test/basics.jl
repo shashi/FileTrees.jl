@@ -257,6 +257,24 @@ import Dagger
     end
 end
 
+@testset "Unwrap TaskFailedExceptions" begin
+        innerfun(x) = x + 2  # Error, we will pass a string as x
+        outerfun(x) = string("Result ", innerfun(x))
+        # Only Executors.Threads messes with exceptions, so we don't test this above
+        callsitefun(ft) = exec(Executor.Threads(unwrap_exceptions=true), mapvalues(identity, mapvalues(identity, mapvalues(identity, mapvalues(outerfun, ft)))))
+        t1 = FileTrees.load(uppercase∘path, t, lazy=true)
+    try
+        callsitefun(t1)
+    catch ex
+        # Bleh! Is there no better way to test that functions show up in the backtrace?
+        currbt = stacktrace(catch_backtrace())
+        @test any(s -> s.func == Symbol(callsitefun), currbt)
+        exstr = sprint(showerror, ex)
+        @test occursin(string(outerfun), exstr)
+        @test occursin(string(innerfun), exstr)
+    end
+end
+
 
 @testset "iterators" begin
     @test values(t1) == map(get, filter(hasvalue, nodes(t1)))

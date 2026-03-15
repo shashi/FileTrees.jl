@@ -38,12 +38,31 @@ exec(e, x, args...) = x
 exec(e, d::FileTree, args...) = mapvalues(v -> exec(e, v, fetch), d; lazy=false)
 exec(e, f::File, collect_results=fetch) = setvalue(f, exec(e, f[], collect_results))
 
+struct UnwrappedTaskException{E} <: Exception
+    cnt::Int
+    msg::String
+    stack::E
+end
+
+function Base.showerror(io::IO, e::UnwrappedTaskException)
+    println(io, e.cnt, " nested TaskFailedExceptions have been unwrapped by FileTrees to reduce clutter!\n",  e.msg)
+    for (wrapped, bt) in Iterators.reverse(e.stack)
+        showerror(io, wrapped, bt; backtrace=bt !== nothing)
+    end
+end
+
 fetch_unwrap_exception(t) = try
     fetch(t)
 catch e
-    if istaskfailed(t)
-        rethrow(t.result)
+    if e isa TaskFailedException
+        lastthrown = first(current_exceptions(t)).exception
+        if lastthrown isa UnwrappedTaskException
+            rethrow(UnwrappedTaskException(lastthrown.cnt + 1, lastthrown.msg, lastthrown.stack))
+        end
+        # kept msg in case other executors also want to unwrap
+        rethrow(UnwrappedTaskException(1, "See Executor.Threads documentation for how to disable unwrapping case anything appears to be missing.", current_exceptions(t)))
     end
+    rethrow(e)
 end
 
 """

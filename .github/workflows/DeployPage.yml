@@ -36,9 +36,8 @@ jobs:
             import PkgPage;
             PkgPage.optimize(input="page", output="")'
     - name: Build and Deploy
-      uses: JamesIves/github-pages-deploy-action@releases/v3
+      uses: JamesIves/github-pages-deploy-action@v4
       with:
-        SSH: true
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        BRANCH: gh-pages
-        FOLDER: page/__site
+        token: ${{ secrets.GITHUB_TOKEN }}
+        branch: gh-pages
+        folder: page/__site

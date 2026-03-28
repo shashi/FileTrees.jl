@@ -89,7 +89,7 @@ taxi_dir = FileTree(joinpath(pathof(FileTrees), <span class="hljs-string">&quot;
 
 lazy_dfs = FileTrees.load(taxi_dir; lazy=<span class="hljs-literal">true</span>) <span class="hljs-keyword">do</span> file
     DataFrame(CSV.File(path(file)))
-<span class="hljs-keyword">end</span></code></pre><pre><code class="plaintext hljs">IOError: readdir(&quot;/home/runner/.julia/packages/FileTrees/2C7lN/src/FileTrees.jl/../../page/taxi-data&quot;): not a directory (ENOTDIR)
+<span class="hljs-keyword">end</span></code></pre><pre><code class="plaintext hljs">IOError: readdir(&quot;/home/runner/.julia/packages/FileTrees/seaBZ/src/FileTrees.jl/../../page/taxi-data&quot;): not a directory (ENOTDIR)
 </code></pre>
 <pre><code class="julia hljs">yellow′ = mv(lazy_dfs,
              <span class="hljs-string">r&quot;(.*)/(.*)/yellow.csv&quot;</span>,

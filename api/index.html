@@ -77,14 +77,14 @@
 <div class="content container">
 
 <!-- Content appended here -->
-<div class="franklin-content"><h1 id="api_documentation"><a href="#api_documentation">API documentation</a></h1>
-<h3 id="data_structure"><a href="#data_structure">Data structure</a></h3>
+<div class="franklin-content"><h1 id="api_documentation"><a href="#api_documentation" class="header-anchor">API documentation</a></h1>
+<h3 id="data_structure"><a href="#data_structure" class="header-anchor">Data structure</a></h3>
   <div class="docstring">
       <h2 class="doc-header" id="FileTree">
         <a href="#FileTree">FileTree</a>
         <div class="doc-type">type</div></h2>
       <div class="doc-content"><pre><code class="julia hljs">FileTree(parent, name, children, value)</code></pre>
-<h4 id="fields"><a href="#fields">Fields:</a></h4>
+<h4 id="fields"><a href="#fields" class="header-anchor">Fields:</a></h4>
 <ul>
 <li><p><code>parent::Union&#123;FileTree, Nothing&#125;</code> – The parent node. <code>nothing</code> if it&#39;s the root node.</p>
 </li>
@@ -97,8 +97,9 @@
 </li>
 </ul>
 <p>Copy over all fields from <code>tree</code>, but use any fields provided as keyword arguments.</p>
-<pre><code class="julia hljs">FileTree(dirname::<span class="hljs-built_in">String</span>)</code></pre>
+<pre><code class="julia hljs">FileTree(dirname::<span class="hljs-built_in">String</span>; [sort])</code></pre>
 <p>Construct a <code>FileTree</code> to reflect directory from disk in the current working directory.</p>
+<p>If <code>sort&#61;true</code> &#40;the default&#41; then each level of the tree will be lexicographically sorted.</p>
 </div>
   </div>
 
@@ -107,7 +108,7 @@
         <a href="#File">File</a>
         <div class="doc-type">type</div></h2>
       <div class="doc-content"><pre><code class="julia hljs">File(parent, name, value=NoValue())</code></pre>
-<h4 id="fields__2"><a href="#fields__2">Fields:</a></h4>
+<h4 id="fields__2"><a href="#fields__2" class="header-anchor">Fields:</a></h4>
 <ul>
 <li><p><code>parent::Union&#123;FileTree, Nothing&#125;</code> – The parent node. <code>nothing</code> if it&#39;s the root node.</p>
 </li>
@@ -132,8 +133,11 @@
       <h2 class="doc-header" id="path">
         <a href="#path">path</a>
         <div class="doc-type">function</div></h2>
-      <div class="doc-content"><pre><code class="julia hljs">path(file::<span class="hljs-built_in">Union</span>{File, FileTree)</code></pre>
-<p>Returns an <a href="https://rofinn.github.io/FilePathsBase.jl/stable/design/#Path-Types-1"><code>AbstractPath</code></a> object which is the path of the file from the root node leading up to this file.</p>
+      <div class="doc-content"><p>No documentation found for public binding <code>FileTrees.path</code>.</p>
+<p><code>FileTrees.path</code> is a <code>Function</code>.</p>
+<pre><code class="julia hljs"><span class="hljs-comment"># 1 method for generic function &quot;path&quot; from FileTrees:</span>
+ [<span class="hljs-number">1</span>] path(x::<span class="hljs-built_in">Union</span>{FileTrees.File, FileTrees.FileTree})
+     @ ~/.julia/packages/FileTrees/<span class="hljs-number">2</span>C7lN/src/datastructure.jl:<span class="hljs-number">293</span></code></pre>
 </div>
   </div>
 
@@ -220,17 +224,16 @@
 </div>
   </div>
 
-<h3 id="tree_manipulation"><a href="#tree_manipulation">Tree manipulation</a></h3>
+<h3 id="tree_manipulation"><a href="#tree_manipulation" class="header-anchor">Tree manipulation</a></h3>
 <p>See the article on <a href="/FileTrees.jl/tree-manipulation/">tree manipulation</a>.</p>
   <div class="docstring">
       <h2 class="doc-header" id="map/filter">
         <a href="#map/filter">map/filter</a>
         <div class="doc-type">methods</div></h2>
-      <div class="doc-content"><pre><code class="julia hljs">map(f, tree::FileTree; walk=FileTrees.postwalk, dirs=<span class="hljs-literal">true</span>)</code></pre>
-<p>apply <code>f</code> to every node in the tree. To only visit File nodes, pass <code>dirs&#61;false</code>.</p>
-<p>walk can be either <code>FileTrees.postwalk</code> or <code>FileTrees.postwalk</code>.</p>
-<pre><code class="julia hljs">filter(f, tree::FileTree; walk=FileTrees.postwalk, dirs=<span class="hljs-literal">true</span>)</code></pre>
-<p>remove every node <code>x</code> from <code>tree</code> where <code>f&#40;x&#41;</code> is <code>true</code>. <code>f&#40;x&#41;</code> must return a boolean value.</p>
+      <div class="doc-content"><pre><code class="julia hljs">filter(f, tree::FileTree; walk=FileTrees.postwalk, dirs=<span class="hljs-literal">true</span>)</code></pre>
+<p>Return a copy of <code>tree</code>, removing nodes for which <code>f</code> is <code>false</code>. </p>
+<p>The function <code>f</code> is passed all nodes &#40;<code>File</code>s and <code>FileTree</code>s&#41; if <code>dirs&#61;true</code>  and leaf nodes &#40;<code>File</code>s&#41; if <code>dirs&#61;false</code>.</p>
+<p><code>walk</code> can be either <code>FileTrees.postwalk</code> or <code>FileTrees.prewalk</code>. Which applies the function after recursively walking the tree, or before.</p>
 </div>
   </div>
 
@@ -281,10 +284,11 @@ t1 = mapsubtrees(<span class="hljs-string">&quot;*&quot;</span>) <span class="hl
         <div class="doc-type">method</div></h2>
       <div class="doc-content"><pre><code class="julia hljs">mv(t::FileTree,
    from_path::<span class="hljs-built_in">Regex</span>,
-   to_path::SubstitutionString; combine)</code></pre>
+   to_path::<span class="hljs-built_in">SubstitutionString</span>; combine, associative=<span class="hljs-literal">false</span>)</code></pre>
 <p>move nodes in the file tree whose path matches the <code>from_tree</code> regular expression pattern by renaming it to <code>to_path</code> pattern. Any sub-pattern in <code>from_path</code> which is surrounded by paranthesis will be read as a matched substring which can be accessed in the to_path substitution pattern using \1, \2 etc. positional matches.</p>
 <p>If a file overwrites an existing node after copy, <code>combine</code> will be called to combine them together. By default <code>combine</code> will error.</p>
-<h2 id="example"><a href="#example">Example:</a></h2>
+<p>Use <code>associative&#61;true</code> if <code>combine</code> is associative to improve parallelism.</p>
+<h2 id="example"><a href="#example" class="header-anchor">Example:</a></h2>
 <pre><code class="julia hljs">julia&gt; t = maketree(<span class="hljs-string">&quot;dir&quot;</span> =&gt; [string(j) =&gt;
                                 [string(i)=&gt;[<span class="hljs-string">&quot;data.csv&quot;</span>]
                                     <span class="hljs-keyword">for</span> i = <span class="hljs-number">1</span>:<span class="hljs-number">2</span>] <span class="hljs-keyword">for</span> j=<span class="hljs-number">1</span>:<span class="hljs-number">2</span>])
@@ -317,10 +321,11 @@ dir/
         <div class="doc-type">method</div></h2>
       <div class="doc-content"><pre><code class="julia hljs">cp(t::FileTree,
    from_path::<span class="hljs-built_in">Regex</span>,
-   to_path::SubstitutionString; combine)</code></pre>
+   to_path::<span class="hljs-built_in">SubstitutionString</span>; combine, associative=<span class="hljs-literal">false</span>)</code></pre>
 <p>copy nodes in the file tree whose path matches the <code>from_tree</code> regular expression pattern by renaming it to <code>to_path</code> pattern. Any sub-pattern in <code>from_path</code> which is surrounded by paranthesis will be read as a matched substring which can be accessed in the to_path substitution pattern using \1, \2 etc. positional matches.</p>
 <p>If a file overwrites an existing node after copy, <code>combine</code> will be called to combine them together. By default <code>combine</code> will error.</p>
-<h2 id="example__2"><a href="#example__2">Example:</a></h2>
+<p>Use <code>associative&#61;true</code> if <code>combine</code> is associative to improve parallelism.</p>
+<h2 id="example__2"><a href="#example__2" class="header-anchor">Example:</a></h2>
 <pre><code class="julia hljs">julia&gt; t = maketree(<span class="hljs-string">&quot;dir&quot;</span> =&gt; [string(j) =&gt; [string(i)=&gt;[<span class="hljs-string">&quot;data.csv&quot;</span>] <span class="hljs-keyword">for</span> i = <span class="hljs-number">1</span>:<span class="hljs-number">2</span>] <span class="hljs-keyword">for</span> j=<span class="hljs-number">1</span>:<span class="hljs-number">2</span>])
 dir/
 ├─ <span class="hljs-number">1</span>/
@@ -362,7 +367,7 @@ dir/
 </div>
   </div>
 
-<h3 id="values_in_trees"><a href="#values_in_trees">Values in trees</a></h3>
+<h3 id="values_in_trees"><a href="#values_in_trees" class="header-anchor">Values in trees</a></h3>
 <p>See the article on <a href="/FileTrees.jl/values">values</a>.</p>
   <div class="docstring">
       <h2 class="doc-header" id="FileTrees.load">
@@ -412,13 +417,13 @@ dir/
 </div>
   </div>
 
-<h3 id="laziness_and_parallelism"><a href="#laziness_and_parallelism">Laziness and Parallelism</a></h3>
+<h3 id="laziness_and_parallelism"><a href="#laziness_and_parallelism" class="header-anchor">Laziness and Parallelism</a></h3>
   <div class="docstring">
       <h2 class="doc-header" id="compute">
         <a href="#compute">compute</a>
         <div class="doc-type">method</div></h2>
-      <div class="doc-content"><pre><code class="julia hljs">compute(tree::FileTree; cache=<span class="hljs-literal">true</span>)</code></pre>
-<p>Compute any lazy values &#40;Thunks&#41; in <code>tree</code> and return a new tree where the values refer to the computed values &#40;maybe on remote processes&#41;. The tree still behaves as a Lazy tree. <code>exec</code> on it will fetch the values from remote processes.</p>
+      <div class="doc-content"><p>No documentation found.</p>
+<p>Binding <code>FileTrees.compute</code> does not exist.</p>
 </div>
   </div>
 
@@ -426,16 +431,16 @@ dir/
       <h2 class="doc-header" id="exec">
         <a href="#exec">exec</a>
         <div class="doc-type">function</div></h2>
-      <div class="doc-content"><pre><code class="julia hljs">exec(x)</code></pre>
-<p>If <code>x</code> is a FileTree, computes any uncomputed <code>Thunk</code>s stored as values in it. Returns a new tree with the computed values. If <code>x</code> is a <code>Thunk</code> &#40;such as the result of a <code>reducevalues</code>&#41;, then exec will compute the result. If <code>x</code> is anything else, <code>exec</code> just returns the same value.</p>
-<pre><code class="julia hljs">exec(ctx, x)</code></pre>
-<p>Same as <code>exec&#40;x&#41;</code> with a ctx being passed to <code>Dagger</code> when computing any <code>Thunks</code>.</p>
+      <div class="doc-content"><pre><code class="julia hljs">exec([e], x)</code></pre>
+<p>Return the result of executing <code>x</code> using executor <code>e</code> &#40;default <code>Executor.Threads</code>&#41;.</p>
+<p>Available executors can be found in the <code>Executor</code> submodule.</p>
+<p>If <code>x</code> is a <code>FileTree</code>, computes any uncomputed <code>Thunk</code>s stored as values in it. Returns a new tree with the computed values. If <code>x</code> is a <code>File</code>, computes the value if it is a <code>Thunk</code>. Returns a new <code>File</code> with the computed value. If <code>x</code> is a <code>Thunk</code> &#40;such as the result of a <code>reducevalues</code>&#41;, then exec will compute the result. If <code>x</code> is anything else, <code>exec</code> just returns the same value.</p>
 </div>
   </div>
 
 <div class="page-foot">
   <div class="copyright">
-    &copy; Shashi Gowda, Julian Samaroo. Last modified: October 02, 2020. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a>.
+    &copy; Shashi Gowda, Julian Samaroo. Last modified: March 28, 2026. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a>.
   </div>
 </div>
 </div><!-- CONTENT ENDS HERE -->

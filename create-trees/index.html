@@ -78,7 +78,7 @@
 <div class="content container">
 
 <!-- Content appended here -->
-<div class="franklin-content"><h1 id="creating_file_trees"><a href="#creating_file_trees">Creating file trees</a></h1>
+<div class="franklin-content"><h1 id="creating_file_trees"><a href="#creating_file_trees" class="header-anchor">Creating file trees</a></h1>
 <p>As seen on the home page, the easiest way to create a FileTree is to call <code>FileTree</code> with the path to a directory on disk.</p>
 <pre><code class="julia hljs"><span class="hljs-keyword">using</span> FileTrees
 
@@ -122,24 +122,24 @@ taxi_dir = FileTree(<span class="hljs-string">&quot;taxi-data&quot;</span>)</cod
 t</code></pre><pre><code class="plaintext hljs">mydir/
 ├─ 1/
 │  ├─ 1/
-│  │  └─ data.csv (10-element Array{Float64,1})
+│  │  └─ data.csv (10-element Vector{Float64})
 │  └─ 2/
-│     └─ data.csv (10-element Array{Float64,1})
+│     └─ data.csv (10-element Vector{Float64})
 ├─ 2/
 │  ├─ 1/
-│  │  └─ data.csv (10-element Array{Float64,1})
+│  │  └─ data.csv (10-element Vector{Float64})
 │  └─ 2/
-│     └─ data.csv (10-element Array{Float64,1})
+│     └─ data.csv (10-element Vector{Float64})
 └─ 3/
    ├─ 1/
-   │  └─ data.csv (10-element Array{Float64,1})
+   │  └─ data.csv (10-element Vector{Float64})
    └─ 2/
-      └─ data.csv (10-element Array{Float64,1})
+      └─ data.csv (10-element Vector{Float64})
 </code></pre>
 <p>This last method is slower and is not recommended if you are creating thousands of files.</p>
 <div class="page-foot">
   <div class="copyright">
-    &copy; Shashi Gowda, Julian Samaroo. Last modified: October 02, 2020. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a>.
+    &copy; Shashi Gowda, Julian Samaroo. Last modified: March 28, 2026. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a>.
   </div>
 </div>
 </div><!-- CONTENT ENDS HERE -->

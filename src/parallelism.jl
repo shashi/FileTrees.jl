@@ -35,7 +35,7 @@ If `x` is anything else, `exec` just returns the same value.
 exec(x) = exec(DEFAULT_EXEC_CONTEXT[], x)
 exec(e, x, args...) = x
 
-exec(e, d::FileTree, args...) = mapvalues(v -> exec(e, v, fetch), d; lazy=false)
+exec(e, d::FileTree, args...) = mapvalues(fetch, mapvalues(v -> exec(e, v, identity), d; lazy=false))
 exec(e, f::File, collect_results=fetch) = setvalue(f, exec(e, f[], collect_results))
 
 struct UnwrappedTaskException{E} <: Exception

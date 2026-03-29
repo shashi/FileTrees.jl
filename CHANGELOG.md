@@ -4,7 +4,7 @@
 
 ### Breaking changes
 
-- No longer possible to use `Dagger.Context()` as first input to `exec`. Instead, add `Dagger` as a dependency (since it now is a weak dependency) and use `Executors.Dagger` (note that this uses eager mode).
+- No longer possible to use `Dagger.Context()` as first input to `exec`. Instead, add `Dagger` as a dependency (since it now is a weak dependency) and use `Executor.Dagger` (note that this uses eager mode).
 - `compute` is now only available when `Dagger` is loaded (since it is a `Dagger` function). The returned `FileTree` now has `DTasks` as values instead of `Chunks`.
 
 ### Other changes

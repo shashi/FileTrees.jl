@@ -11,7 +11,7 @@ When you lazy-load and chain operations on the lazy loaded data, you are also te
 ```julia:dir1
 using FileTrees, DataFrames, CSV
 
-taxi_dir = FileTree(joinpath(pathof(FileTrees), "../../page/taxi-data"))
+taxi_dir = FileTree("taxi-data")
 
 lazy_dfs = FileTrees.load(taxi_dir; lazy=true) do file
     DataFrame(CSV.File(path(file)))
@@ -38,12 +38,12 @@ FileTrees allows for control over the execution performed by `exec` by supplying
 
 The available Executors can be found in the `Executor` submodule. The following executors are always available:
 
-* `Executors.CurrentTask`: Uses the current task to execute (i.e no new tasks spawned and therefore no parallelism).
-* `Executors.Threads`: Uses the `Threads` standard library to run computations in multiple threads. This is the default used if no extra argument is given to `exec`.
+* `Executor.CurrentTask`: Uses the current task to execute (i.e no new tasks spawned and therefore no parallelism).
+* `Executor.Threads`: Uses the `Threads` standard library to run computations in multiple threads. This is the default used if no extra argument is given to `exec`.
 
 Additionally, the following executors are available in extension modules:
 
-* `Executors.Dagger`: Uses `Dagger` to run computations, meaning that all available processes and threads will be used (unless given options to restrict this). Requires that [Dagger.jl](https://github.com/JuliaParallel/Dagger.jl) is loaded.
+* `Executor.Dagger`: Uses `Dagger` to run computations, meaning that all available processes and threads will be used (unless given options to restrict this). Requires that [Dagger.jl](https://github.com/JuliaParallel/Dagger.jl) is loaded.
 
 # Parallel invocation with Dagger
 

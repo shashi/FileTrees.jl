@@ -1,5 +1,6 @@
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
+Dagger = "d58978e5-989f-55fb-8d15-ea34adc7bf54"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 FileTrees = "72696420-646e-6120-6e77-6f6420746567"

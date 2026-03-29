@@ -260,7 +260,7 @@ end
 @testset "Unwrap TaskFailedExceptions" begin
         innerfun(x) = x + 2  # Error, we will pass a string as x
         outerfun(x) = string("Result ", innerfun(x))
-        # Only Executors.Threads messes with exceptions, so we don't test this above
+        # Only Executor.Threads messes with exceptions, so we don't test this above
         callsitefun(ft) = exec(Executor.Threads(unwrap_exceptions=true), mapvalues(identity, mapvalues(identity, mapvalues(identity, mapvalues(outerfun, ft)))))
         t1 = FileTrees.load(uppercase∘path, t, lazy=true)
     try

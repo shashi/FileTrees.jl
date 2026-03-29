@@ -17,7 +17,7 @@ end
 """
     compute([e], tree::FileTree)
 
-Compute any lazy values (Thunks) in `tree` using executor `e` (default `Executors.Dagger`) and return a new tree where the values refer to
+Compute any lazy values (Thunks) in `tree` using executor `e` (default `Executor.Dagger`) and return a new tree where the values refer to
 the computed values (maybe on remote processes if applicable). 
     
 For executors which compute the lazy values in separate tasks, the returned tree still behaves as a Lazy tree. `exec` on it will fetch the

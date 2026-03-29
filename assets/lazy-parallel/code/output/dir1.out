@@ -1,2 +1,0 @@
-UndefVarError: `yellow′` not defined in `Main.FD_SANDBOX_1003884096211714240`
-Suggestion: add an appropriate import or assignment. This global was declared but not assigned.

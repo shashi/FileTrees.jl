@@ -137,6 +137,23 @@ import FileTrees: attach
         # Also test that we maintained the same order as the first encountered node
         @test name.(children(tcombined)) == ["y", "x"]
     end
+
+    @testset "Unusual filenames" begin
+        # Some of these are generally not allowed on filesystems, but FileTrees handles them in other contexts
+        t = maketree("root" => [(name="", value=1), (name=".", value=2), (name="..", value=3), (name="a", value=4)])
+        
+        # All names are accepted at this stage
+        @test name.(files(t)) == ["", ".", "..", "a"]
+        @test reducevalues(vcat, t) == 1:4
+                
+        # Should be a noop
+        tmv = mv(t, r"(.*)", s"\1")
+
+        # The file named "." gets swallowed due to normdots which might be surprising. Maybe worth fixing in the future
+        @test name.(files(tmv)) == ["", "..", "a"]
+        @test reducevalues(vcat, tmv) == [1, 3, 4]
+
+    end
 end
 
 @testset "values" begin

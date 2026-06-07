@@ -287,6 +287,8 @@ root node leading up to this file.
 """
 function Path(d::Node)
     parent(d) === nothing && return Path(d.name)
+    # Prevent that empty names become ".". Not 100 that this is always right, but at least is prevents mv from silently deleting them
+    isempty(d.name) && return Path(parent(d)) 
     Path(parent(d)) / Path(d.name)
 end
 

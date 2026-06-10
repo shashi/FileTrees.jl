@@ -44,7 +44,7 @@ end
     @test isempty(setdiff(name.(children(t2)), ["yellow", "green"]))
 
     # this should throw
-    @test_throws ErrorException mv(dfs, r"^([^/]*)/([^/]*)/yellow.csv$", s"yellow.csv")
+    @test_throws FileTrees.UndefMergeError mv(dfs, r"^([^/]*)/([^/]*)/yellow.csv$", s"yellow.csv")
 
     yellow = mv(dfs, r"^([^/]*)/([^/]*)/yellow.csv$", s"yellow.csv", combine=vcat, associative=false)["yellow.csv"]
     @test get(yellow) isa DataFrame

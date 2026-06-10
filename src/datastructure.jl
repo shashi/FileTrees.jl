@@ -20,11 +20,14 @@ struct NoValue end
 
 Copy over all fields from `tree`, but use any fields provided as keyword arguments.
 
-    FileTree(dirname::String; [sort])
+    FileTree(dirname::String; [sort], [follow_symlinks])
 
 Construct a `FileTree` to reflect directory from disk in the current working directory.
 
 If `sort=true` (the default) then each level of the tree will be lexicographically sorted.
+
+If `follow_symlinks=false` (the default) then symbolic links will not be followed. Setting this to `true` can dramatically speed up the construction, 
+even if no symbolic links are present as it elides a stat check inside `walkdir``.
 """
 struct FileTree
     parent::Union{FileTree, Nothing}
@@ -57,11 +60,11 @@ end
 
 FileTree(dir; kwargs...) = FileTree(nothing, dir; kwargs...)
 
-function FileTree(parent, dir; sort=true, root="")
+function FileTree(parent, dir; sort=true, root="", follow_symlinks=false)
     parent′ = FileTree(parent, dir, [])
-    for (path, dirs, files) in walkdir(joinpath(root, dir)) 
+    for (path, dirs, files) in walkdir(joinpath(root, dir); follow_symlinks) 
         for dir in dirs
-            push!(parent′.children, FileTree(parent′, dir; sort, root=path))
+            push!(parent′.children, FileTree(parent′, dir; sort, root=path, follow_symlinks))
         end
         for file in files
             push!(parent′.children, File(parent′, file))
@@ -119,13 +122,25 @@ Return a copy of node with `val` set as the value.
 setvalue(x::FileTree, val) = FileTree(x; value=val)
 
 """
-    setparent(node::Union{FileTree, File}, parent)
+    setparent(node::Union{FileTree, File}, parent; [deep])
 
 Return a copy of node with `parent` set as the parent.
 """
 function setparent(x::FileTree, parent=parent(x))
-    p = FileTree(x, parent=parent, children=copy(x.children))
-    copy!(p.children, setparent.(x.children, (p,)))
+    p = FileTree(x, parent=parent, children=similar(x.children))
+    @inbounds for i in eachindex(p.children, x.children)
+        p.children[i] =  setparent(x.children[i], p)
+    end
+    p
+end
+
+# Update children without copying them. Only for when we are dead certain we have
+# created the whole tree from scratch
+function setparent!(x::FileTree, parent=parent(x))
+    p = FileTree(x, parent=parent, children=x.children)
+    @inbounds for i in eachindex(p.children, x.children)
+        p.children[i] =  setparent!(x.children[i], p)
+    end
     p
 end
 
@@ -138,7 +153,7 @@ Base.show(io::IO, d::FileTree) = AbstractTrees.print_tree(io, d)
 
 - `parent::Union{FileTree, Nothing}` -- The parent node. `nothing` if it's the root node.
 - `name::String` -- Name of the root.
-- `value::Any` -- the value at the node, if no value is present, a `NoValue()` sentinal value.
+- `value::Any` -- the value at the node, if no value is present, a `NoValue()` sentinel value.
 """
 struct File
     parent::Union{Nothing, FileTree}
@@ -183,6 +198,9 @@ Base.empty(d::File) = d
 setvalue(x::File, val) = File(x, value=val)
 
 setparent(x::File, parent=parent(x)) = File(x, parent=parent)
+
+setparent!(f::File, args...;kws...) = setparent(f, args...)
+
 
 Base.getindex(tree::FileTree, i::Int) = tree.children[i]
 
@@ -279,22 +297,80 @@ maketree(node::Vector) = maketree("."=>node)
 
 Base.basename(d::Node) = Path(d.name)
 
+# Internal struct for collecting the path from a Node with minimal overhead
+# We reuse it so we don't need to allocate the data array each time we use it
+# TaskLocalValue is used to thread safety
+struct PathStringBuffer
+    data::Vector{UInt8}
+end
+PathStringBuffer() = PathStringBuffer(Vector{UInt8}[])
+const _PATH_STRING_BUFFER = TaskLocalValue{PathStringBuffer}(PathStringBuffer)
+
+
+function _rpath(buf::PathStringBuffer, f::FileTrees.Node, delim)
+    pos = _rpath!(buf, f, 0, delim)
+    res = GC.@preserve buf unsafe_string(pointer(buf.data), pos)
+    empty!(buf.data)
+    res
+end
+
+function _rpath!(buf, f::FileTrees.Node, pos::Int, delim::Vector{UInt8})
+    if !isnothing(parent(f))
+        pos = _rpath!(buf, parent(f), pos, delim)  
+        append!(buf.data, delim)
+        pos += length(delim)
+    end
+    n = codeunits(name(f))
+    append!(buf.data, n)
+    return pos + length(n)
+end
+
+# Internal struct for collecting the Path segments from a Node with minimal overhead
+# We reuse it so we don't need to allocate the path array each time we use it
+# TaskLocalValue is used to thread safety
+struct PathStringArray
+    path::Vector{String}
+end
+PathStringArray() = PathStringArray(sizehint!(String[], 4))
+const _PATH_STRING_ARRAY = TaskLocalValue{PathStringArray}(PathStringArray)
+
+function _rpath(arr::PathStringArray, f::FileTrees.Node)
+    len = _rpath!(arr, f, 1)-1
+    ntuple(i -> arr.path[i], len)
+end
+function _rpath!(arr::PathStringArray, f::FileTrees.Node, n)
+    if isnothing(parent(f))
+        if length(arr.path) < n
+            resize!(arr.path, n)
+        end
+        arr.path[1] = name(f)
+        return 2
+    end
+
+    pos = _rpath!(arr, parent(f), n+1) 
+    arr.path[pos] = name(f)
+    pos+1
+end
+
 """
     Path(file::Union{File, FileTree)
 
 Returns an [`AbstractPath`](https://rofinn.github.io/FilePathsBase.jl/stable/design/#Path-Types-1) object which is the Path of the file from the
 root node leading up to this file.
 """
-function Path(d::Node)
-    parent(d) === nothing && return Path(d.name)
-    # Prevent that empty names become ".". Not 100 that this is always right, but at least is prevents mv from silently deleting them
-    isempty(d.name) && return Path(parent(d)) 
-    Path(parent(d)) / Path(d.name)
+function Path(d::Node) 
+    arr =_PATH_STRING_ARRAY[]
+    len = _rpath!(arr, d, 1)-1
+    Path(ntuple(i -> arr.path[i], len))
 end
 
-path(x::Node) = string(Path(x))
+const _PATH_SEPARATOR = Vector{UInt8}(Base.Filesystem.path_separator)
+const _CANONICAL_PATH_SEPARATOR = [UInt8('/')]
 
-Base.dirname(d::Node) = dirname(Path(d))
+path(x::Node) =  _rpath(_PATH_STRING_BUFFER[], x, _PATH_SEPARATOR)
+canonical_path(x::Node) = _rpath(_PATH_STRING_BUFFER[], x, _CANONICAL_PATH_SEPARATOR)
+
+Base.dirname(d::Node) = Path(parent(d))
 
 Base.getindex(d::Node) = d.value
 

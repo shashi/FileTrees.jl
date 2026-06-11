@@ -32,6 +32,13 @@ end
                                         lazy_dfs, lazy=false)) == 8
     end
 
+    @testset "Parallel loading" begin
+        dfsp = FileTrees.load(FileTree(name(taxi_dir); paralleldepth=Inf)) do file
+            DataFrame(CSV.File(path(file)))
+        end
+        @test isequal(dfs, dfsp)
+    end
+
 end
 
 @testset "mv" begin
@@ -44,7 +51,7 @@ end
     @test isempty(setdiff(name.(children(t2)), ["yellow", "green"]))
 
     # this should throw
-    @test_throws ErrorException mv(dfs, r"^([^/]*)/([^/]*)/yellow.csv$", s"yellow.csv")
+    @test_throws FileTrees.UndefMergeError mv(dfs, r"^([^/]*)/([^/]*)/yellow.csv$", s"yellow.csv")
 
     yellow = mv(dfs, r"^([^/]*)/([^/]*)/yellow.csv$", s"yellow.csv", combine=vcat, associative=false)["yellow.csv"]
     @test get(yellow) isa DataFrame

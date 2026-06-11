@@ -2,6 +2,8 @@ module FileTrees
 
 using FilePathsBase
 using AbstractTrees
+using TaskLocalValues
+using OrderedCollections: OrderedDict
 import AbstractTrees: children
 import Base: parent, getindex
 

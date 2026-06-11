@@ -96,7 +96,7 @@ baremodule Executor
 
     Use Julia's standard library `Threads` to spawn each computation in a separate task when passed as first argument to `exec`.
 
-    If the keyword argument `unwrap_exceptions` is set to `true`` (the default), any `TaskFailedExceptions` will be unwrapped,
+    If the keyword argument `unwrap_exceptions` is set to `true` (the default), any `TaskFailedExceptions` will be unwrapped,
     which typically results in less visual noise in case the computation throws an exception.
     
     The keyword argument `pool` (default `:default`) is given as first argument to `Threads.@spawn`. 

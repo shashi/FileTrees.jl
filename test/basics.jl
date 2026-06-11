@@ -85,6 +85,7 @@ import FileTrees: attach
                         File(nothing, "data.csv", (yr, mo)) )
         end
     end
+    FileTrees.setparent!(t1)
 
     @test isconsistent(t1)
 
@@ -101,6 +102,7 @@ import FileTrees: attach
                         File(nothing, string("0", mo) * ".csv", (yr, mo)))
         end
     end
+    FileTrees.setparent!(t5)
 
     @test isconsistent(t5)
 
@@ -149,9 +151,8 @@ import FileTrees: attach
         # Should be a noop
         tmv = mv(t, r"(.*)", s"\1")
 
-        # The file named "." gets swallowed due to normdots which might be surprising. Maybe worth fixing in the future
-        @test name.(files(tmv)) == ["", "..", "a"]
-        @test reducevalues(vcat, tmv) == [1, 3, 4]
+        @test name.(files(tmv)) == ["", ".", "..", "a"]
+        @test reducevalues(vcat, tmv) == 1:4
 
     end
 end

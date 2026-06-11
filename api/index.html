@@ -92,14 +92,16 @@
 </li>
 <li><p><code>children::Vector</code> – children</p>
 </li>
-<li><p><code>value::Any</code> – the value at the node, if no value is present, a <code>NoValue&#40;&#41;</code> sentinal value.</p>
+<li><p><code>value::Any</code> – the value at the node, if no value is present, a <code>NoValue&#40;&#41;</code> sentinel value.</p>
 <p>FileTree&#40;tree::FileTree; parent, name, children, value&#41;</p>
 </li>
 </ul>
 <p>Copy over all fields from <code>tree</code>, but use any fields provided as keyword arguments.</p>
-<pre><code class="julia hljs">FileTree(dirname::<span class="hljs-built_in">String</span>; [sort])</code></pre>
+<pre><code class="julia hljs">FileTree(dirname::<span class="hljs-built_in">String</span>; [sort], [follow_symlinks], [paralleldepth])</code></pre>
 <p>Construct a <code>FileTree</code> to reflect directory from disk in the current working directory.</p>
 <p>If <code>sort&#61;true</code> &#40;the default&#41; then each level of the tree will be lexicographically sorted.</p>
+<p>If <code>follow_symlinks&#61;true</code> &#40;the default&#41; then symbolic links will be followed. Setting this to <code>true</code> actually speeds up the construction,  even if no symbolic links are present as it elides a stat check inside <code>walkdir</code>. Only reason to set this to <code>false</code> is if there exist symbolic links that should not be followed.</p>
+<p>Subdirectories down to <code>paralleldepth</code> &#40;default <code>0</code>&#41; levels will be read in separate tasks, which can give significant speedups when the directory tree is wide and I/O latency is high &#40;e.g. NFS&#41;.</p>
 </div>
   </div>
 
@@ -114,7 +116,7 @@
 </li>
 <li><p><code>name::String</code> – Name of the root.</p>
 </li>
-<li><p><code>value::Any</code> – the value at the node, if no value is present, a <code>NoValue&#40;&#41;</code> sentinal value.</p>
+<li><p><code>value::Any</code> – the value at the node, if no value is present, a <code>NoValue&#40;&#41;</code> sentinel value.</p>
 </li>
 </ul>
 </div>
@@ -137,7 +139,7 @@
 <p><code>FileTrees.path</code> is a <code>Function</code>.</p>
 <pre><code class="julia hljs"><span class="hljs-comment"># 1 method for generic function &quot;path&quot; from FileTrees:</span>
  [<span class="hljs-number">1</span>] path(x::<span class="hljs-built_in">Union</span>{FileTrees.File, FileTrees.FileTree})
-     @ ~/.julia/packages/FileTrees/Esqbq/src/datastructure.jl:<span class="hljs-number">295</span></code></pre>
+     @ ~/.julia/packages/FileTrees/dAfCe/src/datastructure.jl:<span class="hljs-number">378</span></code></pre>
 </div>
   </div>
 
@@ -210,7 +212,7 @@
       <h2 class="doc-header" id="setparent">
         <a href="#setparent">setparent</a>
         <div class="doc-type">function</div></h2>
-      <div class="doc-content"><pre><code class="julia hljs">setparent(node::<span class="hljs-built_in">Union</span>{FileTree, File}, parent)</code></pre>
+      <div class="doc-content"><pre><code class="julia hljs">setparent(node::<span class="hljs-built_in">Union</span>{FileTree, File}, parent; [deep])</code></pre>
 <p>Return a copy of node with <code>parent</code> set as the parent.</p>
 </div>
   </div>
@@ -440,7 +442,7 @@ dir/
 
 <div class="page-foot">
   <div class="copyright">
-    &copy; Shashi Gowda, Julian Samaroo. Last modified: June 07, 2026. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a>.
+    &copy; Shashi Gowda, Julian Samaroo. Last modified: June 11, 2026. Website built with <a href="https://github.com/tlienart/Franklin.jl">Franklin.jl</a>.
   </div>
 </div>
 </div><!-- CONTENT ENDS HERE -->

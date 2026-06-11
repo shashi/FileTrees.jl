@@ -14,20 +14,24 @@ struct NoValue end
 - `parent::Union{FileTree, Nothing}` -- The parent node. `nothing` if it's the root node.
 - `name::String` -- Name of the root.
 - `children::Vector` -- children
-- `value::Any` -- the value at the node, if no value is present, a `NoValue()` sentinal value.
+- `value::Any` -- the value at the node, if no value is present, a `NoValue()` sentinel value.
 
     FileTree(tree::FileTree; parent, name, children, value)
 
 Copy over all fields from `tree`, but use any fields provided as keyword arguments.
 
-    FileTree(dirname::String; [sort], [follow_symlinks])
+    FileTree(dirname::String; [sort], [follow_symlinks], [paralleldepth])
 
 Construct a `FileTree` to reflect directory from disk in the current working directory.
 
 If `sort=true` (the default) then each level of the tree will be lexicographically sorted.
 
-If `follow_symlinks=false` (the default) then symbolic links will not be followed. Setting this to `true` can dramatically speed up the construction, 
-even if no symbolic links are present as it elides a stat check inside `walkdir``.
+If `follow_symlinks=true` (the default) then symbolic links will be followed. Setting this to `true` actually speeds up the construction, 
+even if no symbolic links are present as it elides a stat check inside `walkdir`. Only reason to set this to `false` is if there exist
+symbolic links that should not be followed.
+ 
+Subdirectories down to `paralleldepth` (default `0`) levels will be read in separate tasks, which can give significant speedups when the directory tree is
+wide and I/O latency is high (e.g. NFS).
 """
 struct FileTree
     parent::Union{FileTree, Nothing}
@@ -60,23 +64,27 @@ end
 
 FileTree(dir; kwargs...) = FileTree(nothing, dir; kwargs...)
 
-function FileTree(parent, dir; sort=true, root="", follow_symlinks=false)
+function FileTree(parent, dir; sort=true, follow_symlinks=true, root="", paralleldepth=0)
     parent′ = FileTree(parent, dir, [])
-    for (path, dirs, files) in walkdir(joinpath(root, dir); follow_symlinks) 
-        for dir in dirs
-            push!(parent′.children, FileTree(parent′, dir; sort, root=path, follow_symlinks))
+    for (path, dirs, files) in walkdir(joinpath(root, dir); follow_symlinks)
+
+        if paralleldepth > 0 && length(dirs) > 1
+            tasks = [Threads.@spawn FileTree(parent′, d; sort, follow_symlinks, root=path, paralleldepth=paralleldepth-1) for d in dirs]
+            append!(parent′.children, fetch.(tasks))
+        else
+            for d in dirs
+                push!(parent′.children, FileTree(parent′, d; sort, follow_symlinks, root=path, paralleldepth=0))
+            end
         end
         for file in files
             push!(parent′.children, File(parent′, file))
         end
-        if sort 
+        if sort
             sort!(parent′.children; by=name)
         end
-        # this might look a bit silly, but we don't care much for walkdir recursing down the tree, only that it is
-        # much faster than readdir + isdir/isfile when it comes to separating files from directories 
         break
     end
-    parent′ 
+    parent′
 end
 
 """

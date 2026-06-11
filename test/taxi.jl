@@ -32,6 +32,13 @@ end
                                         lazy_dfs, lazy=false)) == 8
     end
 
+    @testset "Parallel loading" begin
+        dfsp = FileTrees.load(FileTree(name(taxi_dir); paralleldepth=Inf)) do file
+            DataFrame(CSV.File(path(file)))
+        end
+        @test isequal(dfs, dfsp)
+    end
+
 end
 
 @testset "mv" begin

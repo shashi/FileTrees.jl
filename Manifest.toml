@@ -246,11 +246,11 @@ weakdeps = ["Mmap", "Test"]
 
 [[deps.FileTrees]]
 deps = ["AbstractTrees", "FilePathsBase", "Glob", "OrderedCollections", "TaskLocalValues"]
-git-tree-sha1 = "41b5de5026b7688508e810a867e50f66bff36b57"
+git-tree-sha1 = "b6eafec43e4ad2f4ef3b9541f0510bfa9c0b7564"
 repo-rev = "master"
 repo-url = "https://github.com/shashi/FileTrees.jl.git"
 uuid = "72696420-646e-6120-6e77-6f6420746567"
-version = "0.4.3"
+version = "0.4.4"
 weakdeps = ["Dagger"]
 
     [deps.FileTrees.extensions]

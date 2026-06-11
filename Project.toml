@@ -1,6 +1,6 @@
 name = "FileTrees"
 uuid = "72696420-646e-6120-6e77-6f6420746567"
-version = "0.4.3"
+version = "0.4.4"
 authors = ["Shashi Gowda <gowda@mit.edu>", "Julian Samaroo <jpsamaroo@jpsamaroo.me>"]
 
 [deps]
